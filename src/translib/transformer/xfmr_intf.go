@@ -810,7 +810,11 @@ func intf_ip_addr_del (d *db.DB , ifName string, tblName string, subIntf *ocbind
         }
         count := 0
         _ = interfaceIPcount(tblName, d, &ifName, &count)
-        if (count - len(intfIpMap)) == 1 {
+
+        /*  If last L3 config, remove L3 entry with just interface name,
+         *  applicable to all interfaces except Loopback interface.
+         */
+        if (count - len(intfIpMap)) == 1 && (tblName != LOOPBACK_INTERFACE_TN) {
             IntfMapObj, err := d.GetMapAll(&db.TableSpec{Name:tblName+"|"+ifName})
             if err != nil {
                 return nil, errors.New("Entry "+tblName+"|"+ifName+" missing from ConfigDB")
@@ -1263,20 +1267,36 @@ func deleteLoopbackIntf(inParams *XfmrParams, loName *string) error {
 
     loMap[*loName] = db.Value{Field:map[string]string{}}
 
-    _, err = inParams.d.GetEntry(&db.TableSpec{Name:intTbl.cfgDb.portTN}, db.Key{Comp: []string{*loName}})
-    if err != nil {
-        log.Errorf("Retrieving data from LOOPBACK_INTERFACE table for Loopback: %s failed!", *loName)
-        return err
+    IntfMapObj, err := inParams.d.GetMapAll(&db.TableSpec{Name:intTbl.cfgDb.portTN + "|" + *loName})
+    if err != nil || !IntfMapObj.IsPopulated() {
+        errStr := "Retrieving data from LOOPBACK_INTERFACE table for Loopback: " + *loName + " failed!"
+        log.Errorf(errStr)
+        return tlerr.InvalidArgsError{Format:errStr}
     }
-    err = validateL3ConfigExists(inParams.d, loName)
+    /* If L3 config exist, return error */
+    ipKeys, err := doGetIntfIpKeys(inParams.d, intTbl.cfgDb.intfTN, *loName)
     if err != nil {
-        return err
+        log.Errorf("Get for IP keys failed, err:%v", err)
+        return tlerr.InvalidArgsError{Format:err.Error()}
     }
+    if (len(ipKeys)) > 0 {
+        l3ErrStr := "IP Configuration exists for Loopback: " + *loName
+        return tlerr.InvalidArgsError{Format:l3ErrStr}
+    }
+    IntfMap := IntfMapObj.Field
+    if len(IntfMap) > 1 {
+        if log.V(3) {
+            log.Infof("Existing entries in LOOPBACK_INTERFACE|%s: %v", *loName, IntfMap)
+        }
+        l3ErrStr := "L3 config exists in LOOPBACK_INTERFACE table for Loopback: " + *loName
+        return tlerr.InvalidArgsError{Format:l3ErrStr}
+    }
+
     resMap[intTbl.cfgDb.intfTN] = loMap
 
     subOpMap[db.ConfigDB] = resMap
     inParams.subOpDataMap[DELETE] = &subOpMap
-    return err
+    return nil
 }
 
 func getIntfIpByName(dbCl *db.DB, tblName string, ifName string, ipv4 bool, ipv6 bool, ip string) (map[string]db.Value, error) {

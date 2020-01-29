@@ -391,7 +391,7 @@ limitations under the License.
                 ptype="LO_ID"
                 >
         </PARAM>
-        <ACTION builtin="clish_restcl">oper=DELETE url=/restconf/data/openconfig-interfaces:interfaces/interface=Loopback${lo-id}/config</ACTION>
+        <ACTION builtin="clish_restcl">oper=DELETE url=/restconf/data/openconfig-interfaces:interfaces/interface=Loopback${lo-id}</ACTION>
     </COMMAND>
      </VIEW>
 
