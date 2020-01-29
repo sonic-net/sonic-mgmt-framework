@@ -159,6 +159,8 @@ install:
 	$(INSTALL) -D $(TOPDIR)/scripts/org.sonic.hostservice.conf $(DESTDIR)/etc/dbus-1/system.d
 	$(INSTALL) -d $(DESTDIR)/lib/systemd/system
 	$(INSTALL) -D $(TOPDIR)/scripts/sonic-hostservice.service $(DESTDIR)/lib/systemd/system
+	$(INSTALL) -d $(DESTDIR)/etc/sonic/
+	$(INSTALL) -D $(TOPDIR)/config/cfg_mgmt.json $(DESTDIR)/etc/sonic/
 
 	# Scripts for Host Account Management (HAM)
 	$(INSTALL) -D $(TOPDIR)/src/ham/hamd/etc/dbus-1/system.d/* $(DESTDIR)/etc/dbus-1/system.d/
@@ -187,6 +189,7 @@ clean: rest-clean
 	$(MAKE) -C src/cvl clean
 	rm -rf debian/.debhelper
 	(cd build && find .  -maxdepth 1 -name "gopkgs" -prune -o -not -name '.' -exec rm -rf {} +) || true
+	(cd src/ham && ./build.sh clean || true)
 
 cleanall:
 	$(MAKE) -C src/cvl cleanall

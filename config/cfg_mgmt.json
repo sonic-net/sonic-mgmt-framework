@@ -1,0 +1,13 @@
+{
+    "bgp": {
+        "container": "bgp",
+        "files": [
+            "/etc/frr/bfdd.conf",
+            "/etc/frr/bgpd.conf",
+            "/etc/frr/ospfd.conf",
+            "/etc/frr/pimd.conf",
+            "/etc/frr/staticd.conf",
+            "/etc/frr/zebra.conf"
+        ]
+    }
+}
