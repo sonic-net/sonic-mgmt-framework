@@ -4,6 +4,6 @@
 {{'--------------------------------------------------------------------------'}}
 {% for process in json_output %}
 {%set name = (process['state']['name'] | string).split(' ')%}
-{{(process['pid'] | string).ljust(just_var)}} {{(process['state']['cpu_utilization'] | string).ljust(just_var)}} {#{{(process['state']['cpu_usage_user'] | string).ljust(just_var)}} {{(process['state']['cpu_usage_system'] | string).ljust(just_var)}}#} {{(process['state']['memory_utilization'] | string).ljust(just_var)}} {{(process['state']['memory_usage'] | string).ljust(just_var)}} {#{{(process['state']['start_time'] | string).ljust(10)}} {{(process['state']['uptime'] | string).ljust(just_var)}}#} {{name[0]}}
+{{(process['pid'] | string).ljust(just_var)}} {{(process['state']['cpu-utilization'] | string).ljust(just_var)}}  {{(process['state']['memory-utilization'] | string).ljust(just_var)}} {{(process['state']['memory-usage'] | string).ljust(just_var)}} {{name[0]}}
 {% endfor %}
 

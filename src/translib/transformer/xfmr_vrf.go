@@ -45,6 +45,7 @@ var NwInstTblNameMapWithName = map[string]string {
 	"mgmt": "MGMT_VRF_CONFIG",
 	"Vrf": "VRF",
 	"default": "VRF",
+    "Vlan": "VLAN",
 }
 
 /*
@@ -60,6 +61,8 @@ func getInternalNwInstName (name string) (string, error) {
                 return "mgmt", err
         } else if (strings.HasPrefix(name, "Vrf") == true) {
                 return "Vrf", err
+        } else if (strings.HasPrefix(name, "Vlan") == true) {
+                return "Vlan", err
         } else if (strings.Compare(name, "default") == 0) {
                 return "default", err
         } else {
@@ -279,6 +282,7 @@ var network_instance_table_name_xfmr TableXfmrFunc = func (inParams XfmrParams) 
                 if (inParams.oper == GET) {
                         tblList = append(tblList , "MGMT_VRF_CONFIG")
                         tblList = append(tblList, "VRF")
+                        tblList = append(tblList, "VLAN")
                         log.Info("network_instance_table_name_xfmr: tblList ", tblList)
                         return tblList, err
                 } else {
@@ -294,6 +298,7 @@ var network_instance_table_name_xfmr TableXfmrFunc = func (inParams XfmrParams) 
 
                 /* If keyName not expected, make it hit the sonic VRF yang to return error msg */ 
                 tblList = append(tblList, "VRF");
+                tblList = append(tblList, "VLAN")
                 return tblList, err
         }
 
@@ -341,6 +346,11 @@ var YangToDb_network_instance_enabled_field_xfmr FieldXfmrYangToDb = func(inPara
         nwInstObj := getNwInstRoot(inParams.ygRoot)
         if nwInstObj.NetworkInstance == nil {
                 return res_map, errors.New("Network instance not set")
+        }
+
+        if strings.HasPrefix(inParams.key, "Vlan") {
+            log.Infof("YangToDb Vlan key %s, do not add fallback attriubtes.", inParams.key)
+            return res_map, err
         }
 
         pathInfo := NewPathInfo(inParams.uri)
@@ -448,8 +458,13 @@ var YangToDb_network_instance_name_field_xfmr FieldXfmrYangToDb = func(inParams 
 
         log.Info("YangToDb_network_instance_name_field_xfmr")
 
-        /* the key name is not repeated as attr name in the DB */
-        res_map["NULL"] = "NULL"
+        if inParams.key != "" && strings.HasPrefix(inParams.key, "Vlan") {
+            vlanIdStr := strings.TrimPrefix(inParams.key, "Vlan")
+            res_map["vlanid"] = vlanIdStr
+        } else {
+            /* the key name is not repeated as attr name in the DB */
+            res_map["NULL"] = "NULL"
+        }
 
         return res_map, err
 }
