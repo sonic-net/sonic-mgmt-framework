@@ -21,7 +21,6 @@ import os
 import json
 import urllib3
 import pwd
-import os
 from six.moves.urllib.parse import quote
 
 urllib3.disable_warnings()
@@ -139,14 +138,17 @@ class Response(object):
     def __init__(self, response):
         self.response = response
         self.status_code = response.status_code
+        self.content = response.content
 
         try:
             if response.content is None or len(response.content) == 0:
                 self.content = None
-            else:
-                self.content = self.response.json()
+            elif _has_json_content(response):
+                self.content = json.loads(response.content)
         except ValueError:
-            self.content = self.response.text
+            # TODO Can we set status_code to 5XX in this case???
+            # Json parsing can fail only if server returned bad json
+            self.content = response.content
 
     def ok(self):
         return self.status_code >= 200 and self.status_code <= 299
@@ -185,6 +187,10 @@ class Response(object):
     def __getitem__(self, key):
         return self.content[key]
 
+
+def _has_json_content(resp):
+    ctype = resp.headers.get('Content-Type')
+    return (ctype is not None and 'json' in ctype)
 
 def default_error_message_formatter(status_code, err_entry):
     if 'error-message' in err_entry:
