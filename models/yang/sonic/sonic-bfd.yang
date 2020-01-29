@@ -81,9 +81,6 @@ module sonic-bfd {
                                         path "/svlan:sonic-vlan/svlan:VLAN/svlan:VLAN_LIST/svlan:name";
                                 }
                                 type leafref {
-                                        path "/svlan:sonic-vlan/svlan:VLAN/svlan:VLAN_LIST/svlan:name";
-                                }
-                                type leafref {
                                         path "/sloif:sonic-loopback-interface/sloif:LOOPBACK_INTERFACE/sloif:LOOPBACK_INTERFACE_LIST/sloif:loIfName";
                                 }
                         }
