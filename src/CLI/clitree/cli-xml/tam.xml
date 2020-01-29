@@ -33,7 +33,7 @@ limitations under the License.
              help="Show TAM device info" 
              mode="subcommand" 
              ptype="SUBCOMMAND">
-      <ACTION>python $SONIC_CLI_ROOT/sonic-cli-tam.py get_sonic_tam_sonic_tam_tam_device_table show_tam_device.j2</ACTION>
+      <ACTION builtin="clish_pyobj">sonic_cli_tam get_sonic_tam_sonic_tam_tam_device_table show_tam_device.j2</ACTION>
     </COMMAND>
     <COMMAND name="show tam collector" 
              help="Show TAM collector info" 
@@ -44,15 +44,7 @@ limitations under the License.
              ptype="STRING_32" 
              optional="true"> 
       </PARAM>
-      <ACTION>
-        if test "${name}" = "all" ; then&#xA;
-          python $SONIC_CLI_ROOT/sonic-cli-tam.py get_sonic_tam_sonic_tam_tam_collector_table show_tam_collector.j2&#xA;
-        elif test -z "${name}"; then&#xA;
-          python $SONIC_CLI_ROOT/sonic-cli-tam.py get_sonic_tam_sonic_tam_tam_collector_table show_tam_collector.j2&#xA;
-        else&#xA;
-          python $SONIC_CLI_ROOT/sonic-cli-tam.py get_sonic_tam_sonic_tam_tam_collector_table_tam_collector_table_list ${name} show_tam_collector.j2&#xA;
-        fi&#xA;
-      </ACTION>
+      <ACTION builtin="clish_pyobj">sonic_cli_tam get_sonic_tam_sonic_tam_tam_collector_table show_tam_collector.j2 ${name}</ACTION>
     </COMMAND>
   </VIEW>
 
@@ -80,7 +72,7 @@ limitations under the License.
              help="Device ID" 
              ptype="UINT16"> 
       </PARAM>
-      <ACTION>python $SONIC_CLI_ROOT/sonic-cli-tam.py patch_sonic_tam_sonic_tam_tam_device_table_tam_device_table_list_deviceid device ${device-id}</ACTION>
+      <ACTION builtin="clish_pyobj">sonic_cli_tam patch_sonic_tam_sonic_tam_tam_device_table_tam_device_table_list_deviceid device ${device-id}</ACTION>
     </COMMAND>
 
     <!-- tam collector -->
@@ -119,7 +111,7 @@ limitations under the License.
                ptype="RANGE_0_65535"> 
         </PARAM>
       </PARAM>
-      <ACTION>python $SONIC_CLI_ROOT/sonic-cli-tam.py patch_list_sonic_tam_sonic_tam_tam_collector_table_tam_collector_table_list ${name} ${ip-type-val} ${ip-addr-val} ${port-val}</ACTION>
+      <ACTION builtin="clish_pyobj">sonic_cli_tam patch_list_sonic_tam_sonic_tam_tam_collector_table_tam_collector_table_list ${name} ${ip-type-val} ${ip-addr-val} ${port-val}</ACTION>
     </COMMAND>
 
     <!-- config sub view for int-ifa configuration -->
@@ -134,7 +126,7 @@ limitations under the License.
              help="Clear TAM device ID" 
              ptype="SUBCOMMAND" 
              mode="subcommand">
-      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-tam.py patch_sonic_tam_sonic_tam_tam_device_table_tam_device_table_list_deviceid device 0</ACTION>
+      <ACTION builtin="clish_pyobj">sonic_cli_tam patch_sonic_tam_sonic_tam_tam_device_table_tam_device_table_list_deviceid device 0</ACTION>
     </COMMAND>
 
     <!-- no tam collector -->
@@ -146,7 +138,8 @@ limitations under the License.
              help="Collector name" 
              ptype="STRING"> 
       </PARAM>
-      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-tam.py delete_sonic_tam_sonic_tam_tam_collector_table_tam_collector_table_list ${name}</ACTION>
+      <ACTION builtin="clish_pyobj">sonic_cli_tam delete_sonic_tam_sonic_tam_tam_collector_table_tam_collector_table_list ${name}</ACTION>
+
     </COMMAND>
 
   </VIEW>
