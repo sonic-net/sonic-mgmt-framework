@@ -6,6 +6,7 @@
 {% if vars.update({'interface': ""}) %}{% endif %}
 
 {% if vars.update({'remoteId': ""}) %}{% endif %}
+{% if vars.update({'uptime': ""}) %}{% endif %}
 {% if vars.update({'downtime': ""}) %}{% endif %}
 {% if vars.update({'localDiag': "ok"}) %}{% endif %}
 {% if vars.update({'remoteDiag': "ok"}) %}{% endif %}
@@ -44,6 +45,10 @@ BFD Peers:
             {% endif %}
             {% if "remote-discriminator" in peer %}
                 {% if vars.update({'remoteId':peer['remote-discriminator']}) %}{% endif %}
+            {% endif %}
+            {% if "last-up-time" in peer %}
+                {% set time = peer['last-up-time']|int %}
+                {% if vars.update({'uptime':'%d hours, %d mins, %d secs'|format(time/3600, (time%3600)/60, time%60 )}) %}{% endif %}
             {% endif %}
             {% if "last-failure-time" in peer %}
                 {% set time = peer['last-failure-time']|int %}
@@ -89,8 +94,12 @@ BFD Peers:
 {{'%4s%s'|format(' ', peerkey)}}
 {{'%8sID: %s'|format(' ', vars.sessionId)}}
 {{'%8sRemote ID: %s'|format(' ', vars.remoteId)}}
-{{'%8sStatus: %s'|format(' ', vars.status)}}
+{{'%8sStatus: %s'|format(' ', vars.status.lower())}}
+{% if vars.status == 'UP' %}
+{{'%8sUptime: %s'|format(' ', vars.uptime)}}
+{% else %}
 {{'%8sDowntime: %s'|format(' ', vars.downtime)}}
+{% endif %}
 {{'%8sDiagnostics: %s'|format(' ', vars.localDiag)}}
 {{'%8sRemote diagnostics: %s'|format(' ', vars.remoteDiag)}}
 {{'%8sPeer Type: %s'|format(' ', vars.type)}}

@@ -63,6 +63,7 @@ limitations under the License.
         fi&#xA;
   </ACTION>
   </COMMAND>
+  <COMMAND name="clear bgp" help="Clear BGP"/>
   <COMMAND name="clear ip bgp" help="Clear BGP">
     <PARAM name="clear_bgp_subcommands" help="BGP Subcommands" ptype="SUBCOMMAND" mode="switch">
         <MACRO name="CLEAR_BGP_COMMON_OPTIONS_SUB_CMDS" arg=""></MACRO>

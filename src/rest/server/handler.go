@@ -88,7 +88,7 @@ func Process(w http.ResponseWriter, r *http.Request) {
 	}
 
 write_resp:
-	glog.Infof("[%s] Sending response %d, type=%s, data=%s", reqID, status, rtype, data)
+	glog.Infof("[%s] Sending response %d, type=%s, size=%d", reqID, status, rtype, len(data))
 
 	// Write http response.. Following strict order should be
 	// maintained to form proper response.
@@ -96,9 +96,14 @@ write_resp:
 	//	2. Set status code via w.WriteHeader(code)
 	//	3. Finally, write response body via w.Write(bytes)
 	if len(data) != 0 {
+		if status >= 400 || glog.V(1) {
+			glog.Infof("[%s] data=%s", reqID, data)
+		}
+
 		w.Header().Set("Content-Type", rtype)
 		w.WriteHeader(status)
 		w.Write([]byte(data))
+
 	} else {
 		// No data, status only
 		w.WriteHeader(status)
@@ -108,7 +113,7 @@ write_resp:
 // getRequestBody returns the validated request body
 func getRequestBody(r *http.Request, rc *RequestContext) (*MediaType, []byte, error) {
 	if r.ContentLength == 0 {
-		glog.Infof("[%s] No body", rc.ID)
+		glog.V(1).Infof("[%s] No body", rc.ID)
 		return nil, nil, nil
 	}
 
@@ -150,7 +155,7 @@ func getRequestBody(r *http.Request, rc *RequestContext) (*MediaType, []byte, er
 		}
 	}
 
-	glog.Infof("[%s] Content-type=%s; data=%s", rc.ID, ctype, body)
+	glog.V(1).Infof("[%s] Content-type=%s; data=%s", rc.ID, ctype, body)
 	return ct, body, nil
 }
 

@@ -1,11 +1,11 @@
 {% for key,value in json_output.items() %}
-{% if 'ietf-ptp-ext:clock-type' in value.keys() %}
+{% if 'ietf-ptp-ext:clock-type' in value.keys() and value['ietf-ptp-ext:clock-type'] %}
 {{ 'Mode'.ljust(21)}} {{ value['ietf-ptp-ext:clock-type']}}
 {% endif %}
-{% if 'ietf-ptp-ext:domain-profile' in value.keys() %}
+{% if 'ietf-ptp-ext:domain-profile' in value.keys() and value['ietf-ptp-ext:domain-profile'] %}
 {{ 'Domain Profile'.ljust(21)}} {{ value['ietf-ptp-ext:domain-profile']}}
 {% endif %}
-{% if 'ietf-ptp-ext:network-transport' in value.keys() %}
+{% if 'ietf-ptp-ext:network-transport' in value.keys() and value['ietf-ptp-ext:network-transport'] %}
 {{ 'Network Transport'.ljust(21)}} {{ value['ietf-ptp-ext:network-transport']}} {{ value['ietf-ptp-ext:unicast-multicast']}}
 {% if 'udp6-scope' in value.keys() %}
 {% if value['ietf-ptp-ext:network-transport'] == 'UDPv6' and value['ietf-ptp-ext:unicast-multicast'] == 'multicast' %}
@@ -13,7 +13,7 @@
 {% endif %}
 {% endif %}
 {% endif %}
-{% if 'domain-number' in value.keys() %}
+{% if 'domain-number' in value.keys() and 'ietf-ptp-ext:clock-type' in value.keys() and value['ietf-ptp-ext:clock-type'] %}
 {{ 'Domain Number'.ljust(21)}} {{ value['domain-number']}}
 {% endif %}
 {% if 'clock-identity' in value.keys() %}

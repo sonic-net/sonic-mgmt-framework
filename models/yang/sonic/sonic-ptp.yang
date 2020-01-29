@@ -6,6 +6,9 @@ module sonic-ptp {
 	import sonic-common {
 		prefix cmn;
 	}
+	import sonic-extension {
+		prefix sonic-ext;
+	}
 
 	organization
 		"SONiC";
@@ -26,7 +29,16 @@ module sonic-ptp {
 			list PTP_INSTANCE_LIST {
 				key instance-number;
 				leaf instance-number {
-					type string;
+					type string {
+						pattern "GLOBAL" {
+							error-message "Invalid Instance";
+							error-app-tag instance-number-invalid;
+						}
+					}
+					description
+						"Instance name of the PTP data set in the device (see IEEE
+						Std 1588-2008 subclause 6.3). This device supports only one
+						instance. Only 'GLOBAL' string is supported for this field";
 				}
 			}
 		}
@@ -40,37 +52,24 @@ module sonic-ptp {
 				}
 				leaf steps-removed {
 					type uint16;
+					config false;
+					description
+						"The number of communication paths traversed
+						between the local clock and the grandmaster clock.";
 				}
 				leaf offset-from-master {
 					type int64;
+					config false;
+					description
+						"The current value of the time difference between
+						a master and a slave clock as computed by the slave.";
 				}
 				leaf mean-path-delay {
 					type int64;
-				}
-			}
-		}
-		container PTP_TC_CLOCK {
-			list PTP_TC_CLOCK_LIST {
-				key instance-number;
-				leaf instance-number {
-					type string {
-						pattern "GLOBAL" {
-							error-message "Invalid Instance";
-							error-app-tag instance-number-invalid;
-						}
-					}
-				}
-				leaf clock-identity {
-					type string;
-				}
-				leaf number-ports {
-					type uint16;
-				}
-				leaf delay-mechanism {
-					type string;
-				}
-				leaf primary-domain {
-					type uint8;
+					config false;
+					description
+						"The current value of the mean propagation time between
+						a master and a slave clock as computed by the slave.";
 				}
 			}
 		}
@@ -84,36 +83,77 @@ module sonic-ptp {
 				}
 				leaf observed-parent-clock-phase-change-rate {
 					type int32;
+					config false;
+					description
+						"An estimate of the parent clock's phase change rate
+						as observed by the slave clock.";
 				}
 				leaf grandmaster-identity {
 					type string;
+					config false;
+					description
+						"The clockIdentity attribute of the grandmaster clock.";
 				}
 				leaf grandmaster-priority1 {
 					type uint8;
+					config false;
+					description
+						"The priority1 attribute of the grandmaster clock.";
 				}
 				leaf grandmaster-priority2 {
 					type uint8;
+					config false;
+					description
+						"The priority2 attribute of the grandmaster clock.";
 				}
 				leaf port-number {
 					type uint16;
+					config false;
+					description
+						"Port number.";
 				}
 				leaf observed-parent-offset-scaled-log-variance {
 					type uint16;
+					config false;
+					description
+						"An estimate of the parent clock's PTP variance
+						as observed by the slave clock.";
 				}
 				leaf clock-identity {
 					type string;
+					config false;
+					description
+						"Identity of the clock.";
 				}
 				leaf offset-scaled-log-variance {
 					type uint16;
+					config false;
+					description
+						"An estimate of the parent clock's PTP variance
+						as observed by the slave clock.";
 				}
 				leaf clock-class {
 					type uint8;
+					config false;
+					description
+						"The clockClass denotes the traceability of the time
+						or frequency distributed by the clock.";
 				}
 				leaf clock-accuracy {
 					type uint8;
+					config false;
+					description
+						"The clockAccuracy indicates the expected accuracy
+						of the clock.";
 				}
 				leaf parent-stats {
 					type uint8;
+					config false;
+					description
+						"When set to true, the values of
+						observedParentOffsetScaledLogVariance and
+						observedParentClockPhaseChangeRate of parentDS
+						have been measured and are valid.";
 				}
 			}
 		}
@@ -127,33 +167,69 @@ module sonic-ptp {
 				}
 				leaf time-traceable {
 					type uint8;
+					config false;
+					description
+						"When set to true, the timescale and the
+						currentUtcOffset are traceable to a primary
+						reference.";
 				}
 				leaf frequency-traceable {
 					type uint8;
+					config false;
+					description
+						"When set to true, the frequency determining the
+						timescale is traceable to a primary reference.";
 				}
 				leaf ptp-timescale {
 					type uint8;
+					config false;
+					description
+						"When set to true, the clock timescale of the
+						grandmaster clock is PTP; otherwise, the timescale is
+						ARB (arbitrary).";
 				}
 				leaf time-source {
 					type uint8;
+					config false;
+					description
+						"The source of time used by the grandmaster clock.";
 				}
 				leaf current-utc-offset-valid {
 					type uint8;
+					config false;
+					description
+						"When set to true, the current UTC offset is valid.";
 				}
 				leaf current-utc-offset {
 					type int16;
+					config false;
+					description
+						"The offset between TAI and UTC when the epoch of the
+						PTP system is the PTP epoch in units of seconds, i.e.,
+							when ptp-timescale is TRUE; otherwise, the value has
+								no meaning.";
 				}
 				leaf leap59 {
 					type uint8;
+					config false;
+					description
+						"When set to true, the last minute of the current UTC
+						day contains 59 seconds.";
 				}
 				leaf leap61 {
 					type uint8;
+					config false;
+					description
+						"When set to true, the timescale and the
+						currentUtcOffset are traceable to a primary
+						reference.";
 				}
 			}
 		}
 		container PTP_PORT {
 			list PTP_PORT_LIST {
 				key "instance-number port-number";
+				sonic-ext:custom-validation ValidatePtp;
 
 				leaf instance-number {
 					type leafref {
@@ -162,62 +238,101 @@ module sonic-ptp {
 				}
 				leaf port-number {
 					type string;
+					description
+						"List of port data sets of the clock (see IEEE Std
+						1588-2008 subclause 8.2.5).";
 				}
 				leaf peer-mean-path-delay {
 					type int64;
+					config false;
+					description
+						"An estimate of the current one-way propagation delay
+						on the link when the delayMechanism is P2P; otherwise,
+						   it is zero.";
 				}
 				leaf announce-receipt-timeout {
 					type int8;
+					config false;
+					description
+						"The number of announceIntervals that have to pass
+						without receipt of an Announce message before the
+						occurrence of the event ANNOUNCE_RECEIPT_TIMEOUT_
+						EXPIRES.";
 				}
 				leaf log-sync-interval {
 					type int8;
+					config false;
+					description
+						"The base-2 logarithm of the mean SyncInterval
+						for multicast messages.  The rates for unicast
+						transmissions are negotiated separately on a per-port
+						basis and are not constrained by this attribute.";
 				}
 				leaf log-min-pdelay-req-interval {
 					type int8;
+					config false;
+					description
+						"The base-2 logarithm of the
+						minPdelayReqInterval (minimum permitted mean time
+						interval between successive Pdelay_Req messages).";
 				}
 				leaf version-number {
 					type int8;
+					config false;
+					description
+						"The PTP version in use on the port.";
 				}
 				leaf port-state {
 					type uint8;
+					config false;
+					description
+						"Current state associated with the port.";
 				}
 				leaf underlying-interface {
+					sonic-ext:custom-validation ValidatePtpUnderlyingInterface;
 					type string;
+					description
+						"Reference to the configured underlying interface that
+						is used by this PTP port (see RFC 8343).";
 				}
 				leaf log-min-delay-req-interval {
 					type int8;
+					config false;
+					description
+						"The base-2 logarithm of the minDelayReqInterval
+						(the minimum permitted mean time interval between
+						 successive Delay_Req messages).";
 				}
 				leaf log-announce-interval {
 					type int8;
+					config false;
+					description
+						"The base-2 logarithm of the mean
+						announceInterval (mean time interval between
+								successive Announce messages).";
 				}
 				leaf delay-mechanism {
 					type string;
+					config false;
+					description
+						"The propagation delay measuring option used by the
+						port in computing meanPathDelay.";
 				}
 				leaf unicast-table {
 					type string;
+					description
+						"The comma-separated list of ip addresses to use for
+						master";
 				}
-			}
-		}
-		container PTP_TC_PORT {
-			list PTP_TC_PORT_LIST {
-				key "port-number";
-				leaf port-number {
-					type string;
-				}
-				leaf log-min-pdelay-req-interval {
-					type int8;
-				}
-				leaf faulty-flag {
-					type uint8;
-				}
-				leaf peer-mean-path-delay {
-					type int64;
+				must "count(underlying-interface) != 0" {
+					error-message "underlying-interface needed";
 				}
 			}
 		}
 		container PTP_CLOCK {
 			list PTP_CLOCK_LIST {
 				key instance-number;
+				sonic-ext:custom-validation ValidatePtp;
 				leaf instance-number {
 					type leafref {
 						path "../../../PTP_INSTANCE/PTP_INSTANCE_LIST/instance-number";
@@ -227,60 +342,146 @@ module sonic-ptp {
 				// default-ds attributes
 				leaf priority1 {
 					type uint8;
+					description
+						"The priority1 attribute of the local clock.";
 				}
 				leaf priority2 {
 					type uint8;
+					description
+						"The priority2 attribute of the local clock.";
 				}
 				leaf domain-number {
-					type uint8;
+					type uint8 {
+						range "0..127" {
+							error-message "Invalid value passed for domain-number";
+						}
+					}
+					description
+						"The domain number of the current syntonization
+						domain.";
 				}
 				leaf slave-only {
 					type uint8;
+					description
+						"When set to true, the clock is a slave-only clock.";
 				}
 				leaf clock-class {
 					type uint8;
+					config false;
+					description
+						"The clockClass denotes the traceability of the time
+						or frequency distributed by the clock.";
 				}
 				leaf clock-accuracy {
 					type uint8;
+					config false;
+					description
+						"The clockAccuracy indicates the expected accuracy
+						of the clock.";
 				}
 				leaf offset-scaled-log-variance {
 					type uint16;
+					config false;
+					description
+						"The offsetScaledLogVariance provides an estimate of
+						the variations of the clock from a linear timescale
+						when it is not synchronized to another clock
+						using the protocol.";
 				}
 				leaf two-step-flag {
 					type uint8;
+					description
+						"When set to true, the clock is a two-step clock;
+					otherwise,the clock is a one-step clock.";
 				}
 				leaf clock-identity {
 					type string;
+					config false;
+					description
+						"The clockIdentity of the local clock.";
 				}
 				leaf number-ports {
 					type uint16;
+					config false;
+					description
+						"The number of PTP ports on the instance.";
 				}
 				leaf log-announce-interval {
 					type int8;
+					description
+						"The base-2 logarithm of the mean
+						announceInterval (mean time interval between
+								successive Announce messages).";
 				}
 				leaf announce-receipt-timeout {
 					type uint8;
+					description
+						"The number of announceIntervals that have to pass
+						without receipt of an Announce message before the
+						occurrence of the event ANNOUNCE_RECEIPT_TIMEOUT_
+						EXPIRES.";
 				}
 				leaf log-sync-interval {
 					type int8;
+					description
+						"The base-2 logarithm of the mean SyncInterval
+						for multicast messages.  The rates for unicast
+						transmissions are negotiated separately on a per-port
+						basis and are not constrained by this attribute.";
 				}
 				leaf log-min-delay-req-interval {
 					type int8;
+					description
+						"The base-2 logarithm of the
+						minPdelayReqInterval (minimum permitted mean time
+						interval between successive Pdelay_Req messages).";
 				}
 				leaf clock-type {
-					type string;
+					type string {
+						pattern "(BC)|(P2P_TC)|(E2E_TC)|(disable)" {
+							error-message "Invalid value passed for clock-type";
+						}
+					}
+					description
+						"Defines the role of the default-data-set";
 				}
 				leaf network-transport {
-					type string;
+					type string {
+						pattern "(L2)|(UDPv4)|(UDPv6)" {
+							error-message "Invalid value passed for network-transport";
+						}
+					}
+					description
+						"The network transport used for communication";
 				}
 				leaf unicast-multicast {
-					type string;
+					type string {
+						pattern "(unicast)|(multicast)" {
+							error-message "Invalid value passed for unicast-multicast";
+						}
+					}
+					description
+						"Whether the network transport uses unicast or
+						multicast communication";
 				}
 				leaf domain-profile {
-					type string;
+					type string {
+						pattern "(ieee1588)|(G.8275.x)" {
+							error-message "Invalid value passed for domain-profile";
+						}
+					}
+					description
+						"the method to be used when comparing data sets during
+						the Best Master Clock Algorithm.";
 				}
 				leaf udp6-scope {
 					type string;
+					description
+						"the desired scope for the IPv6 multicast messages.
+						This will be used as the second byte of the primary
+						address. This option is only relevant with IPv6
+						transport. See RFC 4291. The default is 14 (0x0E) for
+						the global scope.";
 				}
 				/*
 				must "domain-profile != 'G.8275.x' or (domain-number >= 44 and domain-number <= 63)" {

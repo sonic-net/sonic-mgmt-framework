@@ -28,10 +28,14 @@ module sonic-udld {
     grouping udld_mode_config {
         leaf admin_enable {
             type boolean;
+            description
+                "Enable/Disable UDLD";
         }
 
         leaf aggressive {
             type boolean;
+            description
+                "Enable/Disable aggressive mode of UDLD";
         }
     }
 
@@ -45,6 +49,8 @@ module sonic-udld {
                     type enumeration {
                         enum GLOBAL;
                     }
+                    description
+                        "It's value is always GLOBAL";
                 }
 
                 uses udld_mode_config;
@@ -57,6 +63,9 @@ module sonic-udld {
                     }
                     units seconds;
                     default 1;
+                    description
+                        "It is the time interval at which periodic hellos are
+                        exchanged. Default is 1 second";
                 }
 
                 leaf multiplier {
@@ -66,6 +75,10 @@ module sonic-udld {
                         }
                     }
                     default 3;
+                    description
+                        "This multiplier value is used to determine the timeout
+                        interval (i.e. message-time x multiplier value) after
+                        which UDLD declares the state of the link.";
                 }
             }
         }
@@ -83,6 +96,8 @@ module sonic-udld {
                     type leafref {
                         path "/prt:sonic-port/prt:PORT/prt:PORT_LIST/prt:ifname";
                     }
+                    description
+                        "Reference of port on which UDLD to be configured.";
                 }
 
                 uses udld_mode_config;
@@ -100,18 +115,26 @@ module sonic-udld {
                     type enumeration {
                         enum GLOBAL;
                     }
+                    description
+                        "It's value is always GLOBAL";
                 }
 
                 leaf device_id {
                     type string;
+                    description
+                        "Local device Id";
                 }
 
                 leaf device_name {
                     type string;
+                    description
+                        "Name of local device";
                 }
 
                 leaf timeout_interval {
                     type uint16;
+                    description
+                        "Timeout interval (message time x multipler)";
                 }
             }
         }
@@ -127,22 +150,32 @@ module sonic-udld {
                     type leafref {
                         path "/prt:sonic-port/prt:PORT/prt:PORT_LIST/prt:ifname";
                     }
+                    description
+                        "Reference of port on which UDLD is configured.";
                 }
 
                 leaf status {
                     type string;
+                    description
+                        "UDLD status on port";
                 }
 
                 leaf pdu_sent {
                     type uint64;
+                    description
+                        "Count of PDUs transmitted from port";
                 }
 
                 leaf pdu_received {
                     type uint64;
+                    description
+                        "Count of PDUs received on port";
                 }
 
                 leaf pdu_recv_error {
                     type uint64;
+                    description
+                        "Count of PDUs errors received on port";
                 }
             }
         }
@@ -158,34 +191,50 @@ module sonic-udld {
                     type leafref {
                         path "/prt:sonic-port/prt:PORT/prt:PORT_LIST/prt:ifname";
                     }
+                    description
+                        "Reference of local port on which UDLD is configured.";
                 }
 
                 leaf index {
                     type string;
+                    description
+                        "Index number of neighbor port";
                 }
 
                 leaf device_id {
                     type string;
+                    description
+                        "Peer device id";
                 }
 
                 leaf device_name {
                     type string;
+                    description
+                        "Peer device name";
                 }
 
                 leaf port_id {
                     type string;
+                    description
+                        "Peer port name";
                 }
 
                 leaf msg_time {
                     type uint16;
+                    description
+                        "Message time of peer";
                 }
 
                 leaf timeout_interval {
                     type uint16;
+                    description
+                        "Timeout interval of peer";
                 }
 
                 leaf status {
                     type string;
+                    description
+                        "Peer Port status";
                 }
             }
         }
