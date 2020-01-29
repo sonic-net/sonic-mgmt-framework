@@ -14,7 +14,9 @@
 {% if 'sonic-sag:SAG_GLOBAL_LIST' in json_output['global'] %}
 {% set sag_global = json_output['global']['sonic-sag:SAG_GLOBAL_LIST'] %}
 {% set gwmac = sag_global[0]['gwmac'] %}
+{% if json_output['family'] in sag_global[0] %}
 {% set familyenabled = sag_global[0][json_output['family']] %}
+{% endif %}
 {% endif %}
 {% if "miscmap" in json_output %}
 {% if "counters" in json_output["miscmap"] %}
