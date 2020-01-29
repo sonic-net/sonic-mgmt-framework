@@ -1,0 +1,4 @@
+39a40,42
+>     char *cmd = clish_shell__get_full_line(clish_context);
+>     setenv("USER_COMMAND", cmd, 1);
+> 
