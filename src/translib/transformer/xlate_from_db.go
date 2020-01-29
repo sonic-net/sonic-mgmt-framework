@@ -384,7 +384,14 @@ func sonicDbToYangDataFill(uri string, xpath string, dbIdx db.DBNum, table strin
 							xfmrLogInfoAll("Empty list for xpath(%v)", curUri)
 						}
 					}
+				} else if chldYangType == YANG_CHOICE || chldYangType == YANG_CASE {
+					curUri := table + "/" + yangChldName
+					sonicDbToYangDataFill(curUri, curUri, xDbSpecMap[table].dbIndex, table, key, dbDataMap, resultMap)
+				} else {
+					xfmrLogInfoAll("Not handled case %v", chldXpath)
 				}
+			} else {
+				xfmrLogInfoAll("Yang entry not found for %v", chldXpath)
 			}
 		}
 	}
