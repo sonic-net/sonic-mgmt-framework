@@ -585,11 +585,11 @@ func (app *CommonApp) cmnAppDelDbOpn(d *db.DB, opcode int, dbMap map[string]map[
 				log.Info("DELETE case - No table instances/rows found hence delete entire table = ", tblNm)
 				if !app.skipOrdTableChk {
 					for _, ordtbl := range ordTblList {
-						log.Info("Since parent table is to be deleted, first deleting child table = ", ordtbl)
 						if ordtbl == tblNm {
 							// Handle the child tables only till you reach the parent table entry
 							break
 						}
+						log.Info("Since parent table is to be deleted, first deleting child table = ", ordtbl)
 						dbTblSpec = &db.TableSpec{Name: ordtbl}
 						err = d.DeleteTable(dbTblSpec)
 						if err != nil {
