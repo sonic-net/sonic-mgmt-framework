@@ -567,8 +567,8 @@ module openconfig-bgp-ext {
           type boolean;
           default "false";
           description
-              "This leaf indicates whether the auth-password is encrypted text, 
-              the value of this will be changed to true internally when the auth-password
+              "This leaf indicates whether the password is encrypted text, 
+              the value of this will be changed to true internally when the password
               is configured with encrypted false.";
       }
   }
@@ -582,13 +582,13 @@ module openconfig-bgp-ext {
               "Parameters relating to BGP authentication password";
           container config {
               description
-                  "Configuration information for BGP neighbor group authentication routes.";
+                  "Configuration information for BGP neighbor group authentication.";
               uses bgp-ext-auth-password-config;
           }
           container state {
               config false;
               description
-                  "State information for BGP neighbor group authentication routes.";
+                  "State information for BGP neighbor group authentication.";
               uses bgp-ext-auth-password-config;
           }
       }

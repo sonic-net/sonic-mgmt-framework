@@ -1,6 +1,7 @@
 {% if 'openconfig-network-instance:neighbors' in json_output %}
     {% set neighbor_list = json_output['openconfig-network-instance:neighbors'] %}
     {% if 'neighbor' in neighbor_list %}
+        {{ '\n' }}
         {% set neighbors = neighbor_list['neighbor'] %}
         {% for neighbor in neighbors %}
             {% set n_state = neighbor['state'] %}
@@ -15,12 +16,12 @@
                 {{-', external link\n'}}
             {% endif %}
 
-            {% set vars = {'nbr_enabled': "False"} %}
+            {% set vars = {'nbr_enabled': False} %}
             {% if vars.update({'nbr_enabled':n_state['enabled']}) %}{% endif %}
-            {% if vars.nbr_enabled == 'True' %}
-                {{-'Administratively up\n'}}
+            {% if vars.nbr_enabled == True %}
+                {{-'  Administratively up\n'}}
             {% else %}
-                {{-'Administratively shut down\n'}}
+                {{-'  Administratively shut down\n'}}
             {% endif %}
             {{-'  BGP version '}}{{'4'-}}
             {{-', remote router ID '}}{{' '-}}
@@ -38,29 +39,94 @@
             {% set vars = {'hold_time': ""} %}
             {% set vars = {'kpa_intvl': ""} %}
             {% set vars = {'nego_time': ""} %}
+            {% set vars = {'min_adv_intvl': ""} %}
             {% if vars.update({'hold_time':neighbor['timers']['state']['hold-time']}) %}{% endif %}
             {% if vars.update({'kpa_intvl':neighbor['timers']['state']['keepalive-interval']}) %}{% endif %}
             {% if vars.update({'nego_time':neighbor['timers']['state']['negotiated-hold-time']}) %}{% endif %}
-            {{-'  Hold time is '}}{{vars.hold_time-}}
-            {{-', keepalive interval is '}}{{vars.kpa_intvl}}{{' seconds,'-}}
-            {{-'  negotiated hold time is '}}{{vars.nego_time}}{{'\n'}}
+            {% if vars.update({'min_adv_intvl':neighbor['timers']['state']['minimum-advertisement-interval']}) %}{% endif %}
+            {{-'  Hold time is '}}{{vars.hold_time}}{{' seconds'-}}
+            {{-', keepalive interval is '}}{{vars.kpa_intvl}}{{' seconds'-}}
+            {{-', negotiated hold time is '}}{{vars.nego_time}}{{' seconds'}}{{'\n'}}
+            {{-'  Minimum time between advertisement runs is '}}{{vars.min_adv_intvl}}{{' seconds'}}{{'\n'}}
 
             {% if 'afi-safis' in neighbor %}
                 {% set afi_safis = neighbor['afi-safis']['afi-safi'] %}
                 {% for afi_safi in afi_safis %}
-                    {% if 'state' in afi_safi and 'openconfig-bgp-ext:route-reflector-client' in afi_safi['state'] %}
-                        {% if afi_safi['state']['openconfig-bgp-ext:route-reflector-client'] == 'True' %}
-                            {{-'Route reflector client enabled\n'}}
-                        {% else %}
-                            {{-'Route reflector client disabled\n'}}
+                    {% if 'state' in afi_safi %}
+                        {% if 'enabled' in afi_safi['state'] %}
+                            {% if afi_safi['state']['enabled'] == True %}
+                                {{-'  Address-families enabled\n'}}
+                            {% else %}
+                                {{-'  Address-families disabled\n'}}
+                            {% endif %}
                         {% endif %}
                     {% endif %}
                 {% endfor %}
+                {% for afi_safi in afi_safis %}
+                    {% if 'state' in afi_safi %}
+                        {% if 'prefixes' in afi_safi['state'] and 'received' in afi_safi['state']['prefixes'] %}
+                            {{-'  Prefixes received '}}{{afi_safi['state']['prefixes']['received']}}{{'\n'}}
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+
+                {% for afi_safi in afi_safis %}
+                    {% if 'state' in afi_safi %}
+                        {% if 'openconfig-bgp-ext:route-reflector-client' in afi_safi['state'] %}
+                            {% if afi_safi['state']['openconfig-bgp-ext:route-reflector-client'] == True %}
+                                {{-'Route reflector client enabled\n'}}
+                            {% else %}
+                                {{-'Route reflector client disabled\n'}}
+                            {% endif %}
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+                {% for afi_safi in afi_safis %}
+                    {% if 'state' in afi_safi %}
+                        {% if 'openconfig-bgp-ext:send-community' in afi_safi['state'] %}
+                            {{-'Community attribute sent to this neighbor '}}{{afi_safi['state']['openconfig-bgp-ext:send-community']}}{{'\n'}}
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+
+                {% for afi_safi in afi_safis %}
+                    {% if 'apply-policy' in afi_safi and 'state' in afi_safi['apply-policy'] %}
+                        {% if 'import-policy' in afi_safi['apply-policy']['state'] %}
+                            {% set import_policys = afi_safi['apply-policy']['state']['import-policy'] %}
+                            {% set import_policys_len = import_policys|length %}
+                            {{-'  Import policy:\n'}}
+                            {% for import_policy in afi_safi['apply-policy']['state']['import-policy'] %}
+                                {% if loop.index == 1 %}
+                                    {{-'    '}}{{import_policy|string}}
+                                {% elif loop.index == import_policys_len %}
+                                    {{-', '}}{{import_policy|string}}{{'\n'}}
+                                {% else %}
+                                    {{-', '}}{{import_policy|string}}
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                        {% if 'export-policy' in afi_safi['apply-policy']['state'] %}
+                            {% set export_policys = afi_safi['apply-policy']['state']['export-policy'] %}
+                            {% set export_policys_len = export_policys|length %}
+                            {{-'  Export policy:\n'}}
+                            {% for export_policy in afi_safi['apply-policy']['state']['export-policy'] %}
+                                {% if loop.index == 1 %}
+                                    {{-'    '}}{{export_policy|string}}
+                                {% elif loop.index == export_policys_len %}
+                                    {{-', '}}{{export_policy|string}}{{'\n'}}
+                                {% else %}
+                                    {{-', '}}{{export_policy|string}}
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+
             {% endif %}
 
-            {% set vars = {'nbr_bfd': "False"} %}
+            {% set vars = {'nbr_bfd': False} %}
             {% if vars.update({'nbr_bfd':n_state['openconfig-bgp-ext:bfd']}) %}{% endif %}
-            {% if vars.nbr_bfd == 'True' %}
+            {% if vars.nbr_bfd == True %}
                 {{-'  BFD enabled\n'}}
             {% endif %}
             {{-'  Neighbor capabilities:\n'}}
@@ -108,7 +174,8 @@
                 {% set n_rcvd = n_rcvd + n_messages['received']['openconfig-bgp-ext:CAPABILITY']|int %}
                 {{-'    Total:'.ljust(25)-}}
                 {{-(n_sent|string).ljust(12)-}}
-                {{-(n_rcvd|string)}}{{'\n'}}
+                {{-(n_rcvd|string)}}
+                {{'\n'}}
             {% endif %}
             {% if 'transport' in neighbor %}
                 {% set n_tp_state = neighbor['transport']['state'] %}
@@ -117,6 +184,7 @@
                 {{-'Foreign host: '}}{{n_tp_state['remote-address']-}}
                 {{-', Foreign port: '}}{{n_tp_state['remote-port']}}{{'\n'}}
             {% endif %}
+            {{ '\n' }}
         {% endfor %}
         {{ '\n' }}
     {% endif %}
