@@ -9,7 +9,7 @@
 {%else %}
 {{'%-20s'|format("  UDLD Admin State")}} : Disabled
 {%endif%}
-{% if port_config['aggressive'] == True %}
+{% if (json_output['gbl_aggressive'] == True) or (port_config['aggressive'] == True) %}
 {{'%-20s'|format("  Mode")}} : Aggressive
 {%else %}
 {{'%-20s'|format("  Mode")}} : Normal
