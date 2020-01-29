@@ -178,9 +178,6 @@ def generateShowUdldInterfaceResponse(clientApi, args):
         for neigh_info in neigh_dict:
             if neigh_info['ifname'] == args[1]:
                 neigh_intf_info.append(neigh_info)
-    else:
-        if resp.status_code != 404:
-            return resp
 
     final_dict = {}
     final_dict['interface'] = args[1]

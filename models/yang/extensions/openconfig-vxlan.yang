@@ -166,17 +166,6 @@ module openconfig-vxlan {
       "bdBindVniType";
   }  
 
-  typedef vlan-suppress-type {
-    type enumeration {
-      enum "arp-and-nd" {
-        description
-          "Suppress both ARP and ND.";
-      }
-   }
-    description
-      "Neighbour Suppress Value";
-  }
-
   grouping vxlan-vni-static-ipv4-peer-config {
     description
       "The remote NVE address table in a same VNI.";
@@ -663,8 +652,10 @@ module openconfig-vxlan {
     description
       "Grouping for Neigbour Suppress configuration";
 
-    leaf neigh-suppress{
-      type vlan-suppress-type;
+    leaf arp-and-nd-suppress {
+      type enumeration {
+          enum enable;
+      }
       description
         "Enable Arp and ND Suppression";
     }
@@ -686,17 +677,11 @@ module openconfig-vxlan {
       }
   }
 
-  augment "/oc-if:interfaces/oc-if:interface" {
+  augment "/oc-ni:network-instances/oc-ni:network-instance" {
       description
           "Adds neighbour suppress configuration for routed VLAN interfaces";
 
-      uses  neighbour-suppress-top {
-          when "current()/oc-if:config/oc-if:type = 'ift:l3ipvlan'" {
-              description
-                  "Active when the interface is a logical interface providing
-                  L3 routing for VLANs";
-          }
-      }
+      uses neighbour-suppress-top;
   }
 
 }
