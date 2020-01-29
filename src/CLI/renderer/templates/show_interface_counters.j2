@@ -10,7 +10,7 @@
 {% set vars = {'out_oversize':""} %}
 {% if json_output -%}
 ------------------------------------------------------------------------------------------------
-{{'%-15s'|format("Interface")}}{{'%-10s'|format("State")}}{{'%-10s'|format("RX_OK")}}{{'%-10s'|format("RX_ERR")}}{{'%-10s'|format("RX_DRP")}}{{'%-10s'|format("RX_OVERSIZE")}}{{'%-10s'|format("TX_OK")}}{{'%-10s'|format("TX_ERR")}}{{'%-10s'|format("TX_DRP")}}{{'%-10s'|format("TX_OVERSIZE")}}
+{{'%-15s'|format("Interface")}}{{'%-10s'|format("State")}}{{'%-10s'|format("RX_OK")}}{{'%-10s'|format("RX_ERR")}}{{'%-10s'|format("RX_DRP")}}{{'%-15s'|format("RX_OVERSIZE")}}{{'%-10s'|format("TX_OK")}}{{'%-10s'|format("TX_ERR")}}{{'%-10s'|format("TX_DRP")}}{{'%-15s'|format("TX_OVERSIZE")}}
 ------------------------------------------------------------------------------------------------
 {% for key_json in json_output %}
 {% set interface_list = json_output[key_json]["interface"] %}
@@ -42,7 +42,7 @@
         {% endif %}
     {% endfor %}
 {% if 'Ethernet' in vars.name %}
-{{'%-15s'|format(vars.name)}}{{'%-10s'|format(vars.oper_state)}}{{'%-10s'|format(vars.in_packets)}}{{'%-10s'|format(vars.in_errors)}}{{'%-10s'|format(vars.in_discards)}}{{'%-10s'|format(vars.in_oversize)}}{{'%-10s'|format(vars.out_packets)}}{{'%-10s'|format(vars.out_errors)}}{{'%-10s'|format(vars.out_discards)}}{{'%-10s'|format(vars.out_oversize)}}
+{{'%-15s'|format(vars.name)}}{{'%-10s'|format(vars.oper_state)}}{{'%-10s'|format(vars.in_packets)}}{{'%-10s'|format(vars.in_errors)}}{{'%-10s'|format(vars.in_discards)}}{{'%-15s'|format(vars.in_oversize)}}{{'%-10s'|format(vars.out_packets)}}{{'%-10s'|format(vars.out_errors)}}{{'%-10s'|format(vars.out_discards)}}{{'%-15s'|format(vars.out_oversize)}}
 {% endif %}
 {% endfor %}
 {% endfor %}
