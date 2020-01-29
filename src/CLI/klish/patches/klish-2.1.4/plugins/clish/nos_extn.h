@@ -7,10 +7,13 @@ extern "C" {
 #endif
 
 extern void pyobj_init();
-extern void rest_update_user_info();
 extern void nos_extn_init();
+
 extern int call_pyobj(char *cmd, const char *buff);
 extern int pyobj_set_rest_token(const char*);
+extern int pyobj_update_environ(const char *key, const char *val);
+
+extern void rest_client_init();
 extern int rest_token_fetch(int *interval);
 extern int rest_cl(char *cmd, const char *buff);
 

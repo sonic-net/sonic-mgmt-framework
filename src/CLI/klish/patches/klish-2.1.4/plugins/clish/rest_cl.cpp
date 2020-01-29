@@ -166,14 +166,6 @@ static void rest_set_curl_cert_key() {
 
 static int _init_curl() {
 
-    char *root = getenv("REST_API_ROOT");
-
-    if (root) {
-        REST_API_ROOT.assign(root);
-    } else {
-        REST_API_ROOT.assign("https://localhost:8443");
-    }
-
     curl_global_init(CURL_GLOBAL_ALL);
 
     curl = curl_easy_init();
@@ -192,6 +184,22 @@ static int _init_curl() {
     return 0;
 }
 
+void rest_client_init() {
+    int auth_ena = (getenv("CLISH_NOAUTH") == NULL);
+
+    if (auth_ena){
+        rest_update_user_info();
+    }
+
+    char *root = getenv("REST_API_ROOT");
+
+    REST_API_ROOT.assign(root ? root : "https://localhost:8443");
+
+    _init_curl();
+
+    rest_set_curl_cert_key();
+    rest_set_curl_headers(true);
+}
 
 int rest_token_fetch(int *interval) {
 
@@ -199,8 +207,8 @@ int rest_token_fetch(int *interval) {
     std::string url;
 
     if (!curl) {
-        _init_curl();
-        rest_set_curl_cert_key();
+        syslog(LOG_WARNING, "curl handle is not yet initialized.");
+        return 1;
     }
     
     url  = REST_API_ROOT;

@@ -25,6 +25,8 @@
 #include <unistd.h>
 #include <syslog.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 
 pthread_mutex_t lock;
 
@@ -46,14 +48,12 @@ void *rest_token_refresh(void *vargp){
     }
 }
 
-int clish_restcl_init() {
+int clish_rest_thread_init() {
     pthread_t thread_id;
 
-    pthread_mutex_init(&lock, NULL);
 
     int expiry = 30;
     rest_token_fetch(&expiry);
-    syslog(LOG_DEBUG, "Token expires in %d seconds", expiry);
     
     pthread_create(&thread_id, NULL, rest_token_refresh, (void*)(long)expiry);
     return 0;
@@ -83,8 +83,32 @@ CLISH_PLUGIN_SYM(clish_pyobj)
     return ret;
 }
 
+CLISH_PLUGIN_SYM(clish_setenv)
+{
+    char *key, *value;
+    key = strtok_r((char*)script, "=", &value);
+
+    pyobj_update_environ(key,value);
+
+    setenv(key, value, 1);
+
+    return 0;
+}
+
 void nos_extn_init() {
-    rest_update_user_info();
+    
+    pthread_mutex_init(&lock, NULL);
+
+    int auth_ena = (getenv("CLISH_NOAUTH") == NULL);
+
+    rest_client_init();
     pyobj_init();
-    clish_restcl_init();
+    
+    if (auth_ena) {
+        clish_rest_thread_init();
+    }
+    
+    if (!auth_ena) {
+        syslog(LOG_WARNING, "CLISH running with auth disabled");
+    }
 }

@@ -1,7 +1,8 @@
 9a10
 > #include "nos_extn.h"
-32a34,37
+32a34,38
 > 	clish_plugin_add_psym(plugin, clish_restcl, "clish_restcl");
 > 	clish_plugin_add_psym(plugin, clish_pyobj, "clish_pyobj");
+> 	clish_plugin_add_psym(plugin, clish_setenv, "clish_setenv");
 > 
 > 	nos_extn_init();

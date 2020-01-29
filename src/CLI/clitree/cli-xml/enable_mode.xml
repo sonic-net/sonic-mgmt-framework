@@ -74,5 +74,20 @@ limitations under the License.
         <COMMAND
             name="no debug"
             help="No Debug commands" />
+        
+        <COMMAND
+            name="terminal"
+            help="Set terminal settings" />
+        
+        <COMMAND
+            name="terminal length"
+            help="Set terminal length"
+            >
+            <PARAM
+                name="length"
+                help="Number of lines on screen (0 for no pausing, default 24)" ptype="RANGE_0_255"
+                />
+            <ACTION builtin="clish_setenv">CLISH_TERM_LEN=${length}</ACTION>
+    </COMMAND>
     </VIEW>
 </CLISH_MODULE>

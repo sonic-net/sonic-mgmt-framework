@@ -75,7 +75,7 @@ static void pyobj_handle_error() {
     Py_XDECREF(py_module);
 }
 
-static int pyobj_update_environ(const char *key, const char *val) {
+int pyobj_update_environ(const char *key, const char *val) {
 
     PyObject *module = PyImport_ImportModule("os");
     if (module == NULL) {

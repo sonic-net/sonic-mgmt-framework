@@ -73,7 +73,7 @@ def _write(string, disable_page=False):
     """
     global line_count
 
-    page_len_local = 25
+    page_len_local = int(os.getenv("CLISH_TERM_LEN", '24'))
     terminal = sys.stdout
     # set length as 0 for prints without pagination
     if disable_page is True:

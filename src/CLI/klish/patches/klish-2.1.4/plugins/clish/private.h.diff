@@ -1,3 +1,4 @@
-23a24,25
+23a24,26
 > CLISH_PLUGIN_SYM(clish_restcl);
 > CLISH_PLUGIN_SYM(clish_pyobj);
+> CLISH_PLUGIN_SYM(clish_setenv);
