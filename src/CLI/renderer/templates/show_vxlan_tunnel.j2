@@ -1,0 +1,14 @@
+{% if json_output %}
+
+{% set tunnel_list = json_output["sonic-vxlan:VXLAN_TUNNEL_TABLE_LIST"] %}
+{{'%-20s'|format("Name")}}{{'%-18s'|format("SIP")}}{{'%-20s'|format("DIP")}}{{'%-12s'|format("source")}}{{'%-15s'|format("operstatus")}}
+{{'%-20s'|format("=======")}}{{'%-18s'|format("======")}}{{'%-20s'|format("======")}}{{'%-12s'|format("======")}}{{'%-15s'|format("========")}}
+
+{% for tunnel in tunnel_list %}
+
+{{'%-20s'|format(tunnel['mapname'])}}{{'%-18s'|format(tunnel['src_ip'])}}{{'%-20s'|format(tunnel['dst_ip'])}}{{'%-12s'|format(tunnel['tnl_src'])}}{{'%-15s'|format(tunnel['operstatus'])}}
+{% endfor %}
+
+{% endif %}
+
+
