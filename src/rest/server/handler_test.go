@@ -38,7 +38,8 @@ var testRouter *Router
 
 // Basic mux.Router tests
 func TestRoutes(t *testing.T) {
-	initCount := countRoutes(newRouter())
+	clientAuth := UserAuth{"password": false, "cert": false, "jwt": false}
+	initCount := countRoutes(newRouter(clientAuth))
 
 	// Add couple of test handlers
 
@@ -50,7 +51,7 @@ func TestRoutes(t *testing.T) {
 		w.WriteHeader(2)
 	})
 
-	testRouter = newRouter()
+	testRouter = newRouter(clientAuth)
 	newCount := countRoutes(testRouter)
 	expCount := initCount + 4 // OPTIONS handler is automaticall added for above 2 GET handlers
 
@@ -68,15 +69,14 @@ func TestRoutes(t *testing.T) {
 	// Try the test URLs with authentication enabled.. This should
 	// fail the requests with 401 error. Unknown path should still
 	// return 404.
-	ClientAuth.Set("password")
-	testRouter = newRouter()
+	clientAuth.Set("password")
+	testRouter = newRouter(clientAuth)
 	t.Run("Get1_auth", testGet("/test/1", 401))
 	t.Run("Get2_auth", testGet("/test/2", 401))
 	t.Run("GetUnknown_auth", testGet("/test/unknown", 404))
 	t.Run("Meta_auth", testGet("/.well-known/host-meta", 401))
 
 	// Cleanup for next tests
-	ClientAuth.Unset("password")
 	testRouter = nil
 }
 
@@ -111,6 +111,7 @@ func TestOptions(t *testing.T) {
 	path3 := restconfDataPathPrefix + "optionstest/3"
 	path4 := restconfDataPathPrefix + "optionstest/4"
 	path5 := restconfDataPathPrefix + "optionstest/unknown"
+	clientAuth := UserAuth{"password": false, "cert": false, "jwt": false}
 
 	h := func(w http.ResponseWriter, r *http.Request) {}
 	AddRoute("OPTGET1", "GET", path1, h)
@@ -120,7 +121,7 @@ func TestOptions(t *testing.T) {
 	AddRoute("OPTPAT3", "PATCH", path3, h)
 	AddRoute("OPTPAT4", "POST", path4, h)
 
-	testRouter = newRouter()
+	testRouter = newRouter(clientAuth)
 	t.Run("OPT-1", testOptions(path1, "GET, OPTIONS", ""))
 	t.Run("OPT-2", testOptions(path2, "GET, PUT, PATCH, OPTIONS", ""))
 	t.Run("OPT-3", testOptions(path3, "PATCH, OPTIONS", mimeYangDataJSON))
@@ -318,8 +319,9 @@ func testPathConv(template, path, expPath string) func(*testing.T) {
 }
 
 func testPathConv2(m map[string]string, template, path, expPath string) func(*testing.T) {
+	clientAuth := UserAuth{"password": false, "cert": false, "jwt": false}
 	return func(t *testing.T) {
-		router := newRouter()
+		router := newRouter(clientAuth)
 		router.addRoute(t.Name(), "GET", template, pathConvHandler)
 
 		r := httptest.NewRequest("GET", path, nil)
@@ -702,9 +704,10 @@ func testResponseStatus(method, path string, expStatus int) func(*testing.T) {
 }
 
 func (r *Router) addRoute(name, method, path string, h http.HandlerFunc) {
+	clientAuth := UserAuth{"password": false, "cert": false, "jwt": false}
 	if isServeFromTree(path) {
 		rr := routeRegInfo{name: name, method: method, path: path, handler: h}
-		r.rcRoutes.add("", path, &rr)
+		r.rcRoutes.add("", path, &rr, clientAuth)
 	} else if path == "*" {
 		r.muxRoutes.Methods(method).HandlerFunc(h)
 	} else {

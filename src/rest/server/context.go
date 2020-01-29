@@ -71,6 +71,9 @@ type RequestContext struct {
 
 	// Auth contains the authorized user information
 	Auth AuthInfo
+
+
+	ClientAuth UserAuth
 }
 
 type contextkey int

@@ -63,7 +63,7 @@ var tusrName = flag.String("tusrname", "tactestuser", "TACACS+ non-admin usernam
 var tusrPass = flag.String("tusrpass", "password", "TACACS+ non-admin password")
 var tadmName = flag.String("tadmname", "tactestadmin", "TACACS+ admin username")
 var tadmPass = flag.String("tadmpass", "password", "TACACS+ admin password")
-
+var defaultAuth = UserAuth{"password": false, "cert": false, "jwt": false}
 func init() {
 	fmt.Println("+++++ pamAuth_test +++++")
 }
@@ -102,7 +102,7 @@ var authTestHandler = authMiddleware(http.HandlerFunc(
 		} else {
 			Process(w, r)
 		}
-	}))
+	}), defaultAuth)
 
 func TestAuthLocalUser_Get(t *testing.T) {
 	ensureAuthTestEnabled(t, "local")
@@ -184,12 +184,11 @@ func testAuthSet(t *testing.T, username, password string, expStatus int) {
 func testAuth(method, username, password string, expStatus int) func(*testing.T) {
 	return func(t *testing.T) {
 		// Temporariliy enable password auth if not enabled already
-		if !ClientAuth.Enabled("password") {
-			ClientAuth.Set("password")
-			defer ClientAuth.Unset("password")
-		}
+		
 
 		r := httptest.NewRequest(method, "/api-tests:auth", nil)
+		rc, r := GetContext(r)
+		rc.ClientAuth.Set("password")
 		w := httptest.NewRecorder()
 
 		if username != "" {
