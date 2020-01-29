@@ -16,37 +16,41 @@ def invoke_api(func, args):
     # Set/Get the rules of all DROP MONITOR table entries.
     if func == 'get_sonic_tam_drop_monitor_sonic_tam_drop_monitor_tam_drop_monitor_feature_table':
        path = cc.Path('/restconf/data/sonic-tam-drop-monitor:sonic-tam-drop-monitor/TAM_DROP_MONITOR_FEATURE_TABLE')
-       resp = api.get(path)
        return api.get(path)
 
     if func == 'get_sonic_tam_drop_monitor_sonic_tam_drop_monitor_tam_drop_monitor_aging_interval_table':
        path = cc.Path('/restconf/data/sonic-tam-drop-monitor:sonic-tam-drop-monitor/TAM_DROP_MONITOR_AGING_INTERVAL_TABLE')
-       resp = api.get(path)
        return api.get(path)
 
     if func == 'get_sonic_tam_drop_monitor_sonic_tam_drop_monitor_sample_rate_table':
-       path = cc.Path('/restconf/data/sonic-tam-drop-monitor:sonic-tam-drop-monitor/SAMPLE_RATE_TABLE')
-       resp = api.get(path)
+       if (len(args) == 2) and (args[1] !=  "all"):
+           path = cc.Path('/restconf/data/sonic-tam-drop-monitor:sonic-tam-drop-monitor/SAMPLE_RATE_TABLE/SAMPLE_RATE_TABLE_LIST={name}', name=args[1])
+       else:
+           path = cc.Path('/restconf/data/sonic-tam-drop-monitor:sonic-tam-drop-monitor/SAMPLE_RATE_TABLE')
+
        return api.get(path)
 
     if func == 'get_sonic_tam_drop_monitor_sonic_tam_drop_monitor_sample_rate_table_sample_rate_table_list':
        path = cc.Path('/restconf/data/sonic-tam-drop-monitor:sonic-tam-drop-monitor/SAMPLE_RATE_TABLE/SAMPLE_RATE_TABLE_LIST={name}', name=args[0])
-       resp = api.get(path)
        return api.get(path)
 
     elif func == 'get_sonic_tam_drop_monitor_sonic_tam_drop_monitor_tam_drop_monitor_flow_table':
-       path = cc.Path('/restconf/data/sonic-tam-drop-monitor:sonic-tam-drop-monitor/TAM_DROP_MONITOR_FLOW_TABLE')
-       return api.get(path)
-
-    elif func == 'get_list_sonic_tam_drop_monitor_sonic_tam_drop_monitor_tam_drop_monitor_flow_table_tam_drop_monitor_flow_table_list':
-       path = cc.Path('/restconf/data/sonic-tam-drop-monitor:sonic-tam-drop-monitor/TAM_DROP_MONITOR_FLOW_TABLE/TAM_DROP_MONITOR_FLOW_TABLE_LIST={name}', name=args[0])
-       return api.get(path)
+       if (len(args) == 2) and (args[1] !=  "all"):
+           path = cc.Path('/restconf/data/sonic-tam-drop-monitor:sonic-tam-drop-monitor/TAM_DROP_MONITOR_FLOW_TABLE/TAM_DROP_MONITOR_FLOW_TABLE_LIST={name}', name=args[1])
+           return api.get(path)
+       else:
+           path = cc.Path('/restconf/data/sonic-tam-drop-monitor:sonic-tam-drop-monitor/TAM_DROP_MONITOR_FLOW_TABLE')
+           return api.get(path)
 
     elif func == 'patch_sonic_tam_drop_monitor_sonic_tam_drop_monitor_tam_drop_monitor_feature_table_tam_drop_monitor_feature_table_list_enable':
-       path = cc.Path('/restconf/data/sonic-tam-drop-monitor:sonic-tam-drop-monitor/TAM_DROP_MONITOR_FEATURE_TABLE/TAM_DROP_MONITOR_FEATURE_TABLE_LIST={name}/enable', name=args[0])
-       if args[1] == 'True':
+       if args[0] == 'enable':
+           path = cc.Path('/restconf/data/sonic-tam-drop-monitor:sonic-tam-drop-monitor/TAM_DROP_MONITOR_FEATURE_TABLE/TAM_DROP_MONITOR_FEATURE_TABLE_LIST={name}/enable', name='feature')
            body = { "sonic-tam-drop-monitor:enable": True }
-       return api.patch(path, body)
+           return api.patch(path, body)
+       else:
+           path = cc.Path('/restconf/data/sonic-tam-drop-monitor:sonic-tam-drop-monitor/TAM_DROP_MONITOR_FEATURE_TABLE')
+           return api.delete(path, body)
+
 
     elif func == 'patch_sonic_tam_drop_monitor_sonic_tam_drop_monitor_tam_drop_monitor_aging_interval_table_tam_drop_monitor_aging_interval_table_list_aging_interval':
        path = cc.Path('/restconf/data/sonic-tam-drop-monitor:sonic-tam-drop-monitor/TAM_DROP_MONITOR_AGING_INTERVAL_TABLE/TAM_DROP_MONITOR_AGING_INTERVAL_TABLE_LIST={name}/aging-interval', name= args[0])
@@ -66,11 +70,11 @@ def invoke_api(func, args):
        return api.patch(path, body)
 
     elif func == 'delete_sonic_tam_drop_monitor_sonic_tam_drop_monitor_tam_drop_monitor_flow_table_tam_drop_monitor_flow_table_list':
-       path = cc.Path('/restconf/data/sonic-tam-drop-monitor:sonic-tam-drop-monitor/TAM_DROP_MONITOR_FLOW_TABLE/TAM_DROP_MONITOR_FLOW_TABLE_LIST={name}', name=args[0])
-       return api.delete(path)
+       if (len(args) == 1) and (args[0] !=  "all"):
+           path = cc.Path('/restconf/data/sonic-tam-drop-monitor:sonic-tam-drop-monitor/TAM_DROP_MONITOR_FLOW_TABLE/TAM_DROP_MONITOR_FLOW_TABLE_LIST={name}', name=args[0])
+       else:
+           path = cc.Path('/restconf/data/sonic-tam-drop-monitor:sonic-tam-drop-monitor/TAM_DROP_MONITOR_FLOW_TABLE/TAM_DROP_MONITOR_FLOW_TABLE_LIST',)
 
-    elif func == 'delete_list_sonic_tam_drop_monitor_sonic_tam_drop_monitor_tam_drop_monitor_flow_table_tam_drop_monitor_flow_table_list':
-       path = cc.Path('/restconf/data/sonic-tam-drop-monitor:sonic-tam-drop-monitor/TAM_DROP_MONITOR_FLOW_TABLE/TAM_DROP_MONITOR_FLOW_TABLE_LIST',)
        return api.delete(path)
 
     elif func == 'delete_sonic_tam_drop_monitor_sonic_tam_drop_monitor_tam_drop_monitor_aging_interval_table':
@@ -82,8 +86,12 @@ def invoke_api(func, args):
        return api.delete(path)
 
     elif func == 'delete_list_sonic_tam_drop_monitor_sonic_tam_drop_monitor_sample_rate_table_sample_rate_table_list':
-       path = cc.Path('/restconf/data/sonic-tam-drop-monitor:sonic-tam-drop-monitor/SAMPLE_RATE_TABLE/SAMPLE_RATE_TABLE_LIST',)
-       return api.delete(path)
+        if (len(args) == 1) and (args[0] != "all"):
+            path = cc.Path('/restconf/data/sonic-tam-drop-monitor:sonic-tam-drop-monitor/SAMPLE_RATE_TABLE/SAMPLE_RATE_TABLE_LIST={name}', name=args[0])
+        else:
+            path = cc.Path('/restconf/data/sonic-tam-drop-monitor:sonic-tam-drop-monitor/SAMPLE_RATE_TABLE/SAMPLE_RATE_TABLE_LIST',)
+           
+        return api.delete(path)
 
     elif func == 'delete_sonic_tam_drop_monitor_sonic_tam_drop_monitor_tam_drop_monitor_feature_table':
        path = cc.Path('/restconf/data/sonic-tam-drop-monitor:sonic-tam-drop-monitor/TAM_DROP_MONITOR_FEATURE_TABLE',)
@@ -119,19 +127,19 @@ def get_tam_drop_monitor_flow_stats(args):
     counters_db = ConfigDBConnector()
     counters_db.db_connect('COUNTERS_DB')
 
-    if len(args) == 0:
-       path = cc.Path('/restconf/data/sonic-tam-drop-monitor:sonic-tam-drop-monitor/TAM_DROP_MONITOR_FLOW_TABLE')
-    else:
+    if (len(args) == 1) and (args[0] != "all"):
        path = cc.Path('/restconf/data/sonic-tam-drop-monitor:sonic-tam-drop-monitor/TAM_DROP_MONITOR_FLOW_TABLE/TAM_DROP_MONITOR_FLOW_TABLE_LIST={name}', name=args[0])
+    else:
+       path = cc.Path('/restconf/data/sonic-tam-drop-monitor:sonic-tam-drop-monitor/TAM_DROP_MONITOR_FLOW_TABLE')
 
     response = api.get(path)
 
     if response.ok():
         if response.content:
-            if len(args) == 0:
-                api_response = response.content['sonic-tam-drop-monitor:TAM_DROP_MONITOR_FLOW_TABLE']['TAM_DROP_MONITOR_FLOW_TABLE_LIST']
-            else:
+            if (len(args) == 1) and (args[0] != "all"):
                 api_response = response.content['sonic-tam-drop-monitor:TAM_DROP_MONITOR_FLOW_TABLE_LIST']
+            else:
+                api_response = response.content['sonic-tam-drop-monitor:TAM_DROP_MONITOR_FLOW_TABLE']['TAM_DROP_MONITOR_FLOW_TABLE_LIST']
 
             for i in range(len(api_response)):
                 api_response[i]['Packets'] = 0
@@ -149,6 +157,13 @@ def get_tam_drop_monitor_flow_stats(args):
     show_cli_output("show_tam_drop_monitor_flow_stats.j2", api_response)
 
 def run(func, args):
+    if func == 'get_tam_drop_monitor_supported':
+        get_tam_drop_monitor_supported(args)
+        return
+    elif func == 'get_tam_drop_monitor_flow_stats':
+	get_tam_drop_monitor_flow_stats(args)
+        return
+
     response = invoke_api(func, args)
     if response.ok():
         if response.content is not None:
@@ -167,8 +182,6 @@ def run(func, args):
                 show_cli_output(args[0], api_response)
             elif func == 'get_sonic_tam_drop_monitor_sonic_tam_drop_monitor_sample_rate_table':
                 show_cli_output(args[0], api_response)
-            elif func == 'get_sonic_tam_drop_monitor_sonic_tam_drop_monitor_sample_rate_table_sample_rate_table_list':
-                show_cli_output(args[1], api_response)
             else:
                 return
 
