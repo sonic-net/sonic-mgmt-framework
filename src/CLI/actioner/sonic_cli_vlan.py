@@ -29,6 +29,8 @@ from scripts.render_cli import show_cli_output
 vlanDict = {}
 suppressVlanList = []
 
+api = cc.ApiClient()
+
 class ifInfo:
     ifModeDict = {}
     oper_status = "down"
@@ -40,7 +42,6 @@ class ifInfo:
         return {'vlanMembers':self.ifModeDict, 'oper_status':self.oper_status}
 
 def invoke_api(func, args=[]):
-    api = cc.ApiClient()
 
     if func == 'get_sonic_vlan_sonic_vlan':
         path = cc.Path('/restconf/data/sonic-vlan:sonic-vlan')
@@ -213,6 +214,7 @@ def run(func, args):
                     sortMembers = collections.OrderedDict(sorted(val['vlanMembers'].items(), key=lambda t: t[1]))
                     val['vlanMembers'] = sortMembers
                 vDictSorted = collections.OrderedDict(sorted(vDict.items(), key = lambda t: getVlanId(t[0])))
+                vlanDict.clear()
                 if func == 'get_sonic_vlan_sonic_vlan':
                      show_cli_output(args[1], vDictSorted)
                 elif func == 'get_sonic_vxlan_sonic_vxlan_suppress_vlan_neigh':

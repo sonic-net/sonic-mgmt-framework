@@ -27,6 +27,41 @@ from scripts.render_cli import show_cli_output
 
 vniDict = {}
 
+def apply_type_filter(response, rt_type):
+    new_list = []
+    if 'openconfig-bgp-evpn-ext:routes' in response:
+        if 'route' in response['openconfig-bgp-evpn-ext:routes']:
+            for i in range(len(response['openconfig-bgp-evpn-ext:routes']['route'])):
+                route = response['openconfig-bgp-evpn-ext:routes']['route'][i]
+                t = route['prefix'].split(':')[0].rstrip(']').lstrip('[')
+                if rt_type == t:
+                    new_list.append(route)
+    response['openconfig-bgp-evpn-ext:routes']['route'] = new_list
+    return response
+
+def apply_macip_filter(response, mac, ip):
+    new_list = []
+    if 'openconfig-bgp-evpn-ext:routes' in response:
+        if 'route' in response['openconfig-bgp-evpn-ext:routes']:
+            for i in range(len(response['openconfig-bgp-evpn-ext:routes']['route'])):
+                route = response['openconfig-bgp-evpn-ext:routes']['route'][i]
+                t = route['prefix'].split(':')[0].rstrip(']').lstrip('[')
+                if '2' == t and mac in route['prefix'] and ip in route['prefix']:
+                    new_list.append(route)
+    response['openconfig-bgp-evpn-ext:routes']['route'] = new_list
+    return response
+
+def apply_rd_filter(response, rd):
+    new_list = []
+    if 'openconfig-bgp-evpn-ext:routes' in response:
+        if 'route' in response['openconfig-bgp-evpn-ext:routes']:
+            for i in range(len(response['openconfig-bgp-evpn-ext:routes']['route'])):
+                route = response['openconfig-bgp-evpn-ext:routes']['route'][i]
+                if rd == route['route-distinguisher']:
+                    new_list.append(route)
+    response['openconfig-bgp-evpn-ext:routes']['route'] = new_list
+    return response
+
 def invoke_api(func, args=[]):
     api = cc.ApiClient()
     keypath = []
@@ -44,6 +79,26 @@ def invoke_api(func, args=[]):
             +'/loc-rib/routes',
                 vrf=args[0], af_name=args[1])
         return api.get(keypath)
+    elif func == 'get_bgp_evpn_routes_filter':
+        keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={vrf}'
+            +'/protocols/protocol=BGP,bgp/bgp/rib/afi-safis/afi-safi={af_name}/openconfig-bgp-evpn-ext:l2vpn-evpn'
+            +'/loc-rib/routes',
+                vrf=args[0], af_name=args[1])
+        response = api.get(keypath)
+        filter_type = args[2].split('=')[1]
+        if filter_type == "type":
+            apply_type_filter(response.content, args[3])
+        elif filter_type == "rd":
+            apply_rd_filter(response.content, args[3])
+        elif filter_type == "rd,type":
+            apply_rd_filter(response.content, args[3])
+            apply_type_filter(response.content, args[4])
+        elif filter_type == "rd,macip":
+            apply_rd_filter(response.content, args[3])
+            apply_macip_filter(response.content, args[4], args[5])
+        else:
+            print("Unsupported filter ", filter_type)
+        return response
 
     else:
         body = {}

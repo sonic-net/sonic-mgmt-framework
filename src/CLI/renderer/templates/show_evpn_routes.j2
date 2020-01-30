@@ -47,7 +47,8 @@ EVPN type-5 prefix: [5]:[EthTag]:[IPlen]:[IP]
   {% if "state" in key %}
     {% if vars.update({'validRoute':route["state"]["valid-route"]}) %}{% endif %}
     {% if vars.update({'pathId':route["state"]["path-id"]}) %}{% endif %}
-    {% if vars.update({'origin':route["state"]["origin"]}) %}{% endif %}
+    {% if vars.update({'neighbor':route["state"]["origin"]}) %}{% endif %}
+    {% if vars.update({'time':route["state"]["last-modified"]}) %}{% endif %}
   {% endif %}
   {% if "attr-sets" in key %}
     {% if vars.update({'origin':route["attr-sets"]["origin"]}) %}{% endif %}

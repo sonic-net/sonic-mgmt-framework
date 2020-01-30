@@ -113,9 +113,9 @@ def delete_link_state_tracking_group_upstream(args):
 def show_link_state_tracking_group_info(args):
     aa = cc.ApiClient()
     if len(args):
-        uri = cc.Path('/restconf/data/sonic-link-state-tracking:sonic-link-state-tracking/INTF_TRACKING/INTF_TRACKING_LIST={grp_name}', grp_name=args[0])
+        uri = cc.Path('/restconf/data/sonic-link-state-tracking:sonic-link-state-tracking/INTF_TRACKING_TABLE/INTF_TRACKING_TABLE_LIST={grp_name}', grp_name=args[0])
     else:
-        uri = cc.Path('/restconf/data/sonic-link-state-tracking:sonic-link-state-tracking')
+        uri = cc.Path('/restconf/data/sonic-link-state-tracking:sonic-link-state-tracking/INTF_TRACKING_TABLE/INTF_TRACKING_TABLE_LIST')
     return aa.get(uri)
 
 
@@ -151,31 +151,39 @@ def generic_delete_response_handler(response, args):
             print(response.error_message())
 
 
-def show_link_state_tracking_group_data(groups):
+def show_link_state_tracking_group_data(groups, details):
     for data in groups:
         print('Name: {}'.format(data['name']))
         print('Description: {}'.format(data.get('description', "")))
         print('Timeout: {}'.format(data.get('timeout', "")))
 
-        print('Upstream:')
-        for upstr in data.get('upstream', '').split(','):
-            print('    {}'.format(upstr))
+        if details:
+            print('Upstream:')
+            for upstr, status in zip(data.get('upstream', []), data.get('upstream_status', [])):
+                if status == "":
+                    print('    {}'.format(upstr))
+                else:
+                    print('    {} ({})'.format(upstr, status))
 
-        print('Downstream:')
-        for downstr in data.get('downstream', '').split(','):
-            print('    {}'.format(downstr))
+            print('Downstream:')
+            for downstr, status in zip(data.get('downstream', []), data.get('downstream_status', [])):
+                if status == "":
+                    print('    {}'.format(downstr))
+                else:
+                    print('    {} ({})'.format(downstr, status))
         print('')
 
 
 def show_link_state_tracking_group_response_handler(response, args):
     if response.ok():
         data = response.content
-        if len(args):
-            show_link_state_tracking_group_data(data['sonic-link-state-tracking:INTF_TRACKING_LIST'])
-        elif 'sonic-link-state-tracking:sonic-link-state-tracking' in data:
-            show_link_state_tracking_group_data(data['sonic-link-state-tracking:sonic-link-state-tracking']['INTF_TRACKING']['INTF_TRACKING_LIST'])
+        if bool(data):
+            show_link_state_tracking_group_data(data['sonic-link-state-tracking:INTF_TRACKING_TABLE_LIST'], len(args) > 0)
+        elif len(args) > 0:
+             print("%Error: Group not found")
     elif str(response.status_code) == '404':
-        print("%Error: Group not found")
+        if len(args) > 0:
+            print("%Error: Group not found")
     else:
         print(response.error_message())
 
@@ -210,7 +218,6 @@ response_handlers = {
 
 
 def run(op_str, args):
-    pipestr().write(args)
     try:
         resp = request_handlers[op_str](args)
         response_handlers[op_str](resp, args)

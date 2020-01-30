@@ -74,18 +74,15 @@ func tokenResp(w http.ResponseWriter, r *http.Request, username string, roles []
 
 func Authenticate(w http.ResponseWriter, r *http.Request) {
 	var creds Credentials
-
-	var username string
+	rc, r := GetContext(r)
 	auth_success := false
-	if ClientAuth.Enabled("cert") && r.TLS != nil && len(r.TLS.PeerCertificates) > 0 {
+	if rc.ClientAuth.Enabled("cert") && r.TLS != nil && len(r.TLS.PeerCertificates) > 0 {
 		//Check if they are using certificate based auth
-		username = strings.ToLower(r.TLS.PeerCertificates[0].Subject.CommonName)
-	}
-
-
-	if len(username) > 0 {
-		auth_success = true
-		creds.Username = username
+		username := strings.ToLower(r.TLS.PeerCertificates[0].Subject.CommonName)
+		if len(username) > 0 {
+			auth_success = true
+			creds.Username = username
+		}
 	}
 
 	if auth_success == false {
@@ -99,7 +96,7 @@ func Authenticate(w http.ResponseWriter, r *http.Request) {
 		auth_success, err = UserPwAuth(creds.Username, creds.Password)
 	}
 	if auth_success {
-		usr, err := user.Lookup(username)
+		usr, err := user.Lookup(creds.Username)
 		if err == nil {
 			roles, err := GetUserRoles(usr)
 			if err == nil {

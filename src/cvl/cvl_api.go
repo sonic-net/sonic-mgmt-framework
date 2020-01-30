@@ -377,6 +377,9 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (cvlErr CVLErrorIn
 				cvlErrObj.ErrAppTag = "too-many-elements"
 				cvlErrObj.Msg = "Max elements limit reached"
 				cvlErrObj.CVLErrDetails = cvlErrorMap[cvlErrObj.ErrCode]
+				cvlErrObj.ConstraintErrMsg = fmt.Sprintf("Max elements limit %v reached",
+				modelInfo.tableInfo[tbl].redisTableSize)
+
 				return cvlErrObj, CVL_SYNTAX_ERROR
 			}
 

@@ -73,7 +73,7 @@ def _write(string, disable_page=False):
     """
     global line_count
 
-    page_len_local = 25
+    page_len_local = int(os.getenv("CLISH_TERM_LEN", '24'))
     terminal = sys.stdout
     # set length as 0 for prints without pagination
     if disable_page is True:
@@ -135,7 +135,7 @@ def show_cli_output(template_file, response):
     template_path = os.getenv("RENDERER_TEMPLATE_PATH")
     #template_path = os.path.abspath(os.path.join(THIS_DIR, "../render-templates"))
 
-    j2_env = Environment(loader=FileSystemLoader(template_path),extensions=['jinja2.ext.do'])
+    j2_env = Environment(loader=FileSystemLoader(template_path),extensions=['jinja2.ext.do','jinja2.ext.loopcontrols'])
     j2_env.trim_blocks = True
     j2_env.lstrip_blocks = True
     j2_env.rstrip_blocks = True

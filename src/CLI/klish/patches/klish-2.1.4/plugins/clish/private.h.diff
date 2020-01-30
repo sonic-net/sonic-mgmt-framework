@@ -1,5 +1,4 @@
-23a24,27
+23a24,26
 > CLISH_PLUGIN_SYM(clish_restcl);
 > CLISH_PLUGIN_SYM(clish_pyobj);
-> 
-> extern void pyobj_init();
+> CLISH_PLUGIN_SYM(clish_setenv);

@@ -263,7 +263,8 @@ module openconfig-interfaces-annot {
 
     deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv4/oc-intf-ext:sag-ipv4/oc-intf-ext:config/oc-intf-ext:static-anycast-gateway {
       deviate add {
-        sonic-ext:field-name "gwip";
+        //sonic-ext:field-name "gwip";
+		sonic-ext:subtree-transformer "sag_ipv4_intf_xfmr";
 	  }
     }
 
@@ -292,7 +293,8 @@ module openconfig-interfaces-annot {
 
     deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv6/oc-intf-ext:sag-ipv6/oc-intf-ext:config/oc-intf-ext:static-anycast-gateway {
       deviate add {
-        sonic-ext:field-name "gwip";
+        //sonic-ext:field-name "gwip";
+		sonic-ext:subtree-transformer "sag_ipv6_intf_xfmr";
       }
     }
 

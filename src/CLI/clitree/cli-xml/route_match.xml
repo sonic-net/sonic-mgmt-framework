@@ -154,7 +154,7 @@ limitations under the License.
         help="Set routing policy match criteria to ipv4 prefix-list"
         >
         <PARAM name="prefix-list-name"
-                     help="Name of prefis-list (Max size 63)"
+                     help="Name of prefix-list (Max size 63)"
                      ptype="STRING"
         />
         <ACTION>
@@ -222,7 +222,7 @@ limitations under the License.
         >
         <PARAM name="match-tag"
                      help="tag value (1-4294967295)"
-                     ptype="STRING"
+                     ptype="RANGE_1_4294967295"
         />
        <ACTION>
            python $SONIC_CLI_ROOT/sonic-cli-route-match.py patch_openconfig_routing_policy_ext_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_match_tag_set_config_tag_value  ${name} ${seq_num} ${match-tag}
@@ -275,13 +275,56 @@ limitations under the License.
         name="match peer"
         help="Set routing policy match criteria to peer ip"
         >
-        <PARAM name="match-peer"
-                     help="Peer's IP address"
-                     ptype="IPV4V6_ADDR"
-        />
-       <ACTION>
-           python $SONIC_CLI_ROOT/sonic-cli-route-match.py patch_openconfig_routing_policy_ext_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_match_neighbor_set_config_address ${name} ${seq_num} ${match-peer}
-       </ACTION>
+        <PARAM name="peer-type" 
+	   help="Configure match peer"  
+           mode="switch" 
+           ptype="SUBCOMMAND">
+           <PARAM name="match-peer"
+              help="Peer's IP address"
+              ptype="IPV4V6_ADDR"
+           />
+           <PARAM name="Ethernet" 
+              help="Select an interface" 
+              mode="subcommand" 
+              ptype="SUBCOMMAND">
+              <PARAM name="phy-if-name" 
+                 help="Physical interface" 
+                 ptype="UINT"
+              />
+           </PARAM>
+           <PARAM name="PortChannel" 
+              help="Port channel Interface Configuration" 
+              mode="subcommand" 
+              ptype="SUBCOMMAND">
+              <PARAM name="lag-id" 
+                 help="PortChannel identifier" 
+                 ptype="LAG_ID"
+              />
+           </PARAM>
+           <PARAM name="Vlan" 
+              help="Vlan Interface Configuration" 
+              mode="subcommand" 
+              ptype="SUBCOMMAND">
+              <PARAM name="vlan-id" 
+                 help="Vlan identifier" 
+                 ptype="VLAN_ID"
+              />
+           </PARAM>
+        </PARAM>
+        <ACTION>
+           if test "${peer-type}" = "match-peer" ; then&#xA;
+               python $SONIC_CLI_ROOT/sonic-cli-route-match.py patch_openconfig_routing_policy_ext_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_match_neighbor_set_config_address ${name} ${seq_num} ${match-peer}&#xA;
+           fi&#xA;
+           if test "${peer-type}" = "Ethernet" ; then&#xA;
+               python $SONIC_CLI_ROOT/sonic-cli-route-match.py patch_openconfig_routing_policy_ext_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_match_neighbor_set_config_address ${name} ${seq_num} Ethernet${phy-if-name}&#xA;
+           fi&#xA;
+           if test "${peer-type}" = "PortChannel" ; then&#xA;
+               python $SONIC_CLI_ROOT/sonic-cli-route-match.py patch_openconfig_routing_policy_ext_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_match_neighbor_set_config_address ${name} ${seq_num} PortChannel${lag-id}&#xA;
+           fi&#xA;
+           if test "${peer-type}" = "Vlan" ; then&#xA;
+               python $SONIC_CLI_ROOT/sonic-cli-route-match.py patch_openconfig_routing_policy_ext_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_match_neighbor_set_config_address ${name} ${seq_num} Vlan${vlan-id}&#xA;
+           fi&#xA;
+        </ACTION>
     </COMMAND>
 
     <COMMAND

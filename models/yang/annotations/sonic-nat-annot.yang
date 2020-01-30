@@ -1,0 +1,16 @@
+module sonic-nat-annot {
+
+    yang-version "1.1";
+
+    namespace "http://openconfig.net/yang/annotation/snat-annot";
+    prefix "snat-annot";
+
+    import sonic-extensions { prefix sonic-ext; }
+    import sonic-nat { prefix snat; }
+
+    deviation /snat:clear_nat {
+      deviate add {
+        sonic-ext:rpc-callback "rpc_clear_nat";
+      }
+    }
+}

@@ -29,7 +29,7 @@ Copyright 2020 Broadcom, Inc.
 
 <!-- show snmp-server group -->
   <COMMAND name="show snmp-server group" help="Show SNMP Group Configuration">
-    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py snmp_group_get show_snmp_group.j2&#xA;</ACTION>
+    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py snmp_group_access_get show_snmp_group.j2&#xA;</ACTION>
     <xi:include href="include/pipe.xml"/>
     <xi:include href="include/pipe.xml"/>
   </COMMAND>
@@ -70,15 +70,10 @@ Before each command articulation, a comment is shown with the desired command sy
 ========================================================================= -->
 
 <!--=========================================================================
-  snmp-server [ contact <contact> ] [ location <location> ] [ sysname <system name> ] [ engine <octet-byte-string> ] [ agentaddress <addressstring> ]
+  snmp-server [ contact <contact> ] [ location <location> ] [ engine <octet-byte-string> ] [ agentaddress <addressstring> ]
   snmp-server enable trap
 ========================================================================= -->
   <COMMAND name="snmp-server" help="SNMP Server Configuration"/>
-
-  <COMMAND name="snmp-server sysname" help="Configure SNMP System Name">
-    <PARAM name="system-name" help="SNMP System Name" ptype="STRING"/>
-    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py  snmp_sysname  "${system-name}"&#xA; </ACTION>
-  </COMMAND>
 
   <COMMAND name="snmp-server location" help="Configure SNMP Location">
     <PARAM name="location-name" help="SNMP location" ptype="STRING"/>
@@ -102,15 +97,33 @@ Before each command articulation, a comment is shown with the desired command sy
 
   <COMMAND name="snmp-server agentaddress" help="Configure SNMP Agent Address">
     <PARAM name="host-addr" help="IPv4 or IPv6" ptype="IPV4_OR_IPV6_ADDR">
-      <PARAM name="port" help="" ptype="SUBCOMMAND" mode="subcommand" optional="true">
+      <PARAM name="port" help="UDP Listening Port" ptype="SUBCOMMAND" mode="subcommand" optional="true">
         <PARAM name="udp-port" help="UDP Listening Port" ptype="LISTEN_PORT" />
       </PARAM>
       <PARAM name = "interface" help = "Specify an interface" ptype="SUBCOMMAND" mode="subcommand" optional="true">
-          <PARAM name = "ifname" help = "Interface Name" ptype = "STRING" > </PARAM>
+          <PARAM name = "ifname" help = "Interface Name" ptype = "STRING_32" > </PARAM>
       </PARAM>
     </PARAM>
     <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py  snmp_agentaddr  ${__params}&#xA; </ACTION>
   </COMMAND>
+
+<!--============= This is currently unsupported ===============================
+<COMMAND name="snmp-server trapreceiver" help="Configure SNMP Trap Receiver">
+  <PARAM name="host-addr" help="IPv4 or IPv6" ptype="IPV4_OR_IPV6_ADDR">
+    <PARAM name="security-model" help="" ptype="SUBCOMMAND" mode="switch">
+      <PARAM name="v1"   help="SNMP Version 1"   ptype="SUBCOMMAND"  mode="subcommand"/>
+      <PARAM name="v2c"  help="SNMP Version 2c"  ptype="SUBCOMMAND"  mode="subcommand"/>
+    </PARAM>
+    <PARAM name="port" help="UDP Listening Port" ptype="SUBCOMMAND" mode="subcommand" optional="true">
+      <PARAM name="udp-port" help="UDP Listening Port" ptype="LISTEN_PORT" />
+    </PARAM>
+    <PARAM name = "interface" help = "Specify an interface" ptype="SUBCOMMAND" mode="subcommand" optional="true">
+      <PARAM name = "ifname" help = "Interface Name" ptype = "STRING" > </PARAM>
+    </PARAM>
+  </PARAM>
+  <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py  snmp_trapreceiver  ${__params}&#xA; </ACTION>
+</COMMAND>
+========================================================================= -->
 
 <!--=========================================================================
   snmp-server  community  "community name"  [groupname  "group name"]
@@ -126,6 +139,7 @@ Before each command articulation, a comment is shown with the desired command sy
 
 <!--=========================================================================
   snmp-server group  "group name" {any| v1 | v2c | v3 { auth | noauth | priv }}  [ read "viewname" ]  [ write "viewname" ]  [ notify "viewname" ]
+    note: SNMPv1 support is disabled in SONiC
     note: Authentication/Privacy is only specified when security option is SNMPv3
 ========================================================================= -->
   <COMMAND name="snmp-server group" help="Configure SNMP Group">
@@ -134,7 +148,7 @@ Before each command articulation, a comment is shown with the desired command sy
       <MACRO name="SNMP-RWN-VIEWS-OPTIONS" arg=""/>
     </PARAM>
     <ACTION>
-        python $SONIC_CLI_ROOT/sonic-cli-snmp.py  snmp_group_add ${__params}&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-snmp.py  snmp_group_access_add ${__params}&#xA;
     </ACTION>
   </COMMAND>
 
@@ -212,21 +226,27 @@ Before each command articulation, a comment is shown with the desired command sy
           snmp-server host  "host-addr" community "community name" {[ traps { v2c | v1 }] | informs [timeout seconds] [retries retries]}
         v3
           snmp-server host  "host-addr" user           "username"            {[traps  {auth | noauth | priv}] | [informs {auth | noauth | priv} [timeout seconds] [retries retries]]}
+    note: SNMPv1 support is disabled in SONiC
 ========================================================================= -->
   <COMMAND name="snmp-server host" help="Configure SNMP Host for Traps or Notifications">
     <PARAM name="host-addr" help="Host address, IPv4 or IPv6" ptype="IPV4_OR_IPV6_ADDR">
       <PARAM name="selector" help="" ptype="SUBCOMMAND" mode="switch">
 <!--=========================================================================
  v1&v2  snmp-server host "host-addr" community "community name" {[ traps { v2c | v1 }] | informs [timeout seconds] [retries retries]}
+    note: SNMPv1 support is disabled in SONiC including traps
 ========================================================================= -->
-        <PARAM name="community" help="Community for v1/v2c" ptype="SUBCOMMAND"  mode="subcommand">
+        <PARAM name="community" help="Community for v2c" ptype="SUBCOMMAND"  mode="subcommand">
           <PARAM name="community-name" help="Unique SNMP Community Name" ptype="SNMP_IDENTIFIER">
             <PARAM name="trap-or-inform" help="" ptype="SUBCOMMAND" mode="switch" optional="true">
               <PARAM name="traps" help="Specify Traps" ptype="SUBCOMMAND" mode="subcommand">
+<!--============= SNMP v1 is not currently supported ===============================
                 <PARAM name="v1-or-v2c" help="" ptype="SUBCOMMAND" mode="switch">
                   <PARAM name="v1"  help="SNMP Version 1"  ptype="SUBCOMMAND"  mode="subcommand"></PARAM>
+========================================================================= -->
                   <PARAM name="v2c" help="SNMP Version 2c" ptype="SUBCOMMAND"  mode="subcommand"></PARAM>
+<!--============= SNMP v1 is not currently supported ===============================
                 </PARAM>
+========================================================================= -->
               </PARAM>
               <PARAM name="informs" help="Specify Informs" ptype="SUBCOMMAND"  mode="subcommand">
                 <PARAM name="timeout" help="Inform Timeout" ptype="SUBCOMMAND" mode="subcommand" optional="true">
@@ -267,13 +287,9 @@ v3      snmp-server host "host-addr" user "username" {[traps  {auth | noauth | p
   </COMMAND>
 
 <!--=========================================================================
-  no snmp-server [ contact ] [ location ] [ sysname ] [ engine ]
+  no snmp-server [ contact ] [ location ] [ engine ]
 ========================================================================= -->
   <COMMAND name="no snmp-server" help="SNMP Server Configuration"/>
-
-  <COMMAND name="no snmp-server sysname" help="Unconfigure SNMP System Name">
-    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py  snmp_sysname&#xA; </ACTION>
-  </COMMAND>
 
   <COMMAND name="no snmp-server location" help="Remove SNMP Location">
     <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py  snmp_location&#xA; </ACTION>
@@ -294,7 +310,7 @@ v3      snmp-server host "host-addr" user "username" {[traps  {auth | noauth | p
 
   <COMMAND name="no snmp-server agentaddress" help="Configure SNMP Agent Address">
     <PARAM name="host-addr" help="Host address, IPv4 or IPv6" ptype="IPV4_OR_IPV6_ADDR">
-      <PARAM name="port" help="" ptype="SUBCOMMAND" mode="subcommand" optional="true">
+      <PARAM name="port" help="UDP Listening Port" ptype="SUBCOMMAND" mode="subcommand" optional="true">
         <PARAM name="udp-port" help="UDP Listening Port" ptype="LISTEN_PORT" />
       </PARAM>
       <PARAM name = "interface" help = "Specify an Interface" ptype="SUBCOMMAND" mode="subcommand" optional="true">
@@ -303,6 +319,16 @@ v3      snmp-server host "host-addr" user "username" {[traps  {auth | noauth | p
     </PARAM>
     <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py  no_snmp_agentaddr  ${__params}&#xA; </ACTION>
   </COMMAND>
+
+<!--============= This is currently unsupported ===============================
+<COMMAND name="no snmp-server trapreceiver" help="Configure SNMP Trap Receiver">
+  <PARAM name="security-model" help="" ptype="SUBCOMMAND" mode="switch">
+    <PARAM name="v1"   help="SNMP Version 1"   ptype="SUBCOMMAND"  mode="subcommand"/>
+    <PARAM name="v2c"  help="SNMP Version 2c"  ptype="SUBCOMMAND"  mode="subcommand"/>
+  </PARAM>
+  <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py  no_snmp_trapreceiver  ${__params}&#xA; </ACTION>
+</COMMAND>
+========================================================================= -->
 <!--=========================================================================
         no snmp-server community  "community name"
 ========================================================================= -->
@@ -314,12 +340,13 @@ v3      snmp-server host "host-addr" user "username" {[traps  {auth | noauth | p
 <!--=========================================================================
         no snmp-server group  "group name" "model" <priv>
   snmp-server group  "group name" { v1 | v2c | v3 { auth | noauth | priv }}  [ read "viewname" ]  [ write "viewname" ]  [ notify "viewname" ]
+    note: SNMPv1 support is disabled in SONiC
 ========================================================================= -->
   <COMMAND name="no snmp-server group" help="Remove SNMP Group" ptype="SUBCOMMAND" mode="subcommand">
     <PARAM name="group-name" help="Unique SNMP Group Name" ptype="SNMP_IDENTIFIER">
       <MACRO name="SNMP-SECURITY-MODELS" arg=""/>
     </PARAM>
-    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py  snmp_group_delete  ${__params}&#xA; </ACTION>
+    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py  snmp_group_access_delete  ${__params}&#xA; </ACTION>
   </COMMAND>
 
 <!--=========================================================================

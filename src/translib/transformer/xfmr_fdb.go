@@ -204,6 +204,18 @@ func fdbMacTableGetEntry(inParams XfmrParams, vlan string,  macAddress string, o
     vlanOid := findInMap(oidTOVlan, vlan)
     vlanId, _ := strconv.Atoi(vlan)
 
+    pathInfo := NewPathInfo(inParams.uri)
+    niName := pathInfo.Var("name")
+
+
+    // if network instance is a VLAN instance, only get entries for this VLAN.
+    if strings.HasPrefix(niName, "Vlan") {
+        niVlanId := strings.TrimPrefix(niName, "Vlan")
+        if vlan != niVlanId {
+            return nil
+        }
+    }
+
     mcEntries := macTbl.Entries
     var mcEntry *ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Fdb_MacTable_Entries_Entry
     var mcEntryKey ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Fdb_MacTable_Entries_Entry_Key
@@ -228,6 +240,7 @@ func fdbMacTableGetEntry(inParams XfmrParams, vlan string,  macAddress string, o
             return errors.New("FDB NewEntry create failed, " + vlan + " " + macAddress)
         }
     }
+
     mcEntry  = mcEntries.Entry[mcEntryKey]
     ygot.BuildEmptyTree(mcEntry)
     mcMac := new(string)
@@ -249,21 +262,34 @@ func fdbMacTableGetEntry(inParams XfmrParams, vlan string,  macAddress string, o
         }
     }
 
-    if  entry.Has("SAI_FDB_ENTRY_ATTR_BRIDGE_PORT_ID") {
-        intfOid := findInMap(brPrtOidToIntfOid, entry.Get("SAI_FDB_ENTRY_ATTR_BRIDGE_PORT_ID"))
-        if intfOid != "" {
-            intfName := new(string)
-            *intfName = findInMap(oidInfMap, intfOid)
-            if *intfName != "" {
-                ygot.BuildEmptyTree(mcEntry.Interface)
-                ygot.BuildEmptyTree(mcEntry.Interface.InterfaceRef)
-                ygot.BuildEmptyTree(mcEntry.Interface.InterfaceRef.Config)
-                mcEntry.Interface.InterfaceRef.Config.Interface = intfName
-                ygot.BuildEmptyTree(mcEntry.Interface.InterfaceRef.State)
-                mcEntry.Interface.InterfaceRef.State.Interface = intfName
-            }
+    var fdbEntryRemoteIpAddress = new(string)
+    if  entry.Has("SAI_FDB_ENTRY_ATTR_ENDPOINT_IP") {
+        *fdbEntryRemoteIpAddress = entry.Get("SAI_FDB_ENTRY_ATTR_ENDPOINT_IP")
+    } else {
+        *fdbEntryRemoteIpAddress = "0.0.0.0"
+    }
 
+    if *fdbEntryRemoteIpAddress == "0.0.0.0" {
+        if  entry.Has("SAI_FDB_ENTRY_ATTR_BRIDGE_PORT_ID") {
+            intfOid := findInMap(brPrtOidToIntfOid, entry.Get("SAI_FDB_ENTRY_ATTR_BRIDGE_PORT_ID"))
+            if intfOid != "" {
+                intfName := new(string)
+                *intfName = findInMap(oidInfMap, intfOid)
+                if *intfName != "" {
+                    ygot.BuildEmptyTree(mcEntry.Interface)
+                    ygot.BuildEmptyTree(mcEntry.Interface.InterfaceRef)
+                    ygot.BuildEmptyTree(mcEntry.Interface.InterfaceRef.Config)
+                    mcEntry.Interface.InterfaceRef.Config.Interface = intfName
+                    ygot.BuildEmptyTree(mcEntry.Interface.InterfaceRef.State)
+                    mcEntry.Interface.InterfaceRef.State.Interface = intfName
+                }
+            }
         }
+    } else {
+        ygot.BuildEmptyTree(mcEntry.Peer)
+        ygot.BuildEmptyTree(mcEntry.Peer.Config)
+        ygot.BuildEmptyTree(mcEntry.Peer.State)
+        mcEntry.Peer.State.PeerIp = fdbEntryRemoteIpAddress
     }
 
     return err
@@ -275,6 +301,10 @@ var DbToYang_fdb_mac_table_xfmr SubTreeXfmrDbToYang = func (inParams XfmrParams)
     instance := pathInfo.Var("name")
     vlan := pathInfo.Var("vlan")
     macAddress := pathInfo.Var("mac-address")
+
+    if strings.HasPrefix(instance, "Vrf") {
+        return nil
+    }
 
     targetUriPath, err := getYangPathFromUri(inParams.uri)
     log.Info("targetUriPath is ", targetUriPath)
@@ -289,7 +319,7 @@ var DbToYang_fdb_mac_table_xfmr SubTreeXfmrDbToYang = func (inParams XfmrParams)
     if vlan == "" || macAddress == "" {
         err = fdbMacTableGetAll (inParams)
     } else {
-        vlanString := strings.Contains(vlan, "Vlan")
+        vlanString := strings.HasPrefix(vlan, "Vlan")
         if vlanString == true {
             vlan = strings.Replace(vlan, "", "Vlan", 0)
         }

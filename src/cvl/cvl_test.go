@@ -1947,7 +1947,7 @@ func TestValidateEditConfig_Delete_Semantic_ACLTableReference_Negative(t *testin
 		cvl.CVLEditConfigData{
 			cvl.VALIDATE_ALL,
 			cvl.OP_DELETE,
-			"ACL_RULE|MyACL11_ACL_IPV4|RULE_1",
+			"ACL_RULE|MyACLTest_ACL_IPV4|Test_1",
 			map[string]string{},
 		},
 	}

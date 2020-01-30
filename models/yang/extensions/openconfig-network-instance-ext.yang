@@ -40,11 +40,13 @@ module openconfig-network-instance-ext {
 	  
       leaf ipv4-enable {
         type boolean;
+		default true;
       }
 
       leaf ipv6-enable {
         type boolean;
-      }		  
+		default true;
+      }
   }
 
   grouping global-sag-top {
@@ -77,11 +79,51 @@ module openconfig-network-instance-ext {
       deviate not-supported;
   }
 
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:route-limits {
+      deviate not-supported;
+  }
+  
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:connection-points {
+      deviate not-supported;
+  }
+  
   deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:mpls {
       deviate not-supported;
   }
   
   deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:segment-routing {
+      deviate not-supported;
+  }
+
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:policy-forwarding {
+	  deviate not-supported;
+  }
+
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:afts/oc-netinst:ipv4-unicast/oc-netinst:ipv4-entry/oc-netinst:state/oc-netinst:next-hop-group {
+      deviate not-supported;
+  }
+
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:afts/oc-netinst:ipv6-unicast/oc-netinst:ipv6-entry/oc-netinst:state/oc-netinst:next-hop-group {
+      deviate not-supported;
+  }
+
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:afts/oc-netinst:policy-forwarding {
+      deviate not-supported;
+  }
+
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:afts/oc-netinst:mpls {
+      deviate not-supported;
+  }
+
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:afts/oc-netinst:ethernet {
+      deviate not-supported;
+  }
+
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:afts/oc-netinst:next-hop-groups {
+      deviate not-supported;
+  }
+
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:afts/oc-netinst:next-hops {
       deviate not-supported;
   }
 
@@ -96,9 +138,13 @@ module openconfig-network-instance-ext {
   deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:isis {
       deviate not-supported;
   }
-  
-  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:policy-forwarding {
-	  deviate not-supported;
+
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:ospfv2 {
+      deviate not-supported;
+  }
+
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:local-aggregates {
+      deviate not-supported;
   }
   
 }

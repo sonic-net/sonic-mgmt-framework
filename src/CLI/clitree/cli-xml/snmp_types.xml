@@ -51,7 +51,7 @@ Copyright 2020 Broadcom, Inc.
    <PTYPE
        name="LISTEN_PORT"
        method="integer"
-       pattern="([161]|[1024..65535])"
+       pattern="1024..65535"
        help=""
        />
    <!--=======================================================-->

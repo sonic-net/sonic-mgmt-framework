@@ -228,7 +228,6 @@ def str2bool(s):
 
 
 def run(func, args):
-        pipestr().write(sys.argv)
         api_response = invoke(func, args)
         if api_response.ok():
             response = api_response.content

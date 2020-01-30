@@ -10,6 +10,10 @@ module sonic-sflow {
 		prefix scommon;
 	}
 
+	import sonic-extension {
+		prefix sonic-ext;
+	}
+
         revision 2019-09-09 {
                 description
                         "Initial revision.";
@@ -82,6 +86,7 @@ module sonic-sflow {
                     }
 
                     leaf agent_id {
+                       sonic-ext:custom-validation ValidateSflowAgentId;
                        type string;
                     }
                 }
