@@ -12,12 +12,8 @@
 extern "C" {
 #endif
 
-//#include "clish/shell/private.h"
-
-#define NS_PREFIX "session"
 #define HOSTNAME_STR_LEN 65
 #define PROMPT_STR_LEN 150
-#define LOADING_STR  "loading-"
 #define CLISH_DO_CMD "do"
 
 #ifdef __cplusplus

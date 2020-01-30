@@ -372,8 +372,8 @@
 >                                 for (j = 0; j < lub_argv__get_count(this->u.regexp_select.items); j++) {
 >                                 	char *name = clish_ptype_regexp_select__get_name(this, j);
 >                                        	/* In the below piece of code, we try to expand the name.
->                                            If user has eth1/1/1, it needs to be converted to ethernet1/1/1.
->                                            Similarly,if user gives "ethernet 1/1/1", the space need to be
+>                                            If user has eth1, it needs to be converted to ethernet1.
+>                                            Similarly,if user gives "ethernet 1", the space need to be
 >                                            stripped */
 >                                 	if (name && strncasecmp(name, result, strlen(name))) {
 >                                         	/* result not matching the name specified in the ptype.

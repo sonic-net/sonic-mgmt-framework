@@ -2,7 +2,7 @@
 > 	this->test = NULL;
 >         this->hidden = BOOL_FALSE;
 >         this->enabled = BOOL_FALSE;
-305a309,341
+305a309,340
 > 
 > /*--------------------------------------------------------- */
 > char *clish_command__get_test(const clish_command_t *this)
@@ -32,7 +32,6 @@
 > /*--------------------------------------------------------- */
 > bool_t clish_command__get_enabled(const clish_command_t * this)
 > {
->     //return this->enabled;
 >     return BOOL_TRUE;
 > }
 > 

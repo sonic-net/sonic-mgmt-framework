@@ -118,7 +118,7 @@
 >         clish_ptype_t *ptype = NULL;
 >         clish_ptype_method_e method = CLISH_PTYPE_METHOD_REGEXP;
 > 
-346,359c458,561
+346,359c458,552
 < 	/* Find out the function API */
 < 	/* CLISH_SYM_API_SIMPLE */
 < 	if (clish_sym__get_api(sym) == CLISH_SYM_API_SIMPLE) {
@@ -210,18 +210,9 @@
 >                         if (matched == BOOL_FALSE) {
 >                                 lub_string_free(res);
 >                                 res = NULL;
->                         } else {
->                                 //if (name && (mgmt_clish_chk_phy_intf(name)))
->                                 //        isEthernet = BOOL_TRUE;
 >                         }
->             		result = 0;
->             		/* Validate entity macros */
->             		if (isEthernet) {
->                			//result = entity_macro_handling(ptr);
->             		}
->             		if (!result) {
->                 		result = func(context, script, out);
->             		}
+> 
+>             		  result = func(context, script, out);
 >                         isEthernet = BOOL_FALSE;
 >                         lub_string_free(res);
 > 
@@ -238,7 +229,7 @@
 >                         result = func(context, script, out);
 >                 }
 >         }
-377c579
+377c570
 < 	lub_string_free(script);
 ---
 > 	if (script) lub_string_free(script);

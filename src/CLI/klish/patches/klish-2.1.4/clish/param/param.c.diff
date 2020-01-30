@@ -1,105 +1,37 @@
-9c9,10
+9d8
 < 
----
-> //#include "clish/plugin/mgmt_clish_interface_utils.h"
-> //#include "clish/ptype/timezone_ptype.h"
-15c16,18
+15c14,16
 < /*--------------------------------------------------------- */
 ---
 > /*---------------------------------------------------------
 >  * PRIVATE METHODS
 >  *--------------------------------------------------------- */
-33a37,59
->     this->yang_name = NULL;
->     this->yang_filter = NULL;
->     this->prompt_str = NULL;
->     this->prompt_oper = NULL;
->     this->prompt_fn = NULL;
->     this->rest_translate_action = NULL;
->     this->rest_translate_yang = NULL;
->     this->rest_translate_notes = NULL;
->     this->rest_translate_requests = NULL;
->     this->name_space = NULL;
->     this->pfeature = NULL;
->     this->default_oper = NULL;
->     this->sub_oper_yang = NULL;
->     this->tmplate = NULL;
->     this->viewname = NULL;
->     this->viewid = NULL;
->     this->recursive = BOOL_FALSE;
->     this->range_common_yang = NULL;
->     this->app_common_yang = NULL;
->     this->template_param = NULL;
->     this->operation = NULL;
->     this->db_mode = NULL;
->     this->refresh_yang_name = NULL;
-35c61,62
-< 	this->paramv = clish_paramv_new();
----
->     this->paramv = clish_paramv_new();
->     this->enabled = BOOL_FALSE;
-50c77,122
-< 
----
->     lub_string_free(this->yang_name);
->     lub_string_free(this->yang_filter);
->     lub_string_free(this->prompt_str);
->     lub_string_free(this->prompt_oper);
->     lub_string_free(this->prompt_fn);
->     lub_string_free(this->rest_translate_action);
->     lub_string_free(this->rest_translate_yang);
->     lub_string_free(this->rest_translate_notes);
->     lub_string_free(this->rest_translate_requests);
->     lub_string_free(this->name_space);
->     lub_string_free(this->pfeature);
->     lub_string_free(this->default_oper);
->     lub_string_free(this->sub_oper_yang);
->     lub_string_free(this->tmplate);
->     lub_string_free(this->viewname);
->     lub_string_free(this->viewid);
->     lub_string_free(this->range_common_yang);
->     lub_string_free(this->app_common_yang);
->     lub_string_free(this->template_param);
->     lub_string_free(this->operation);
->     lub_string_free(this->db_mode);
->     lub_string_free(this->refresh_yang_name);;
-> 
->     this->yang_name = NULL;
->     this->yang_filter = NULL;
->     this->prompt_str = NULL;
->     this->prompt_oper = NULL;
->     this->prompt_fn = NULL;
->     this->rest_translate_action = NULL;
->     this->rest_translate_yang = NULL;
->     this->rest_translate_notes = NULL;
->     this->rest_translate_requests = NULL;
->     this->name_space = NULL;
->     this->pfeature = NULL;
->     this->default_oper = NULL;
->     this->sub_oper_yang = NULL;
->     this->tmplate = NULL;
->     this->viewname = NULL;
->     this->viewid = NULL;
->     this->range_common_yang = NULL;
->     this->app_common_yang = NULL;
->     this->template_param = NULL;
->     this->operation = NULL;
->     this->db_mode = NULL;
->     this->refresh_yang_name = NULL;
+33a35,37
+> 	this->viewname = NULL;
+> 	this->viewid = NULL;
+> 	this->recursive = BOOL_FALSE;
+35a40
+> 	this->enabled = BOOL_FALSE;
+49a55,56
+> 	lub_string_free(this->viewname);
+> 	lub_string_free(this->viewid);
+50a58,60
+> 	this->viewname = NULL;
+> 	this->viewid = NULL;
 > 	
-54c126,128
+54c64,66
 < /*--------------------------------------------------------- */
 ---
 > /*---------------------------------------------------------
 >  * PUBLIC META FUNCTIONS
 >  *--------------------------------------------------------- */
-65c139,141
+65c77,79
 < /*--------------------------------------------------------- */
 ---
 > /*---------------------------------------------------------
 >  * PUBLIC METHODS
 >  *--------------------------------------------------------- */
-77a154,227
+77a92,165
 > /*---------------------------------------------------------
 >  * PUBLIC ATTRIBUTES
 >  *--------------------------------------------------------- */
@@ -174,35 +106,35 @@
 > 	return this->mode;
 > }
 > 
-81c231,232
+81c169,170
 < 	if (CLISH_PARAM_SUBCOMMAND == clish_param__get_mode(this)) {
 ---
 > 	if (CLISH_PARAM_SUBCOMMAND == clish_param__get_mode(this) &&
 > 		CLISH_PTYPE_METHOD_REGEXP_SELECT != clish_ptype__get_method(this->ptype)) {
-84c235
+84c173
 < 	}
 ---
 >     }
-89c240,241
+89c178,179
 < void clish_param_help(const clish_param_t * this, clish_help_t *help)
 ---
 > void clish_param_help(const clish_param_t * this, clish_help_t *help, 
 >                        const char *pval)
-92c244
+92c182
 < 	const char *name;
 ---
 > 	const char *name = NULL;
-93a246,248
+93a184,186
 > 	char *ext_help = NULL;
 > 	help_type_t usename = USE_NAME;
 > 	clish_ptype_method_e method = clish_ptype__get_method(this->ptype);
-104c259
+104c197
 < 			clish_param_help(cparam, help);
 ---
 > 			clish_param_help(cparam, help, pval);
-105a261
+105a199
 > 		lub_string_free((char*)range);
-109,111c265,268
+109,111c203,206
 < 	if (CLISH_PARAM_SUBCOMMAND == clish_param__get_mode(this))
 < 		name = clish_param__get_value(this);
 < 	else
@@ -211,19 +143,9 @@
 > 		if (method != CLISH_PTYPE_METHOD_REGEXP_SELECT)
 > 			name = clish_param__get_value(this);
 > 	} else {
-113a271
+113a209,277
 > 	}
-115,123c273,374
-< 	lub_string_cat(&str, this->text);
-< 	if (range) {
-< 		lub_string_cat(&str, " (");
-< 		lub_string_cat(&str, range);
-< 		lub_string_cat(&str, ")");
-< 	}
-< 	lub_argv_add(help->name, name);
-< 	lub_argv_add(help->help, str);
-< 	lub_string_free(str);
----
+> 
 > 	if (method == CLISH_PTYPE_METHOD_REGEXP_SELECT) {
 > 		clish_ptype_t *ptype = this->ptype;
 > 		usename = clish_ptype__get_usename(ptype);
@@ -291,7 +213,17 @@
 > 			lub_string_cat(&str, name);
 > 		}
 > 	}
-> 
+115,123c279,312
+< 	lub_string_cat(&str, this->text);
+< 	if (range) {
+< 		lub_string_cat(&str, " (");
+< 		lub_string_cat(&str, range);
+< 		lub_string_cat(&str, ")");
+< 	}
+< 	lub_argv_add(help->name, name);
+< 	lub_argv_add(help->help, str);
+< 	lub_string_free(str);
+---
 > 	switch (method) {
 > 		case CLISH_PTYPE_METHOD_SELECT:
 > 			{
@@ -326,7 +258,7 @@
 > 	if(str) {
 > 		lub_string_free(str);
 > 	}
-124a376,387
+124a314,325
 >     /* Handle resource leak */
 >         if((method == CLISH_PTYPE_METHOD_INTEGER || method == CLISH_PTYPE_METHOD_UNSIGNEDINTEGER) &&
 >            (clish_ptype__get_usename(this->ptype) != USE_RANGE)){
@@ -339,7 +271,7 @@
 >          range = NULL;
 >          
 >     }
-135,166c398,402
+135,166c336,340
 < CLISH_SET_STR(param, ptype_name);
 < CLISH_GET_STR(param, ptype_name);
 < CLISH_SET_STR(param, access);
@@ -378,32 +310,35 @@
 > 	unsigned index)
 > {
 > 	return clish_paramv__get_param(this->paramv, index);
-170c406
+170c344
 < _CLISH_GET_STR(param, range)
 ---
 > clish_paramv_t *clish_param__get_paramv(clish_param_t * this)
-172,173c408
+172,173c346
 < 	assert(inst);
 < 	return clish_ptype__get_range(inst->ptype);
 ---
 > 	return this->paramv;
-177,178c412
+177,178c350
 < clish_param_t *clish_param__get_param(const clish_param_t * this,
 < 	unsigned int index)
 ---
 > unsigned int clish_param__get_param_count(const clish_param_t * this)
-180,181c414,524
+180,181c352
 < 	assert(this);
 < 	return clish_paramv__get_param(this->paramv, index);
 ---
 > 	return clish_paramv__get_count(this->paramv);
-> }
-> 
-> /*--------------------------------------------------------- */
+185c356
+< _CLISH_GET(param, unsigned int, param_count)
+---
 > void clish_param__set_optional(clish_param_t * this, bool_t optional)
-> {
+187,188c358
+< 	assert(inst);
+< 	return clish_paramv__get_count(inst->paramv);
+---
 > 	this->optional = optional;
-> }
+189a360,483
 > 
 > /*--------------------------------------------------------- */
 > bool_t clish_param__get_optional(const clish_param_t * this)
@@ -507,16 +442,13 @@
 > 	if (this->access)
 > 		lub_string_free(this->access);
 > 	this->access = lub_string_dup(access);
-185c528
-< _CLISH_GET(param, unsigned int, param_count)
----
+> }
+> 
+> /*--------------------------------------------------------- */
 > char *clish_param__get_access(const clish_param_t *this)
-187,188c530
-< 	assert(inst);
-< 	return clish_paramv__get_count(inst->paramv);
----
+> {
 > 	return this->access;
-189a532,545
+> }
 > 
 > /*--------------------------------------------------------- */
 > void clish_param__set_enabled(clish_param_t * this, bool_t enabled)
