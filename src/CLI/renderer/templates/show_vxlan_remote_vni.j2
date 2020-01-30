@@ -6,7 +6,7 @@
 {% if json_output %}
 
 {% for vnilist in  json_output['sonic-vxlan:EVPN_REMOTE_VNI_TABLE_LIST']%}
-{{'%-8s'|format(vnilist['vlan'])}}  {{'%-12s'|format(vnilist['tunnel'])}}  {{'%-8s'|format(vnilist['vni'])}}
+{{'%-8s'|format(vnilist['vlan'])}}  {{'%-12s'|format(vnilist['remote_vtep'])}}  {{'%-8s'|format(vnilist['vni'])}}
 {% set count.value = count.value + 1 %}
 {% endfor %}
 

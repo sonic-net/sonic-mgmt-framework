@@ -1,15 +1,20 @@
 {% set count = namespace(value=0) %}
 
-{{'%-9s'|format("Vlan")}}  {{'%-20s'|format("Mac")}} {{'%-8s'|format("Type")}}
-{{'%-9s'|format("======")}} {{'%-20s'|format("==============")}} {{'%-8s'|format("=======")}}
+{{'%-9s'|format("Vlan")}}  {{'%-20s'|format("Mac")}} {{'%-8s'|format("Type")}} {{
+{'%-9s'|format("Tunnel")}} {{'%-6s'|format("VNI")}}
+{{'%-9s'|format("======")}} {{'%-20s'|format("==============")}} {{'%-8s'|formatt
+("=======")}} {{'%-9s'|format("========")}} {{'%-6s'|format("======")}}
 
 {% if json_output %}
 
 {% for fdblist in  json_output['sonic-vxlan:VXLAN_FDB_TABLE_LIST']%}
-{{'%-9s'|format(fdblist['vlan'])}} {{'%-20s'|format(fdblist['mac_addr'])}} {{'%-8s'|format(fdblist['type'])}}
+{{'%-9s'|format(fdblist['vlan'])}} {{'%-20s'|format(fdblist['mac_addr'])}} {{'%--
+8s'|format(fdblist['type'])}} {{'%-12s'|format(fdblist['remote_vtep'])}} {{'%-6ss
+'|format(fdblist['vni'])}}
 {% set count.value = count.value + 1 %}
 {% endfor %}
 
 {{'\nTotal count : %4s\n'|format(count.value)}}
 {% endif %}
+
 

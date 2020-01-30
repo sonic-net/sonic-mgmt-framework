@@ -337,9 +337,19 @@ def vxlan_show_vxlan_evpn_remote_vni(args):
 	    print("no vxlan evpn remote vni entires")
 	elif response is not None:
            if len(response) != 0:
-               if (arg_length == 1) or (arg_length == 2 and args[1] == iter['remote_vtep']):
-                 show_cli_output(args[0], response)
-    return
+             if (arg_length == 1):
+                show_cli_output(args[0], response)
+             else:
+               index = 0
+               while (index < len(response['sonic-vxlan:EVPN_REMOTE_VNI_TABLE_LIST'])):
+                 iter = response['sonic-vxlan:EVPN_REMOTE_VNI_TABLE_LIST'][index]
+
+                 if (arg_length == 2 and (args[1] != iter['remote_vtep'])):
+                   response['sonic-vxlan:EVPN_REMOTE_VNI_TABLE_LIST'].pop(index)
+                 else:
+                   index = index + 1
+               show_cli_output(args[0], response)
+        return
 
 #show vxlan evpn remote mac
 def vxlan_show_vxlan_evpn_remote_mac(args):
@@ -348,13 +358,22 @@ def vxlan_show_vxlan_evpn_remote_mac(args):
     api_response = invoke("get_list_sonic_vxlan_sonic_vxlan_fdb_table_vxlan_fdb_table_list", args)
     if api_response.ok():
         response = api_response.content
-	if response is None:
-	    print("no vxlan fdb entries")
-	elif response is not None:
+        if response is None:
+            print("no vxlan fdb entries")
+        elif response is not None:
            if len(response) != 0:
-             if (arg_length == 1) or (arg_length == 2 and args[1] == iter['remote_vtep']):
-                  show_cli_output(args[0], response)       
-    return
+             if (arg_length == 1):
+                show_cli_output(args[0], response) 
+             else:
+               index = 0
+               while (index < len(response['sonic-vxlan:VXLAN_FDB_TABLE_LIST'])):
+                 iter = response['sonic-vxlan:VXLAN_FDB_TABLE_LIST'][index]
+                 if (arg_length == 2 and (args[1] != iter['remote_vtep'])):
+                   response['sonic-vxlan:VXLAN_FDB_TABLE_LIST'].pop(index)
+                 else:
+                   index = index + 1
+               show_cli_output(args[0], response)      
+        return
 
 
 def run(func, args):
@@ -430,3 +449,4 @@ if __name__ == '__main__':
 #           print("Map creation for {} vids succeeded.".format(count+1))
 #         else:
 #           print("Map deletion for {} vids succeeded.".format(count+1))
+

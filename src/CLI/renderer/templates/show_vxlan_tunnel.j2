@@ -6,7 +6,7 @@
 
 {% for tunnel in tunnel_list %}
 
-{{'%-20s'|format(tunnel['mapname'])}}{{'%-18s'|format(tunnel['src_ip'])}}{{'%-20s'|format(tunnel['dst_ip'])}}{{'%-12s'|format(tunnel['tnl_src'])}}{{'%-15s'|format(tunnel['operstatus'])}}
+{{'%-20s'|format(tunnel['name'])}}{{'%-18s'|format(tunnel['src_ip'])}}{{'%-20s'|format(tunnel['dst_ip'])}}{{'%-12s'|format(tunnel['tnl_src'])}}{{'%-15s'|format(tunnel['operstatus'])}}
 {% endfor %}
 
 {% endif %}
