@@ -24,6 +24,8 @@ const (
 	YANG_CONTAINER = "container"
 	YANG_LEAF      = "leaf"
 	YANG_LEAF_LIST = "leaf-list"
+	YANG_CHOICE    = "choice"
+	YANG_CASE      = "case"
 
 	YANG_ANNOT_DB_NAME    = "db-name"
 	YANG_ANNOT_TABLE_NAME = "table-name"

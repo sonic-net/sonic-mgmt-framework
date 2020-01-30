@@ -1,10 +1,6 @@
 {
     "tablelist": [
     {
-        "tablename": "ACL_RULE_TABLE",
-        "parent": "ACL_TABLE"
-    },
-    {
         "tablename": "BGP_GLOBALS_AF",
         "parent": "BGP_GLOBALS"
     },
