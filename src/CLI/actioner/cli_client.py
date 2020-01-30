@@ -100,8 +100,12 @@ class ApiClient(object):
     def patch(self, path, data={}):
         return self.request("PATCH", path, data)
 
-    def delete(self, path):
-        return self.request("DELETE", path, None)
+    def delete(self, path, ignore404=True):
+        resp = self.request("DELETE", path, data=None)
+        if ignore404 and resp.status_code == 404:
+            resp.status_code = 204
+            resp.content = None
+        return resp
 
     @staticmethod
     def prepare_query(depth=None):
