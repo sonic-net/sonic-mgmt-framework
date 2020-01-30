@@ -43,7 +43,7 @@ limitations under the License.
            iptype="ipv4"&#xA;
         fi&#xA;
         if test -n "${summary}"; then&#xA;
-           python $SONIC_CLI_ROOT/sonic_cli_bgp.py get_ip_bgp_summary show_ip_bgp_summary.j2 ${vrf-name} $iptype ${__full_line}&#xA;
+           python $SONIC_CLI_ROOT/sonic_cli_bgp.py get_ip_bgp_summary show_ip_bgp_summary.j2 ${vrf-name} $iptype&#xA;
         elif test -n "${prefix}"; then&#xA;
            python $SONIC_CLI_ROOT/sonic_cli_bgp.py get_show_bgp_prefix ${__full_line}&#xA;
         elif test -n "${peer-group}"; then&#xA;
@@ -259,14 +259,24 @@ limitations under the License.
       <ACTION builtin="clish_pyobj">sonic_cli_bgp patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_route_selection_options_config_external_compare_router_id ${vrf-name} True</ACTION>
   </COMMAND>
 
-  <COMMAND name="neighbor" help="Specify a neighbor router" view="configure-router-bgp-nbr-view" viewid="nbr-addr=${ip}${interface}${ifnum};vrf-name=${vrf-name}">
+  <COMMAND name="neighbor" help="Specify a neighbor router" view="configure-router-bgp-nbr-view" viewid="nbr-addr=${ip}${iftype}${ifnum};vrf-name=${vrf-name}">
     <PARAM name="nbopt" help="neighbor router" mode="switch" ptype="SUBCOMMAND">
       <PARAM name="ip" help="Neighbor router" ptype="IPV4V6_ADDR"/>
-      <PARAM name="interface" help="Interface type name" ptype="STRING">
-          <PARAM name="ifnum" help="Interfce number" ptype="LOOPBACK_NUM" optional="true"/>
+      <PARAM name="interface" help="Interface name" mode="subcommand" ptype="SUBCOMMAND">
+        <PARAM name="iftype" help="interface type" mode="switch" ptype="SUBCOMMAND">
+          <PARAM name="Ethernet" help="Select an interface" mode="subcommand" ptype="SUBCOMMAND">
+            <PARAM name="ifnum" help="Physical interface" ptype="UINT"/>
+          </PARAM>
+          <PARAM name="PortChannel" help="Port channel Interface Configuration" mode="subcommand" ptype="SUBCOMMAND">
+            <PARAM name="ifnum" help="PortChannel identifier" ptype="LAG_ID"/>
+          </PARAM>
+          <PARAM name="Vlan" help="Vlan Interface Configuration" mode="subcommand" ptype="SUBCOMMAND">
+            <PARAM name="ifnum" help="Vlan identifier" ptype="VLAN_ID"/>
+          </PARAM>
+        </PARAM>
       </PARAM>
     </PARAM>
-    <ACTION builtin="clish_pyobj">sonic_cli_bgp patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config ${vrf-name} ${ip} ${interface}${ifnum} ${instance}</ACTION>
+    <ACTION builtin="clish_pyobj">sonic_cli_bgp patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config ${vrf-name} ${ip} ${iftype}${ifnum} ${instance}</ACTION>
   </COMMAND>
 
   <COMMAND name="peer-group" help="Specify a peer-group" view="configure-router-bgp-template-view" viewid="template-name=${template-str};vrf-name=${vrf-name}">

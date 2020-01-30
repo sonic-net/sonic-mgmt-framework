@@ -31,6 +31,7 @@ import (
 	"translib/tlerr"
 	"translib/transformer"
 	"cvl"
+	"sync"
 )
 
 var ()
@@ -193,7 +194,7 @@ func (app *CommonApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
     var payload []byte
     var resPayload []byte
     log.Info("processGet:path =", app.pathInfo.Path)
-    txCache:= make(map[string]interface{})
+    txCache := new(sync.Map)
 
     for {
 	    // Keep a copy of the ygotRoot and let Transformer use this copy of ygotRoot
@@ -303,7 +304,7 @@ func (app *CommonApp) translateCRUDCommon(d *db.DB, opcode int) ([]db.WatchKeys,
 	var err error
 	var keys []db.WatchKeys
 	var tblsToWatch []*db.TableSpec
-	txCache:= make(map[string]interface{})
+	txCache := new(sync.Map)
 	log.Info("translateCRUDCommon:path =", app.pathInfo.Path)
 
 	// translate yang to db
@@ -585,11 +586,11 @@ func (app *CommonApp) cmnAppDelDbOpn(d *db.DB, opcode int, dbMap map[string]map[
 				log.Info("DELETE case - No table instances/rows found hence delete entire table = ", tblNm)
 				if !app.skipOrdTableChk {
 					for _, ordtbl := range ordTblList {
-						log.Info("Since parent table is to be deleted, first deleting child table = ", ordtbl)
 						if ordtbl == tblNm {
 							// Handle the child tables only till you reach the parent table entry
 							break
 						}
+						log.Info("Since parent table is to be deleted, first deleting child table = ", ordtbl)
 						dbTblSpec = &db.TableSpec{Name: ordtbl}
 						err = d.DeleteTable(dbTblSpec)
 						if err != nil {

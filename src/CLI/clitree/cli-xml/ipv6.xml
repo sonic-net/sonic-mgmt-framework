@@ -44,7 +44,7 @@ limitations under the License.
             name="addr"
             help="IPv6 address with mask"
             ptype="IPV6_ADDR_MASK" />
-        <ACTION>python $SONIC_CLI_ROOT/sonic_cli_if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config ${iface} ${addr} </ACTION>
+            <ACTION builtin="clish_pyobj">sonic_cli_if patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config ${iface} ${addr}</ACTION>
     </COMMAND>
 
     <COMMAND
@@ -54,7 +54,7 @@ limitations under the License.
             name="addr"
             help="IPv6 address"
             ptype="IPV6_ADDR" />
-        <ACTION>python $SONIC_CLI_ROOT/sonic_cli_if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config_prefix_length ${iface} ${addr} </ACTION>
+        <ACTION builtin="clish_restcl">oper=DELETE url=/restconf/data/openconfig-interfaces:interfaces/interface=${iface}/subinterfaces/subinterface=0/openconfig-if-ip:ipv6/addresses/address=${addr}/config/prefix-length</ACTION>
     </COMMAND>
   </VIEW>
 
@@ -77,13 +77,7 @@ limitations under the License.
         <PARAM name="gwaddr" help="Default Gateway address" ptype="SUBCOMMAND" mode="subcommand" optional="true" >
             <PARAM name="gw_addr" help="Gateway IP address" ptype="IPV6_ADDR" />
         </PARAM>
-        <ACTION>
-            if test "${gw_addr}" = ""; then&#xA;
-            python $SONIC_CLI_ROOT/sonic_cli_if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config ${iface} ${addr}&#xA;
-            else&#xA;
-            python $SONIC_CLI_ROOT/sonic_cli_if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config ${iface} ${addr} ${gw_addr}&#xA;
-            fi&#xA;
-        </ACTION>
+         <ACTION builtin="clish_pyobj">sonic_cli_if patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config ${iface} ${addr} ${gw_addr}</ACTION>
     </COMMAND>
 
     <COMMAND
@@ -93,7 +87,7 @@ limitations under the License.
             name="addr"
             help="IPv6 address"
             ptype="IPV6_ADDR" />
-        <ACTION>python $SONIC_CLI_ROOT/sonic_cli_if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config_prefix_length ${iface} ${addr} </ACTION>
+        <ACTION builtin="clish_restcl">oper=DELETE url=/restconf/data/openconfig-interfaces:interfaces/interface=${iface}/subinterfaces/subinterface=0/openconfig-if-ip:ipv6/addresses/address=${addr}/config/prefix-length</ACTION>
     </COMMAND>
 </VIEW>
 
@@ -113,7 +107,8 @@ limitations under the License.
             name="addr"
             help="IPv6 address with mask"
             ptype="IPV6_ADDR_MASK" />
-        <ACTION>python $SONIC_CLI_ROOT/sonic_cli_if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config ${po_name} ${addr} </ACTION>
+        <ACTION builtin="clish_pyobj">sonic_cli_if patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config ${po_name} ${addr}</ACTION>
+
     </COMMAND>
 
     <COMMAND
@@ -123,7 +118,7 @@ limitations under the License.
             name="addr"
             help="IPv6 address"
             ptype="IPV6_ADDR" />
-        <ACTION>python $SONIC_CLI_ROOT/sonic_cli_if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config_prefix_length ${po_name} ${addr} </ACTION>
+        <ACTION builtin="clish_restcl">oper=DELETE url=/restconf/data/openconfig-interfaces:interfaces/interface=${po_name}/subinterfaces/subinterface=0/openconfig-if-ip:ipv6/addresses/address=${addr}/config/prefix-length</ACTION>
     </COMMAND>
 </VIEW>
 
@@ -147,7 +142,7 @@ limitations under the License.
              name="addr"
              help="IPv6 address with mask"
              ptype="IPV6_ADDR_MASK" />
-         <ACTION>python $SONIC_CLI_ROOT/sonic_cli_if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config ${vlan_id} ${addr} </ACTION>
+      <ACTION builtin="clish_pyobj">sonic_cli_if patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config ${vlan_name} ${addr}</ACTION>
       </COMMAND>
 
       <COMMAND
@@ -157,7 +152,7 @@ limitations under the License.
               name="addr"
               help="IPv6 address"
               ptype="IPV6_ADDR" />
-          <ACTION>python $SONIC_CLI_ROOT/sonic_cli_if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config_prefix_length ${vlan_id} ${addr} </ACTION>
+         <ACTION builtin="clish_restcl">oper=DELETE url=/restconf/data/openconfig-interfaces:interfaces/interface=${vlan_name}/subinterfaces/subinterface=0/openconfig-if-ip:ipv6/addresses/address=${addr}/config/prefix-length</ACTION>
       </COMMAND>
 </VIEW>
 
@@ -180,7 +175,7 @@ limitations under the License.
              name="addr"
              help="IPv6 address with mask (/128 is supported)"
              ptype="IPV6_ADDR_MASK" />
-         <ACTION>python $SONIC_CLI_ROOT/sonic_cli_if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config ${lo_name} ${addr} </ACTION>
+          <ACTION builtin="clish_pyobj">sonic_cli_if patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config ${lo_name} ${addr}</ACTION>
       </COMMAND>
 
       <COMMAND
@@ -190,7 +185,8 @@ limitations under the License.
               name="addr"
               help="IPv6 address"
               ptype="IPV6_ADDR" />
-          <ACTION>python $SONIC_CLI_ROOT/sonic_cli_if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config_prefix_length ${lo_name} ${addr} </ACTION>
+          <ACTION builtin="clish_restcl">oper=DELETE url=/restconf/data/openconfig-interfaces:interfaces/interface=${lo_name}/subinterfaces/subinterface=0/openconfig-if-ip:ipv6/addresses/address=${addr}/config/prefix-length</ACTION>
+
       </COMMAND>
 </VIEW>
 
@@ -200,6 +196,15 @@ limitations under the License.
         name="show ipv6"
         >
     <ACTION builtin="clish_nop"/>
+    </COMMAND>
+    <!-- show ipv6 interfaces -->
+    <COMMAND
+        name="show ipv6 interfaces"
+        help="IPv6 Info of Interfaces"
+        >
+    <ACTION>
+       python $SONIC_CLI_ROOT/sonic_cli_if.py ip6_interfaces_get show_ip_interfaces_sonic.j2 ${__full_line}
+    </ACTION>
     </COMMAND>
 
     <!-- show ip route -->
