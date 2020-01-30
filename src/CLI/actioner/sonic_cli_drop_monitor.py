@@ -49,7 +49,7 @@ def invoke_api(func, args):
            return api.patch(path, body)
        else:
            path = cc.Path('/restconf/data/sonic-tam-drop-monitor:sonic-tam-drop-monitor/TAM_DROP_MONITOR_FEATURE_TABLE')
-           return api.delete(path, body)
+           return api.delete(path)
 
 
     elif func == 'patch_sonic_tam_drop_monitor_sonic_tam_drop_monitor_tam_drop_monitor_aging_interval_table_tam_drop_monitor_aging_interval_table_list_aging_interval':
