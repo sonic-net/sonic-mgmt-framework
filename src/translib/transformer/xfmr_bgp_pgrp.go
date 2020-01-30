@@ -3,6 +3,7 @@ package transformer
 import (
     "errors"
     "strings"
+    "translib/db"
     "translib/ocbinds"
     "github.com/openconfig/ygot/ygot"
     log "github.com/golang/glog"
@@ -17,6 +18,8 @@ func init () {
     XlateFuncBind("YangToDb_bgp_pgrp_name_fld_xfmr", YangToDb_bgp_pgrp_name_fld_xfmr)
     XlateFuncBind("DbToYang_bgp_pgrp_name_fld_xfmr", DbToYang_bgp_pgrp_name_fld_xfmr)
     XlateFuncBind("DbToYang_bgp_peer_group_mbrs_state_xfmr", DbToYang_bgp_peer_group_mbrs_state_xfmr)
+    XlateFuncBind("YangToDb_bgp_pgrp_auth_password_xfmr", YangToDb_bgp_pgrp_auth_password_xfmr)
+    XlateFuncBind("DbToYang_bgp_pgrp_auth_password_xfmr", DbToYang_bgp_pgrp_auth_password_xfmr)
 }
 
 var YangToDb_bgp_pgrp_name_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
@@ -279,3 +282,112 @@ var DbToYang_bgp_peer_group_mbrs_state_xfmr SubTreeXfmrDbToYang = func(inParams 
     err = get_specific_pgrp_state (pgrp_obj, &pgrp_key)
     return err;
 }
+
+var YangToDb_bgp_pgrp_auth_password_xfmr SubTreeXfmrYangToDb = func(inParams XfmrParams) (map[string]map[string]db.Value, error) {
+    var err error
+    res_map := make(map[string]map[string]db.Value)
+    authmap := make(map[string]db.Value)
+
+    var bgp_obj *ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp
+
+    bgp_obj, niName, err := getBgpRoot (inParams)
+    if err != nil {
+        log.Errorf ("BGP root get failed!");
+        return res_map, err
+    }
+
+    pathInfo := NewPathInfo(inParams.uri)
+    targetUriPath, _ := getYangPathFromUri(pathInfo.Path)
+    pgrp := pathInfo.Var("peer-group-name")
+    log.Infof("YangToDb_bgp_pgrp_auth_password_xfmr VRF:%s peer group:%s URI:%s", niName, pgrp, targetUriPath)
+
+    pgrps_obj := bgp_obj.PeerGroups
+    if pgrps_obj == nil {
+        log.Errorf("Error: PeerGroups container missing")
+        return res_map, err
+    }
+
+    pgrp_obj, ok := pgrps_obj.PeerGroup[pgrp]
+    if !ok {
+        log.Infof("%s Peer group object missing, add new", pgrp)
+        return res_map, err
+    }
+    entry_key := niName + "|" + pgrp 
+    if pgrp_obj.AuthPassword.Config != nil && pgrp_obj.AuthPassword.Config.Password != nil && (inParams.oper != DELETE){
+        auth_password := pgrp_obj.AuthPassword.Config.Password
+        encrypted := pgrp_obj.AuthPassword.Config.Encrypted
+        log.Infof("PeerGroup password:%d encrypted:%s", *auth_password, *encrypted)
+
+        encrypted_password := *auth_password
+        if encrypted == nil || (encrypted != nil && *encrypted == false) {
+            cmd := "show bgp encrypt " + *auth_password + " json"
+            bgpPgrpPasswordJson, cmd_err := exec_vtysh_cmd (cmd)
+            if (cmd_err != nil) {
+                log.Errorf ("Failed !! Error:%s", cmd_err);
+                return res_map, err
+            }
+            encrypted_password, ok = bgpPgrpPasswordJson["Encrypted_string"].(string); if !ok {
+                return res_map, err
+            }
+        }
+        log.Infof("PeerGroup password:%s encrypted:%s", *auth_password, encrypted_password)
+        authmap[entry_key] = db.Value{Field: make(map[string]string)}
+        authmap[entry_key].Field["auth_password"] = encrypted_password
+    } else if (inParams.oper == DELETE) {
+        authmap[entry_key] = db.Value{Field: make(map[string]string)}
+        authmap[entry_key].Field["auth_password"] = ""
+    }
+
+    res_map["BGP_PEER_GROUP"] = authmap
+    return res_map, err
+}
+
+var DbToYang_bgp_pgrp_auth_password_xfmr SubTreeXfmrDbToYang = func (inParams XfmrParams) (error) {
+    var err error
+    var bgp_obj *ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp
+
+    bgp_obj, niName, err := getBgpRoot (inParams)
+    if err != nil {
+        log.Errorf ("BGP root get failed!");
+        return err
+    }
+
+    pathInfo := NewPathInfo(inParams.uri)
+    targetUriPath, _ := getYangPathFromUri(pathInfo.Path)
+    pgrp := pathInfo.Var("peer-group-name")
+    log.Infof("DbToYang_bgp_pgrp_auth_password_xfmr VRF:%s Peer group:%s URI:%s", niName, pgrp, targetUriPath)
+
+    pgrps_obj := bgp_obj.PeerGroups
+    if pgrps_obj == nil {
+        log.Errorf("Error: PeerGroup container missing")
+        return err
+    }
+
+    pgrp_obj, ok := pgrps_obj.PeerGroup[pgrp]
+    if !ok {
+        log.Infof("%s PeerGroup object missing, add new", pgrp)
+        pgrp_obj,_ = pgrps_obj.NewPeerGroup(pgrp)
+    }
+    ygot.BuildEmptyTree(pgrp_obj)
+
+    
+    pgrpCfgTblTs := &db.TableSpec{Name: "BGP_PEER_GROUP"}
+    pgrpEntryKey := db.Key{Comp: []string{niName, pgrp}}
+
+    var entryValue db.Value
+    if entryValue, err = inParams.dbs[db.ConfigDB].GetEntry(pgrpCfgTblTs, pgrpEntryKey) ; err != nil {
+        return err
+    }
+
+    if value, ok := entryValue.Field["auth_password"] ; ok {
+        pgrp_obj.AuthPassword.Config.Password = &value
+        pgrp_obj.AuthPassword.State.Password = &value
+        encrypted := true
+        pgrp_obj.AuthPassword.Config.Encrypted = &encrypted
+        pgrp_obj.AuthPassword.State.Encrypted = &encrypted
+    }
+
+    return err
+}
+
+

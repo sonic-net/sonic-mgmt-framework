@@ -32,6 +32,8 @@ func init () {
     XlateFuncBind("DbToYang_bgp_nbr_orf_type_fld_xfmr", DbToYang_bgp_nbr_orf_type_fld_xfmr)
     XlateFuncBind("YangToDb_bgp_nbr_tx_add_paths_fld_xfmr", YangToDb_bgp_nbr_tx_add_paths_fld_xfmr)
     XlateFuncBind("DbToYang_bgp_nbr_tx_add_paths_fld_xfmr", DbToYang_bgp_nbr_tx_add_paths_fld_xfmr)
+    XlateFuncBind("YangToDb_bgp_nbrs_nbr_auth_password_xfmr", YangToDb_bgp_nbrs_nbr_auth_password_xfmr)
+    XlateFuncBind("DbToYang_bgp_nbrs_nbr_auth_password_xfmr", DbToYang_bgp_nbrs_nbr_auth_password_xfmr)
 }
 
 var bgp_nbr_tbl_xfmr TableXfmrFunc = func (inParams XfmrParams)  ([]string, error) {
@@ -772,10 +774,6 @@ func fill_nbr_state_cmn_info (nbr_key *_xfmr_bgp_nbr_state_key, frrNbrDataValue 
             nbrState.Description = &value
         }
 
-        if value, ok := cfgDbEntry["auth_password"] ; ok {
-            nbrState.AuthPassword = &value
-        }
-
         if value, ok := cfgDbEntry["peer_type"] ; ok {
             switch value {
                 case "internal":
@@ -1165,7 +1163,11 @@ var DbToYang_bgp_nbrs_nbr_af_state_xfmr SubTreeXfmrDbToYang = func(inParams Xfmr
         return nbr_cmd_err
     }
 
-    frrNbrDataJson := nbrMapJson[nbr_af_key.nbrAddr].(map[string]interface{})
+    frrNbrDataJson, ok := nbrMapJson[nbr_af_key.nbrAddr].(map[string]interface{}); if ok {
+        log.Errorf("Failed to decode data from bgp neighbors state info for niName:%s nbrAddr:%s afi-safi-name:%s. Err: %s\n",
+                   nbr_af_key.niName, nbr_af_key.nbrAddr, afiSafi_cmd, nbr_cmd_err)
+        return nbr_cmd_err
+    }
     nbrs_af_state_obj.AfiSafiName = nbr_af_key.afiSafiNameEnum
 
     if cfgDbEntry, cfgdb_get_err := get_spec_nbr_af_cfg_tbl_entry (inParams.dbs[db.ConfigDB], &nbr_af_key) ; cfgdb_get_err == nil {
@@ -1410,3 +1412,107 @@ var DbToYang_bgp_nbr_orf_type_fld_xfmr FieldXfmrDbtoYang = func(inParams XfmrPar
     }
     return result, err
 }
+
+var YangToDb_bgp_nbrs_nbr_auth_password_xfmr SubTreeXfmrYangToDb = func(inParams XfmrParams) (map[string]map[string]db.Value, error) {
+    var err error
+    res_map := make(map[string]map[string]db.Value)
+    authmap := make(map[string]db.Value)
+
+    var bgp_obj *ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp
+
+    bgp_obj, niName, err := getBgpRoot (inParams)
+    if err != nil {
+        log.Errorf ("BGP root get failed!");
+        return res_map, err
+    }
+
+    pathInfo := NewPathInfo(inParams.uri)
+    targetUriPath, _ := getYangPathFromUri(pathInfo.Path)
+    nbrAddr := pathInfo.Var("neighbor-address")
+    log.Infof("YangToDb_bgp_nbrs_nbr_auth_password_xfmr VRF:%s nbrAddr:%s URI:%s", niName, nbrAddr, targetUriPath)
+
+    nbrs_obj := bgp_obj.Neighbors
+    if nbrs_obj == nil {
+        log.Errorf("Error: Neighbors container missing")
+        return res_map, err
+    }
+
+    nbr_obj, ok := nbrs_obj.Neighbor[nbrAddr]
+    if !ok {
+        log.Infof("%s Neighbor object missing, add new", nbrAddr)
+        return res_map, err
+    }
+    entry_key := niName + "|" + nbrAddr
+    if nbr_obj.AuthPassword.Config != nil && nbr_obj.AuthPassword.Config.Password != nil && (inParams.oper != DELETE){
+        auth_password := nbr_obj.AuthPassword.Config.Password
+        encrypted := nbr_obj.AuthPassword.Config.Encrypted
+        log.Infof("Neighbor password:%d encrypted:%s", *auth_password, *encrypted)
+
+        encrypted_password := *auth_password
+        if encrypted == nil || (encrypted != nil && *encrypted == false) {
+            cmd := "show bgp encrypt " + *auth_password + " json"
+            bgpNeighPasswordJson, cmd_err := exec_vtysh_cmd (cmd)
+            if (cmd_err != nil) {
+                log.Errorf ("Failed !! Error:%s", cmd_err);
+                return res_map, err
+            }
+            encrypted_password, ok = bgpNeighPasswordJson["Encrypted_string"].(string); if !ok {
+                return res_map, err
+            }
+            log.Infof("Neighbor password:%s encrypted:%s", *auth_password, encrypted_password)
+        }
+
+        authmap[entry_key] = db.Value{Field: make(map[string]string)}
+        authmap[entry_key].Field["auth_password"] = encrypted_password
+    } else if (inParams.oper == DELETE) {
+        authmap[entry_key] = db.Value{Field: make(map[string]string)}
+        authmap[entry_key].Field["auth_password"] = ""
+    }
+    res_map["BGP_NEIGHBOR"] = authmap
+    return res_map, err
+}
+
+var DbToYang_bgp_nbrs_nbr_auth_password_xfmr SubTreeXfmrDbToYang = func (inParams XfmrParams) (error) {
+    var err error
+    var bgp_obj *ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp
+
+    bgp_obj, niName, err := getBgpRoot (inParams)
+    if err != nil {
+        log.Errorf ("BGP root get failed!");
+        return err
+    }
+
+    pathInfo := NewPathInfo(inParams.uri)
+    targetUriPath, _ := getYangPathFromUri(pathInfo.Path)
+    nbrAddr := pathInfo.Var("neighbor-address")
+    log.Infof("DbToYang_bgp_nbrs_nbr_auth_password_xfmr VRF:%s nbrAddr:%s URI:%s", niName, nbrAddr, targetUriPath)
+
+    nbrs_obj := bgp_obj.Neighbors
+    if nbrs_obj == nil {
+        log.Errorf("Error: Neighbors container missing")
+        return err
+    }
+
+    nbr_obj, ok := nbrs_obj.Neighbor[nbrAddr]
+    if !ok {
+        log.Infof("%s Neighbor object missing, add new", nbrAddr)
+        nbr_obj,_ = nbrs_obj.NewNeighbor(nbrAddr)
+    }
+    ygot.BuildEmptyTree(nbr_obj)
+    var nbr_key _xfmr_bgp_nbr_state_key
+    nbr_key.niName = niName
+    nbr_key.nbrAddr = nbrAddr
+    if cfgDbEntry, cfgdb_get_err := get_spec_nbr_cfg_tbl_entry (inParams.dbs[db.ConfigDB], &nbr_key) ; cfgdb_get_err == nil {
+        if value, ok := cfgDbEntry["auth_password"] ; ok {
+            nbr_obj.AuthPassword.Config.Password = &value
+            nbr_obj.AuthPassword.State.Password = &value
+            encrypted := true
+            nbr_obj.AuthPassword.Config.Encrypted = &encrypted
+            nbr_obj.AuthPassword.State.Encrypted = &encrypted
+        }
+    }
+
+    return err
+}
+
+

@@ -187,6 +187,9 @@ class Response(object):
     def __getitem__(self, key):
         return self.content[key]
 
+def _has_json_content(resp):
+    ctype = resp.headers.get('Content-Type')
+    return (ctype is not None and 'json' in ctype)
 
 def _has_json_content(resp):
     ctype = resp.headers.get('Content-Type')

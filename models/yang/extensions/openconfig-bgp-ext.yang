@@ -8,6 +8,7 @@ module openconfig-bgp-ext {
   prefix "oc-bgp-ext";
 
   import openconfig-inet-types { prefix oc-inet; }
+  import openconfig-types { prefix oc-types; }
   // import some basic types
   import openconfig-network-instance { prefix oc-netinst; }
   import openconfig-bgp-types { prefix oc-bgp-types; }
@@ -552,6 +553,47 @@ module openconfig-bgp-ext {
           }
       }
   }
+
+  grouping bgp-ext-auth-password-config {
+      leaf password {
+          type oc-types:routing-password;
+          description
+              "Authentication password for the neighbor group, 
+              this will be changed to encrypted text internally 
+              when the encrypted flag is configured with false.";
+      }
+
+      leaf encrypted {
+          type boolean;
+          default "false";
+          description
+              "This leaf indicates whether the auth-password is encrypted text, 
+              the value of this will be changed to true internally when the auth-password
+              is configured with encrypted false.";
+      }
+  }
+
+  grouping bgp-ext-neighbor-group-auth-password {
+      description
+          "Configuration parameters related to authentication password for neighbor group.";
+
+      container auth-password {
+          description
+              "Parameters relating to BGP authentication password";
+          container config {
+              description
+                  "Configuration information for BGP neighbor group authentication routes.";
+              uses bgp-ext-auth-password-config;
+          }
+          container state {
+              config false;
+              description
+                  "State information for BGP neighbor group authentication routes.";
+              uses bgp-ext-auth-password-config;
+          }
+      }
+  }
+
 
   grouping bgp-ext-neighbor-group-config{
       leaf disable-ebgp-connected-route-check {
@@ -1828,6 +1870,10 @@ deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:p
 	  uses bgp-ext-global-afi-safi-ibgp-config;
   }
 
+  augment /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor {
+      uses bgp-ext-neighbor-group-auth-password;
+  }
+
   augment /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:config {
       uses bgp-ext-neighbor-group-config;
   }
@@ -1842,6 +1888,10 @@ deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:p
 
   augment /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:state/oc-netinst:messages/oc-netinst:received {
       uses bgp-ext-neighbor-state-msgs;
+  }
+
+  augment /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group {
+      uses bgp-ext-neighbor-group-auth-password; 
   }
 
   augment /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:config {
@@ -2060,4 +2110,20 @@ deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:p
   deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:rib/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv6-unicast/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:adj-rib-out-post/oc-netinst:routes/oc-netinst:route/oc-bgp-ext:attr-sets/oc-bgp-ext:as4-path {
 	  deviate not-supported;
   }
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:config/oc-netinst:auth-password {
+	  deviate not-supported;
+  }
+ 
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:state/oc-netinst:auth-password {
+	  deviate not-supported;
+  }
+  
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:config/oc-netinst:auth-password {
+	  deviate not-supported;
+  }
+ 
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:state/oc-netinst:auth-password {
+	  deviate not-supported;
+  }
+
 }

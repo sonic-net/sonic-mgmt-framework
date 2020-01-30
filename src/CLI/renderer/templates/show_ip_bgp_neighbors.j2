@@ -15,6 +15,13 @@
                 {{-', external link\n'}}
             {% endif %}
 
+            {% set vars = {'nbr_enabled': "False"} %}
+            {% if vars.update({'nbr_enabled':n_state['enabled']}) %}{% endif %}
+            {% if vars.nbr_enabled == 'True' %}
+                {{-'Administratively up\n'}}
+            {% else %}
+                {{-'Administratively shut down\n'}}
+            {% endif %}
             {{-'  BGP version '}}{{'4'-}}
             {{-', remote router ID '}}{{' '-}}
             {{-', local router ID '}}{{' '}}
@@ -28,9 +35,34 @@
             {% else %}
                 {{-'  BGP state = Unestablished'}}
             {% endif %}
-            {% set n_timers_state = neighbor['timers']['state'] %}
-            {{-'  Hold time is '}}{{n_timers_state['negotiated-hold-time']-}}
-            {{-', keepalive interval is '}}{{n_timers_state['keepalive-interval']}}{{' seconds\n'}}
+            {% set vars = {'hold_time': ""} %}
+            {% set vars = {'kpa_intvl': ""} %}
+            {% set vars = {'nego_time': ""} %}
+            {% if vars.update({'hold_time':neighbor['timers']['state']['hold-time']}) %}{% endif %}
+            {% if vars.update({'kpa_intvl':neighbor['timers']['state']['keepalive-interval']}) %}{% endif %}
+            {% if vars.update({'nego_time':neighbor['timers']['state']['negotiated-hold-time']}) %}{% endif %}
+            {{-'  Hold time is '}}{{vars.hold_time-}}
+            {{-', keepalive interval is '}}{{vars.kpa_intvl}}{{' seconds,'-}}
+            {{-'  negotiated hold time is '}}{{vars.nego_time}}{{'\n'}}
+
+            {% if 'afi-safis' in neighbor %}
+                {% set afi_safis = neighbor['afi-safis']['afi-safi'] %}
+                {% for afi_safi in afi_safis %}
+                    {% if 'state' in afi_safi and 'openconfig-bgp-ext:route-reflector-client' in afi_safi['state'] %}
+                        {% if afi_safi['state']['openconfig-bgp-ext:route-reflector-client'] == 'True' %}
+                            {{-'Route reflector client enabled\n'}}
+                        {% else %}
+                            {{-'Route reflector client disabled\n'}}
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+
+            {% set vars = {'nbr_bfd': "False"} %}
+            {% if vars.update({'nbr_bfd':n_state['openconfig-bgp-ext:bfd']}) %}{% endif %}
+            {% if vars.nbr_bfd == 'True' %}
+                {{-'  BFD enabled\n'}}
+            {% endif %}
             {{-'  Neighbor capabilities:\n'}}
             {{-'    4 Byte AS: advertised and received\n'}}
             {% if 'queues' in n_state %}
@@ -40,17 +72,43 @@
                 {{-'    OutQ depth is '}}{{n_queues['output']}}{{'\n'}}
             {% endif %}
             {% if 'messages' in n_state %}
+                {% set n_sent = 0 %}
+                {% set n_rcvd = 0 %}
                 {% set n_messages = n_state['messages'] %}
                 {{-'                         Sent        Rcvd\n'}}
+                {{-'    Opens:'.ljust(25)-}}
+                {{-(n_messages['sent']['openconfig-bgp-ext:OPEN']|string).ljust(12)-}}
+                {{-(n_messages['received']['openconfig-bgp-ext:OPEN']|string)}}{{'\n'}}
+                {% set n_sent = n_sent + n_messages['sent']['openconfig-bgp-ext:OPEN']|int %}
+                {% set n_rcvd = n_rcvd + n_messages['received']['openconfig-bgp-ext:OPEN']|int %}
                 {{-'    Notifications:'.ljust(25)-}}
                 {{-(n_messages['sent']['NOTIFICATION']|string).ljust(12)-}}
                 {{-(n_messages['received']['NOTIFICATION']|string)}}{{'\n'}}
+                {% set n_sent = n_sent + n_messages['sent']['NOTIFICATION']|int %}
+                {% set n_rcvd = n_rcvd + n_messages['received']['NOTIFICATION']|int %}
                 {{-'    Updates:'.ljust(25)-}}
                 {{-(n_messages['sent']['UPDATE']|string).ljust(12)-}}
                 {{-(n_messages['received']['UPDATE']|string)}}{{'\n'}}
+                {% set n_sent = n_sent + n_messages['sent']['UPDATE']|int %}
+                {% set n_rcvd = n_rcvd + n_messages['received']['UPDATE']|int %}
+                {{-'    Keepalive:'.ljust(25)-}}
+                {{-(n_messages['sent']['openconfig-bgp-ext:KEEPALIVE']|string).ljust(12)-}}
+                {{-(n_messages['received']['openconfig-bgp-ext:KEEPALIVE']|string)}}{{'\n'}}
+                {% set n_sent = n_sent + n_messages['sent']['openconfig-bgp-ext:KEEPALIVE']|int %}
+                {% set n_rcvd = n_rcvd + n_messages['received']['openconfig-bgp-ext:KEEPALIVE']|int %}
+                {{-'    Route Refresh:'.ljust(25)-}}
+                {{-(n_messages['sent']['openconfig-bgp-ext:ROUTE-REFRESH']|string).ljust(12)-}}
+                {{-(n_messages['received']['openconfig-bgp-ext:ROUTE-REFRESH']|string)}}{{'\n'}}
+                {% set n_sent = n_sent + n_messages['sent']['openconfig-bgp-ext:ROUTE-REFRESH']|int %}
+                {% set n_rcvd = n_rcvd + n_messages['received']['openconfig-bgp-ext:ROUTE-REFRESH']|int %}
+                {{-'    Capability:'.ljust(25)-}}
+                {{-(n_messages['sent']['openconfig-bgp-ext:CAPABILITY']|string).ljust(12)-}}
+                {{-(n_messages['received']['openconfig-bgp-ext:CAPABILITY']|string)}}{{'\n'}}
+                {% set n_sent = n_sent + n_messages['sent']['openconfig-bgp-ext:CAPABILITY']|int %}
+                {% set n_rcvd = n_rcvd + n_messages['received']['openconfig-bgp-ext:CAPABILITY']|int %}
                 {{-'    Total:'.ljust(25)-}}
-                {{-(n_messages['sent']['NOTIFICATION']+n_messages['sent']['UPDATE']|string).ljust(12)-}}
-                {{-(n_messages['received']['NOTIFICATION']+n_messages['received']['UPDATE']|string)}}{{'\n'}}
+                {{-(n_sent|string).ljust(12)-}}
+                {{-(n_rcvd|string)}}{{'\n'}}
             {% endif %}
             {% if 'transport' in neighbor %}
                 {% set n_tp_state = neighbor['transport']['state'] %}
