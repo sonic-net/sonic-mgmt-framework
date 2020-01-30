@@ -66,6 +66,11 @@ def config_response_handler(api_response, func, args):
                    print('Error: Invalid VNI. Valid range [1 to 16777215]')
                 elif err_app_tag == 'invalid-vtep-name':
                    print('Error: VTEP name should start with "vtep"')
+                elif err_app_tag == 'update-disallowed':
+                   if err_msg is not None:
+                      print("{}".format(err_msg))
+                   else:
+                      print err_app_tag
                 elif err_app_tag == 'instance-required':
                    if err_msg is not None:
                       print("Error: {}".format(err_msg))
