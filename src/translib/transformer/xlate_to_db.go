@@ -679,9 +679,11 @@ func dbMapDefaultFieldValFill(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri str
 								}
 							} else {
 								var xfmrErr error
-								err := mapFillDataUtil(d, ygRoot, oper, uri, requestUri, childXpath, tblName, dbKey, result, subOpDataMap, childName, childNode.defVal, txCache, &xfmrErr)
-								if err != nil {
-									return err
+								if _, ok := xDbSpecMap[tblName+"/"+childNode.fieldName]; ok {
+									err := mapFillDataUtil(d, ygRoot, oper, uri, requestUri, childXpath, tblName, dbKey, result, subOpDataMap, childName, childNode.defVal, txCache, &xfmrErr)
+									if err != nil {
+										return err
+									}
 								}
 							}
 						}

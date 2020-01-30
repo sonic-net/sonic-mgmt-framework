@@ -49,3 +49,5 @@ openconfig-mclag.yang
 openconfig-mclag-annot.yang
 sonic-bgp-clear.yang
 sonic-bgp-clear-annot.yang
+openconfig-vxlan.yang
+openconfig-vxlan-annot.yang
