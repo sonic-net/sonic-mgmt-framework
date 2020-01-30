@@ -74,6 +74,30 @@ module sonic-mgmt-interface {
 
         }
 
+        container MGMT_INTF_TABLE {
+            config false;
+
+            list MGMT_INTF_TABLE_LIST {
+                key "ifName";
+
+                leaf ifName {
+                    type string;
+                }
+            }
+
+            list MGMT_INTF_TABLE_IPADDR_LIST {
+                key "ifName ipPrefix";
+
+                leaf ifName {
+                   type string;
+                }
+
+                leaf ipPrefix {
+                    type inet:ip-prefix;
+                }
+             }
+        }
+
     }
 
 }

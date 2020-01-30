@@ -197,6 +197,15 @@ limitations under the License.
         >
     <ACTION builtin="clish_nop"/>
     </COMMAND>
+    <!-- show ipv6 interfaces -->
+    <COMMAND
+        name="show ipv6 interfaces"
+        help="IPv6 Info of Interfaces"
+        >
+    <ACTION>
+       python $SONIC_CLI_ROOT/sonic_cli_if.py ip6_interfaces_get show_ip_interfaces_sonic.j2 ${__full_line}
+    </ACTION>
+    </COMMAND>
 
     <!-- show ip route -->
     <COMMAND
