@@ -15,42 +15,42 @@ Copyright 2020 Broadcom, Inc.
 <VIEW name="enable-view">
   <!-- show snmp-server -->
   <COMMAND name="show snmp-server" help="Show SNMP Server information">
-    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py snmp_get show_snmp.j2&#xA;</ACTION>
+    <ACTION builtin="clish_pyobj">sonic_cli_snmp snmp_get show_snmp.j2</ACTION>
     <xi:include href="include/pipe.xml"/>
     <xi:include href="include/pipe.xml"/>
   </COMMAND>
 
 <!-- show snmp-server community -->
   <COMMAND name="show snmp-server community" help="Show SNMP Community Configuration">
-    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py snmp_community_get show_snmp_community.j2&#xA;</ACTION>
+    <ACTION builtin="clish_pyobj">sonic_cli_snmp snmp_community_get show_snmp_community.j2</ACTION>
     <xi:include href="include/pipe.xml"/>
     <xi:include href="include/pipe.xml"/>
    </COMMAND>
 
 <!-- show snmp-server group -->
   <COMMAND name="show snmp-server group" help="Show SNMP Group Configuration">
-    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py snmp_group_access_get show_snmp_group.j2&#xA;</ACTION>
+    <ACTION builtin="clish_pyobj">sonic_cli_snmp snmp_group_access_get show_snmp_group.j2</ACTION>
     <xi:include href="include/pipe.xml"/>
     <xi:include href="include/pipe.xml"/>
   </COMMAND>
 
 <!-- show snmp-server user -->
   <COMMAND name="show snmp-server user" help="Show SNMP User Configuration">
-    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py snmp_user_get show_snmp_user.j2&#xA;</ACTION>
+    <ACTION builtin="clish_pyobj">sonic_cli_snmp snmp_user_get show_snmp_user.j2</ACTION>
     <xi:include href="include/pipe.xml"/>
     <xi:include href="include/pipe.xml"/>
   </COMMAND>
 
 <!-- show snmp-server view -->
 <COMMAND name="show snmp-server view" help="Show SNMP View Configuration">
-  <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py snmp_view_get show_snmp_view.j2&#xA;</ACTION>
+  <ACTION builtin="clish_pyobj">sonic_cli_snmp snmp_view_get show_snmp_view.j2</ACTION>
   <xi:include href="include/pipe.xml"/>
   <xi:include href="include/pipe.xml"/>
 </COMMAND>
 
 <!-- show snmp-server host -->
 <COMMAND name="show snmp-server host" help="Show SNMP Trap/Notification Configuration">
-  <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py snmp_host_get show_snmp_host.j2&#xA;</ACTION>
+  <ACTION builtin="clish_pyobj">sonic_cli_snmp snmp_host_get show_snmp_host.j2</ACTION>
   <xi:include href="include/pipe.xml"/>
   <xi:include href="include/pipe.xml"/>
 </COMMAND>
@@ -77,22 +77,22 @@ Before each command articulation, a comment is shown with the desired command sy
 
   <COMMAND name="snmp-server location" help="Configure SNMP Location">
     <PARAM name="location-name" help="SNMP location" ptype="STRING"/>
-    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py  snmp_location  "${location-name}"&#xA; </ACTION>
+    <ACTION>python $SONIC_CLI_ROOT/sonic_cli_snmp.py  snmp_location  "${location-name}"&#xA; </ACTION>
   </COMMAND>
 
   <COMMAND name="snmp-server contact" help="Configure SNMP Contact">
     <PARAM name="contact-name" help="SNMP contact" ptype="STRING"/>
-    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py  snmp_contact  "${contact-name}"&#xA; </ACTION>
+    <ACTION>python $SONIC_CLI_ROOT/sonic_cli_snmp.py  snmp_contact  "${contact-name}"&#xA; </ACTION>
   </COMMAND>
 
   <COMMAND name="snmp-server enable" help="Configure SNMP Traps">
     <PARAM name="trap" help="Enable traps" ptype="SUBCOMMAND"  mode="subcommand"/>
-    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py  snmp_trap enable&#xA; </ACTION>
+    <ACTION builtin="clish_pyobj">sonic_cli_snmp  snmp_trap enable</ACTION>
   </COMMAND>
 
   <COMMAND name="snmp-server engine" help="Configure SNMP Engine ID">
     <PARAM name="engineID" help="SNMP Engine ID" ptype="ENGINE_ID_TYPE"/>
-    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py  snmp_engine  "${engineID}"&#xA; </ACTION>
+    <ACTION builtin="clish_pyobj">sonic_cli_snmp  snmp_engine  ${engineID}</ACTION>
   </COMMAND>
 
   <COMMAND name="snmp-server agentaddress" help="Configure SNMP Agent Address">
@@ -104,7 +104,7 @@ Before each command articulation, a comment is shown with the desired command sy
           <PARAM name = "ifname" help = "Interface Name" ptype = "STRING_32" > </PARAM>
       </PARAM>
     </PARAM>
-    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py  snmp_agentaddr  ${__params}&#xA; </ACTION>
+    <ACTION builtin="clish_pyobj">sonic_cli_snmp  snmp_agentaddr  ${__params}</ACTION>
   </COMMAND>
 
 <!--============= This is currently unsupported ===============================
@@ -121,7 +121,7 @@ Before each command articulation, a comment is shown with the desired command sy
       <PARAM name = "ifname" help = "Interface Name" ptype = "STRING" > </PARAM>
     </PARAM>
   </PARAM>
-  <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py  snmp_trapreceiver  ${__params}&#xA; </ACTION>
+  <ACTION builtin="clish_pyobj">sonic_cli_snmp  snmp_trapreceiver  ${__params}</ACTION>
 </COMMAND>
 ========================================================================= -->
 
@@ -134,7 +134,7 @@ Before each command articulation, a comment is shown with the desired command sy
         <PARAM name="group-name" help="SNMP Community Group" ptype="SNMP_IDENTIFIER" />
       </PARAM>
     </PARAM>
-    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py  snmp_community_add  ${community-name}  ${group-name}&#xA; </ACTION>
+    <ACTION builtin="clish_pyobj">sonic_cli_snmp  snmp_community_add  ${community-name}  ${group-name}</ACTION>
   </COMMAND>
 
 <!--=========================================================================
@@ -147,9 +147,7 @@ Before each command articulation, a comment is shown with the desired command sy
       <MACRO name="SNMP-SECURITY-MODELS" arg=""/>
       <MACRO name="SNMP-RWN-VIEWS-OPTIONS" arg=""/>
     </PARAM>
-    <ACTION>
-        python $SONIC_CLI_ROOT/sonic-cli-snmp.py  snmp_group_access_add ${__params}&#xA;
-    </ACTION>
+    <ACTION builtin="clish_pyobj">sonic_cli_snmp  snmp_group_access_add ${__params}</ACTION>
   </COMMAND>
 
 <!--=========================================================================
@@ -204,7 +202,7 @@ Before each command articulation, a comment is shown with the desired command sy
         </PARAM>
       </PARAM>
     </PARAM>
-    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py snmp_user_add ${__params}&#xA; </ACTION>
+    <ACTION builtin="clish_pyobj">sonic_cli_snmp snmp_user_add ${__params}</ACTION>
   </COMMAND>
 
 <!--=========================================================================
@@ -216,9 +214,7 @@ Before each command articulation, a comment is shown with the desired command sy
         <MACRO name="SNMP-INCLUSION-OPTIONS" arg=""/>
       </PARAM>
     </PARAM>
-    <ACTION>
-      python $SONIC_CLI_ROOT/sonic-cli-snmp.py  snmp_view_add  ${view-name}  ${oid-tree} ${inclusion-option}&#xA;
-    </ACTION>
+    <ACTION builtin="clish_pyobj">sonic_cli_snmp  snmp_view_add  ${view-name}  ${oid-tree} ${inclusion-option}</ACTION>
   </COMMAND>
 
 <!--=========================================================================
@@ -283,7 +279,7 @@ v3      snmp-server host "host-addr" user "username" {[traps  {auth | noauth | p
         </PARAM>
       </PARAM>
     </PARAM>
-    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-snmp.py  snmp_host_add ${__params}&#xA;</ACTION>
+    <ACTION builtin="clish_pyobj">sonic_cli_snmp  snmp_host_add ${__params}</ACTION>
   </COMMAND>
 
 <!--=========================================================================
@@ -292,20 +288,20 @@ v3      snmp-server host "host-addr" user "username" {[traps  {auth | noauth | p
   <COMMAND name="no snmp-server" help="SNMP Server Configuration"/>
 
   <COMMAND name="no snmp-server location" help="Remove SNMP Location">
-    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py  snmp_location&#xA; </ACTION>
+    <ACTION builtin="clish_pyobj">sonic_cli_snmp  snmp_location</ACTION>
   </COMMAND>
 
   <COMMAND name="no snmp-server contact" help="Remove SNMP Contact">
-    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py  snmp_contact&#xA; </ACTION>
+    <ACTION builtin="clish_pyobj">sonic_cli_snmp  snmp_contact</ACTION>
   </COMMAND>
 
   <COMMAND name="no snmp-server enable" help="Configure SNMP Traps">
     <PARAM name="trap" help="Enable traps" ptype="SUBCOMMAND"  mode="subcommand"/>
-    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py  snmp_trap disable&#xA; </ACTION>
+    <ACTION builtin="clish_pyobj">sonic_cli_snmp  snmp_trap disable</ACTION>
   </COMMAND>
 
   <COMMAND name="no snmp-server engine" help="Configure SNMP Engine ID">
-    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py  snmp_engine&#xA; </ACTION>
+    <ACTION builtin="clish_pyobj">sonic_cli_snmp  snmp_engine</ACTION>
   </COMMAND>
 
   <COMMAND name="no snmp-server agentaddress" help="Configure SNMP Agent Address">
@@ -317,7 +313,7 @@ v3      snmp-server host "host-addr" user "username" {[traps  {auth | noauth | p
         <PARAM name = "ifname" help = "Interface Name" ptype = "STRING" > </PARAM>
       </PARAM>
     </PARAM>
-    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py  no_snmp_agentaddr  ${__params}&#xA; </ACTION>
+    <ACTION builtin="clish_pyobj">sonic_cli_snmp  no_snmp_agentaddr  ${__params}</ACTION>
   </COMMAND>
 
 <!--============= This is currently unsupported ===============================
@@ -326,7 +322,7 @@ v3      snmp-server host "host-addr" user "username" {[traps  {auth | noauth | p
     <PARAM name="v1"   help="SNMP Version 1"   ptype="SUBCOMMAND"  mode="subcommand"/>
     <PARAM name="v2c"  help="SNMP Version 2c"  ptype="SUBCOMMAND"  mode="subcommand"/>
   </PARAM>
-  <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py  no_snmp_trapreceiver  ${__params}&#xA; </ACTION>
+  <ACTION builtin="clish_pyobj">sonic_cli_snmp  no_snmp_trapreceiver  ${__params}</ACTION>
 </COMMAND>
 ========================================================================= -->
 <!--=========================================================================
@@ -334,7 +330,7 @@ v3      snmp-server host "host-addr" user "username" {[traps  {auth | noauth | p
 ========================================================================= -->
   <COMMAND name="no snmp-server community" help="Remove SNMP Community" ptype="SUBCOMMAND" mode="subcommand">
     <PARAM name="community-name" help="SNMP Community to remove" ptype="SNMP_IDENTIFIER"/>
-    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py  snmp_community_delete  ${community-name}&#xA;</ACTION>
+    <ACTION builtin="clish_pyobj">sonic_cli_snmp  snmp_community_delete  ${community-name}</ACTION>
   </COMMAND>
 
 <!--=========================================================================
@@ -346,7 +342,7 @@ v3      snmp-server host "host-addr" user "username" {[traps  {auth | noauth | p
     <PARAM name="group-name" help="Unique SNMP Group Name" ptype="SNMP_IDENTIFIER">
       <MACRO name="SNMP-SECURITY-MODELS" arg=""/>
     </PARAM>
-    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py  snmp_group_access_delete  ${__params}&#xA; </ACTION>
+    <ACTION builtin="clish_pyobj">sonic_cli_snmp  snmp_group_access_delete  ${__params}</ACTION>
   </COMMAND>
 
 <!--=========================================================================
@@ -355,7 +351,7 @@ v3      snmp-server host "host-addr" user "username" {[traps  {auth | noauth | p
   <COMMAND name="no snmp-server user" help="Remove SNMP User" ptype="SUBCOMMAND" mode="subcommand">
     <PARAM name="username" help="Unique SNMP Group Name" ptype="SNMP_IDENTIFIER">
     </PARAM>
-    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py  snmp_user_delete  ${username}&#xA; </ACTION>
+    <ACTION builtin="clish_pyobj">sonic_cli_snmp  snmp_user_delete  ${username}</ACTION>
   </COMMAND>
 
 <!--=========================================================================
@@ -365,7 +361,7 @@ v3      snmp-server host "host-addr" user "username" {[traps  {auth | noauth | p
     <PARAM name="view-name" help="SNMP View Name" ptype="SNMP_IDENTIFIER">
       <PARAM name="oid-tree" help="OID Tree" ptype="OID_IDENTIFIER"/>
     </PARAM>
-    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py  snmp_view_delete  ${view-name}  ${oid-tree}&#xA; </ACTION>
+    <ACTION builtin="clish_pyobj">sonic_cli_snmp  snmp_view_delete  ${view-name}  ${oid-tree}</ACTION>
   </COMMAND>
 
 <!--=========================================================================
@@ -373,7 +369,7 @@ v3      snmp-server host "host-addr" user "username" {[traps  {auth | noauth | p
 ========================================================================= -->
   <COMMAND name="no snmp-server host" help="Remove SNMP Host">
     <PARAM name="host-addr" help="Host address, IPv4, IPv6 or hostname" ptype="HOSTNAME_OR_IPADDR"/>
-    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py  snmp_host_delete  ${host-addr}&#xA; </ACTION>
+    <ACTION builtin="clish_pyobj">sonic_cli_snmp  snmp_host_delete  ${host-addr}</ACTION>
   </COMMAND>
 
 </VIEW>
