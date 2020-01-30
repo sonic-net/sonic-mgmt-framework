@@ -127,29 +127,13 @@ limitations under the License.
             name="donor-interface"
             help="Donor Interface Name"
             ptype="STRING" />
-<<<<<<< HEAD
-	<ACTION>python $SONIC_CLI_ROOT/sonic_cli_if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_unnumbered_interface_ref_config_interface ${iface} ${donor-interface}
-    </ACTION>
-||||||| merged common ancestors
-	<ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_unnumbered_interface_ref_config_interface ${iface} ${donor-interface}
-    </ACTION>
-=======
-    <ACTION builtin="clish_restcl">oper=PATCH url=/restconf/data/openconfig-interfaces:interfaces/interface=${iface}/subinterfaces/subinterface=0/openconfig-if-ip:ipv4/unnumbered/interface-ref/config/interface body={"openconfig-if-ip:interface": "${donor-interface}"}</ACTION>
->>>>>>> a917655696bbb4561f412f23eb1bfebe80286e70
+        <ACTION builtin="clish_restcl">oper=PATCH url=/restconf/data/openconfig-interfaces:interfaces/interface=${iface}/subinterfaces/subinterface=0/openconfig-if-ip:ipv4/unnumbered/interface-ref/config/interface body={"openconfig-if-ip:interface": "${donor-interface}"}</ACTION>
     </COMMAND>
 
     <COMMAND
         name="no ip unnumbered"
 	    help="Configure IPv4 unnumbered interface" >
-<<<<<<< HEAD
-    <ACTION>python $SONIC_CLI_ROOT/sonic_cli_if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_unnumbered_interface_ref_config_interface ${iface}
-    </ACTION>
-||||||| merged common ancestors
-    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_unnumbered_interface_ref_config_interface ${iface}
-    </ACTION>
-=======
         <ACTION builtin="clish_restcl">oper=DELETE url=/restconf/data/openconfig-interfaces:interfaces/interface=${iface}/subinterfaces/subinterface=0/openconfig-if-ip:ipv4/unnumbered/interface-ref/config/interface</ACTION>
->>>>>>> a917655696bbb4561f412f23eb1bfebe80286e70
     </COMMAND>
 </VIEW>
 
@@ -279,29 +263,13 @@ limitations under the License.
              name="donor-interface"
              help="Donor Interface Name"
              ptype="STRING" />
-<<<<<<< HEAD
-         <ACTION>python $SONIC_CLI_ROOT/sonic_cli_if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_unnumbered_interface_ref_config_interface ${po_name} ${donor-interface}
-         </ACTION>
-||||||| merged common ancestors
-         <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_unnumbered_interface_ref_config_interface ${po_name} ${donor-interface}
-         </ACTION>
-=======
         <ACTION builtin="clish_restcl">oper=PATCH url=/restconf/data/openconfig-interfaces:interfaces/interface=${po_name}/subinterfaces/subinterface=0/openconfig-if-ip:ipv4/unnumbered/interface-ref/config/interface body={"openconfig-if-ip:interface": ${donor-interface}}</ACTION>
->>>>>>> a917655696bbb4561f412f23eb1bfebe80286e70
      </COMMAND>
 
      <COMMAND
          name="no ip unnumbered"
          help="Configure IPv4 unnumbered interface" >
-<<<<<<< HEAD
-         <ACTION>python $SONIC_CLI_ROOT/sonic_cli_if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_unnumbered_interface_ref_config_interface ${po_name}
-         </ACTION>
-||||||| merged common ancestors
-         <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_unnumbered_interface_ref_config_interface ${po_name}
-         </ACTION>
-=======
         <ACTION builtin="clish_restcl">oper=DELETE url=/restconf/data/openconfig-interfaces:interfaces/interface=${po_name}/subinterfaces/subinterface=0/openconfig-if-ip:ipv4/unnumbered/interface-ref/config/interface</ACTION>
->>>>>>> a917655696bbb4561f412f23eb1bfebe80286e70
      </COMMAND>
 </VIEW>
 
