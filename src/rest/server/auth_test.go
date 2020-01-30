@@ -63,7 +63,7 @@ var tusrName = flag.String("tusrname", "tactestuser", "TACACS+ non-admin usernam
 var tusrPass = flag.String("tusrpass", "password", "TACACS+ non-admin password")
 var tadmName = flag.String("tadmname", "tactestadmin", "TACACS+ admin username")
 var tadmPass = flag.String("tadmpass", "password", "TACACS+ admin password")
-var defaultAuth = UserAuth{"password": false, "cert": false, "jwt": false}
+var defaultAuth = UserAuth{"password": true, "cert": false, "jwt": false}
 func init() {
 	fmt.Println("+++++ pamAuth_test +++++")
 }

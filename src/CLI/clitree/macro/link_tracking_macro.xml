@@ -9,7 +9,7 @@
             <PARAM name="upstream" help="Upstream interface" ptype="SUBCOMMAND" mode="subcommand" />
         </PARAM>
         <ACTION>
-            python $SONIC_CLI_ROOT/sonic-cli-link-state-tracking.py set_link_state_tracking_group_upstream ${grp-name} ${iface} ${vlan_id} ${po_name}
+            python $SONIC_CLI_ROOT/sonic_cli_link_state_tracking.py set_link_state_tracking_group_upstream ${grp-name} ${iface} ${vlan_id} ${po_name}
         </ACTION>
     </COMMAND>
 
@@ -21,7 +21,7 @@
             <PARAM name="upstream" help="Upstream interface" ptype="SUBCOMMAND" mode="subcommand" />
         </PARAM>
         <ACTION>
-            python $SONIC_CLI_ROOT/sonic-cli-link-state-tracking.py delete_link_state_tracking_group_upstream ${grp-name} ${iface} ${vlan_id} ${po_name}
+            python $SONIC_CLI_ROOT/sonic_cli_link_state_tracking.py delete_link_state_tracking_group_upstream ${grp-name} ${iface} ${vlan_id} ${po_name}
         </ACTION>
     </COMMAND>
 </MACRODEF>

@@ -113,7 +113,7 @@ limitations under the License.
 </VIEW>
 
 <VIEW name="configure-vlan-view">
-    <MACRO name="BIND-INTF-TO-VRF" arg="${vlan_id}"></MACRO>
+    <MACRO name="BIND-INTF-TO-VRF" arg="${vlan_name}"></MACRO>
 </VIEW>
 
 <VIEW name="configure-lo-view">
