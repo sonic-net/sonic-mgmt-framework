@@ -172,7 +172,7 @@ module sonic-snmp {
           type identifier;
         }
 
-        leaf group {
+        leaf securityName {
           type security-name;
         }
       }
