@@ -1,0 +1,45 @@
+module sonic-ssh-server-vrf {
+    namespace "http://github.com/Azure/sonic-ssh-server-vrf";
+    prefix ssh-server-vrf;
+
+    organization
+        "SONiC";
+
+    contact
+        "SONiC";
+
+    description
+        "SONIC SSH VRF SERVER";
+
+    revision 2020-01-28 {
+        description
+            "Initial revision.";
+    }
+
+    container sonic-ssh-server-vrf {
+        container SSH_SERVER_VRF {
+            description "SSH VRF server configuration.";
+
+            list SSH_SERVER_VRF_LIST {
+                key "vrf_name";
+                max-elements 15;
+
+                leaf vrf_name {
+                    type string {
+                        pattern "^mgmt$" {
+                            error-message "Invalid VRF name for SSH server";
+                            error-app-tag vrf-name-ssh-invalid;
+                        }
+                    }
+                }
+
+                leaf port {
+                    type uint16;
+                    description
+                        "SSH port number";
+                }
+            }
+        }
+    }
+}
+
