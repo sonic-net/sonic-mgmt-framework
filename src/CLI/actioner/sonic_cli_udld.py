@@ -143,6 +143,13 @@ def generateShowUdldInterfaceResponse(clientApi, args):
     if resp.ok() and 'sonic-udld:msg_time' in resp.content.keys():
         gbl_msg_time = resp.content['sonic-udld:msg_time']
 
+    # Retrieve global UDLD aggresive
+    keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld/UDLD/UDLD_LIST={id}/aggressive', id='GLOBAL')
+    resp = clientApi.get(keypath)
+    gbl_aggressive = 0
+    if resp.ok() and 'sonic-udld:aggressive' in resp.content.keys():
+        gbl_aggressive = resp.content['sonic-udld:aggressive']
+
     # Retrieve port level UDLD configs
     keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld/UDLD_PORT/UDLD_PORT_LIST={ifname}', ifname=args[1])
     resp = clientApi.get(keypath)
@@ -182,6 +189,7 @@ def generateShowUdldInterfaceResponse(clientApi, args):
     final_dict = {}
     final_dict['interface'] = args[1]
     final_dict['msg_time'] = gbl_msg_time
+    final_dict['gbl_aggressive'] = gbl_aggressive
     final_dict['status'] = port_status
     final_dict['port_config'] = port_conf_dict
     final_dict['global_oper'] = gbl_oper_dict
