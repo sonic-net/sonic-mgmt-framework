@@ -25,9 +25,6 @@ limitations under the License.
         name="show mac"
         help="Show MAC"
         >
-    <ACTION> 
-        builtin="clish_nop"
-    </ACTION>
     </COMMAND>
 
 <!--====================show mac address-table command======================-->
