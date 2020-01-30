@@ -40,7 +40,7 @@ def hashed_pw(pw):
     
 def util_capitalize(value):
     for key,val in value.items():
-        temp = key.split('_')
+        temp = key.split('-')
         alt_key = ''
         for i in temp:
         	alt_key = alt_key + i.capitalize() + ' '
@@ -143,7 +143,7 @@ def run(func, args):
 	    	    show_cli_output(sys.argv[2],value['process'])
 	        else:
 		    for proc in value['process']:
-		        if proc['pid'] == int(sys.argv[3]):
+		        if proc['pid'] == sys.argv[3]:
 		            show_cli_output(sys.argv[2],util_capitalize(proc['state']))
 		            return
     else:

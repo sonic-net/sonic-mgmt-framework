@@ -635,6 +635,20 @@ limitations under the License.
         name="no"
         help="Negate a command or set its defaults"
       />
+      <COMMAND
+            name="nat-zone"
+            help="NAT Zone">
+            <PARAM
+                name="zone"
+                help="NAT zone of the interface"
+                ptype="RANGE_NAT_ZONE" />
+            <ACTION builtin="clish_restcl">oper=PATCH url=/restconf/data/openconfig-interfaces:interfaces/interface=${lo_name}/openconfig-interfaces-ext:nat-zone/config/nat-zone body={"openconfig-interfaces-ext:nat-zone": ${zone}}</ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no nat-zone"
+            help="Remove Nat Zone on the interface" >
+            <ACTION builtin="clish_restcl">oper=DELETE url=/restconf/data/openconfig-interfaces:interfaces/interface=${lo_name}/openconfig-interfaces-ext:nat-zone/config/nat-zone</ACTION>
+        </COMMAND>
 </VIEW>
 
 <VIEW
