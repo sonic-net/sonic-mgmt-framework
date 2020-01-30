@@ -46,10 +46,27 @@
 >         }
 >         return NULL;
 > }
-159a207
-> #if 0
-177a226,284
-> #else
+160,178c207,263
+< 	if (!result) {
+< 		char *viewname = clish_shell_expand(clish_command__get_viewname(cmd), SHELL_VAR_NONE, context);
+< 		if (viewname) {
+< 			/* Search for the view */
+< 			clish_view_t *view = clish_shell_find_view(this, viewname);
+< 			if (!view)
+< 				fprintf(stderr, "System error: Can't "
+< 					"change view to %s\n", viewname);
+< 			lub_string_free(viewname);
+< 			/* Save the PWD */
+< 			if (view) {
+< 				char *line = clish_shell__get_line(context);
+< 				clish_shell__set_pwd(this, line, view,
+< 					clish_command__get_viewid(cmd), context);
+< 				lub_string_free(line);
+< 			}
+< 		}
+< 	}
+< 
+---
 >         if (!result) {
 >                 int cnt, i;
 >                 char *viewname;
@@ -107,18 +124,17 @@
 >                 }
 >         }
 >    	
-> #endif
-306c413,414
+306c391,392
 < 	const void *func = NULL; /* We don't know the func API at this time */
 ---
 > 	clish_hook_action_fn_t *func = NULL;
 > 
-308a417,420
+308a395,398
 > 	clish_parg_t *parg = NULL;
 >         clish_ptype_t *ptype = NULL;
 >         clish_ptype_method_e method = CLISH_PTYPE_METHOD_REGEXP;
 > 
-346,359c458,552
+346,359c436,530
 < 	/* Find out the function API */
 < 	/* CLISH_SYM_API_SIMPLE */
 < 	if (clish_sym__get_api(sym) == CLISH_SYM_API_SIMPLE) {
@@ -229,7 +245,7 @@
 >                         result = func(context, script, out);
 >                 }
 >         }
-377c570
+377c548
 < 	lub_string_free(script);
 ---
 > 	if (script) lub_string_free(script);
