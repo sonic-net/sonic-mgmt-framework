@@ -577,22 +577,43 @@ module openconfig-vxlan {
   grouping vxlan-network-instance-top {
     description
       "VxLAN network instance top grouping";
-    container vxlan-ni {
-      description
-        "VxLAN network instance top container";
-      container config {
-        description
-          "VxLAN network instance config";
-        uses vxlan-network-instance-config;
-      }
-
-      container state {
-        config false;
-        description
-          "VxLAN network instance state";
-        uses vxlan-network-instance-config;
-        uses vxlan-network-instance-state;
-      }
+    container vxlan-vni-instances {
+	    list vni-instance {
+	      key "vni-id source-nve";
+	      max-elements 1;
+		    description
+	  	    "VxLAN network instance config entry";
+	       
+		    leaf vni-id {
+	        type leafref {
+	          path "../config/vni-id";
+	        } 
+		      description
+		        "The id of VNI.";
+		    }
+		           
+		    leaf source-nve {
+	        type leafref {
+	          path "../config/source-nve";
+	        } 
+		      description
+		        "The name of the nve interface .";
+		    }       
+	        
+	      container config {
+	        description
+	          "VxLAN network instance config";
+	        uses vxlan-network-instance-config;
+	      }
+	
+	      container state {
+	        config false;
+	        description
+	          "VxLAN network instance state";
+	        uses vxlan-network-instance-config;
+	        uses vxlan-network-instance-state;
+	      }
+	    }
     }
   }
 

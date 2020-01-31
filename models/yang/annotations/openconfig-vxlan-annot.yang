@@ -1,0 +1,104 @@
+module openconfig-vxlan-annot {
+
+    yang-version "1";
+
+    namespace "http://openconfig.net/yang/annotation/oc-vxlan-annot";
+    prefix "oc-vxlan-annot";
+
+    import openconfig-inet-types { prefix oc-inet; }
+    import openconfig-if-types-ext { prefix oc-if-ext; }
+    import openconfig-extensions { prefix oc-ext; }
+    import openconfig-vxlan { prefix oc-vxlan; }
+    import sonic-extensions {prefix sonic-ext; }
+    
+    deviation /oc-vxlan:vxlan/oc-vxlan:config {
+			deviate not-supported;
+		}    
+ 
+    deviation /oc-vxlan:vxlan/oc-vxlan:state/oc-vxlan:vxlan-vni-peer-infos/oc-vxlan:vxlan-vni-peer-info {
+	    deviate add {
+	    	sonic-ext:table-name "EVPN_REMOTE_VNI_TABLE";
+      	sonic-ext:key-transformer "vxlan_vni_state_peer_info_key_xfmr";	    	
+	    	sonic-ext:db-name "APPL_DB";
+	    }    
+    }
+ 
+    deviation /oc-vxlan:vxlan/oc-vxlan:state/oc-vxlan:vxlan-vni-peer-infos/oc-vxlan:vxlan-vni-peer-info/oc-vxlan:vni-id {
+	    deviate add {
+	    	sonic-ext:field-name "vni";
+	    }    
+    }
+ 
+    deviation /oc-vxlan:vxlan/oc-vxlan:state/oc-vxlan:vxlan-vni-peer-infos/oc-vxlan:vxlan-vni-peer-info/oc-vxlan:source-ip {
+    	deviate add {
+				sonic-ext:field-name "remote_vtep";
+			}
+		}    
+ 
+    deviation /oc-vxlan:vxlan/oc-vxlan:state/oc-vxlan:vxlan-vni-peer-infos/oc-vxlan:vxlan-vni-peer-info/oc-vxlan:peer-ip {
+	    deviate add {
+	    	sonic-ext:field-name "remote_vtep";
+	    }    
+    }
+ 
+    deviation /oc-vxlan:vxlan/oc-vxlan:state/oc-vxlan:vxlan-vni-peer-infos/oc-vxlan:vxlan-vni-peer-info/oc-vxlan:tunnel-type {
+	    deviate add {
+				sonic-ext:field-transformer "vxlan_state_peer_tunnel_type_xfmr";	    
+	    }    
+    }
+ 
+    deviation /oc-vxlan:vxlan/oc-vxlan:state/oc-vxlan:vxlan-vni-peer-infos/oc-vxlan:vxlan-vni-peer-info/oc-vxlan:out-vni-id {
+	    deviate add {
+				sonic-ext:field-name "vni";	    
+	    }    
+    }
+
+    deviation /oc-vxlan:vxlan/oc-vxlan:state/oc-vxlan:vxlan-tunnel-infos/oc-vxlan:vxlan-tunnel-info {
+	    deviate add {
+				sonic-ext:table-name "VXLAN_TUNNEL_TABLE";
+				sonic-ext:key-transformer "vxlan_state_tunnel_info_key_xfmr";				
+				sonic-ext:db-name "STATE_DB";	    
+	    }    
+    }
+ 
+    deviation /oc-vxlan:vxlan/oc-vxlan:state/oc-vxlan:vxlan-tunnel-infos/oc-vxlan:vxlan-tunnel-info/oc-vxlan:peer-ip {
+	    deviate add {
+				sonic-ext:field-name "dst_ip";	    
+	    }    
+    }
+ 
+    deviation /oc-vxlan:vxlan/oc-vxlan:state/oc-vxlan:vxlan-tunnel-infos/oc-vxlan:vxlan-tunnel-info/oc-vxlan:source-ip {
+	    deviate add {
+				sonic-ext:field-name "src_ip";	    
+	    }    
+    }
+ 
+    deviation /oc-vxlan:vxlan/oc-vxlan:state/oc-vxlan:vxlan-tunnel-infos/oc-vxlan:vxlan-tunnel-info/oc-vxlan:status {
+	    deviate add {
+				sonic-ext:field-name "operstatus";	    
+	    }
+		}    
+ 
+    deviation /oc-vxlan:vxlan/oc-vxlan:state/oc-vxlan:vxlan-tunnel-infos/oc-vxlan:vxlan-tunnel-info/oc-vxlan:type {
+	    deviate add {
+				sonic-ext:field-transformer "vxlan_state_tunnel_info_tunnel_type_xfmr";	    
+	    }    
+    }
+ 
+    deviation /oc-vxlan:vxlan/oc-vxlan:state/oc-vxlan:vxlan-tunnel-infos/oc-vxlan:vxlan-tunnel-info/oc-vxlan:up-time {
+			deviate not-supported;
+		}    
+
+    deviation /oc-vxlan:vxlan/oc-vxlan:state/oc-vxlan:vxlan-tunnel-infos/oc-vxlan:vxlan-tunnel-info/oc-vxlan:vrf-name {
+			deviate not-supported;
+		}    
+
+    deviation /oc-vxlan:vxlan/oc-vxlan:state/oc-vxlan:vxlan-tunnel-infos/oc-vxlan:vxlan-tunnel-info/oc-vxlan:tunnel-id {
+			deviate not-supported;
+		}    
+ 
+    deviation /oc-vxlan:vxlan/oc-vxlan:vxlan-vni-instances {
+			deviate not-supported;
+		}
+}
+

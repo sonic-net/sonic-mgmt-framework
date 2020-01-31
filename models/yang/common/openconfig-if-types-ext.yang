@@ -8,14 +8,14 @@ module openconfig-if-types-ext {
   // import statements
   import openconfig-if-types { prefix oc-if-types; }
   import openconfig-extensions { prefix oc-ext; }
-
+  import iana-if-type { prefix ianaift; }
+  
   // meta
   organization
-    "OpenConfig working group";
+    "Broadcom Inc";
 
   contact
-    "OpenConfig working group
-    netopenconfig@googlegroups.com";
+    "Broadcom Inc";
 
   description
     "This module contains a set of interface type definitions that
@@ -39,10 +39,13 @@ module openconfig-if-types-ext {
   identity IF_NVE {
     base oc-if-types:INTERFACE_TYPE;
     description
-      "Ethernet interfaces based on IEEE 802.3 standards, as well
-      as FlexEthernet";
-    reference
-      "IEEE 802.3-2015 - IEEE Standard for Ethernet
-      OIF Flex Ethernet Implementation Agreement 1.0";
+      "Vxlan interfaces";
   }
+
+  identity IF_NVE {
+    base ianaift:iana-interface-type;
+    description
+      "Vxlan interfaces";
+  }
+  
 }
