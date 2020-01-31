@@ -328,21 +328,5 @@ func (t *CustomValidation) ValidatePtp(
 		}
 	}
 
-	/* default setting if PTP_CLOCK|GLOBAL does not exist */
-	var nokey []string
-	ls = redis.NewScript(`if redis.call('EXISTS', "PTP_CLOCK|GLOBAL") == 0 then
-							redis.call('HSET', "PTP_CLOCK|GLOBAL", "two-step-flag", "1")
-							redis.call('HSET', "PTP_CLOCK|GLOBAL", "slave-only", "0")
-							redis.call('HSET', "PTP_CLOCK|GLOBAL", "priority1", "128")
-							redis.call('HSET', "PTP_CLOCK|GLOBAL", "priority2", "128")
-							redis.call('HSET', "PTP_CLOCK|GLOBAL", "network-transport", "L2")
-							redis.call('HSET', "PTP_CLOCK|GLOBAL", "clock-type", "disable")
-							redis.call('HSET', "PTP_CLOCK|GLOBAL", "domain-profile", "ieee1588")
-							redis.call('HSET', "PTP_CLOCK|GLOBAL", "unicast-multicast", "multicast")
-							redis.call('HSET', "PTP_CLOCK|GLOBAL", "udp6-scope", "0xe")
-							redis.call('HSET', "PTP_CLOCK|GLOBAL", "domain-number", "1")
-							redis.call('HSET', "PTP_CLOCK|GLOBAL", "log-announce-interval", "0")
-						  end`)
-	ls.Run(vc.RClient, nokey).Result()
 	return CVLErrorInfo{ErrCode: CVL_SUCCESS}
 }
