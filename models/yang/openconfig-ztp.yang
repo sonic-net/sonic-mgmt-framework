@@ -143,11 +143,8 @@ module openconfig-ztp {
             "ZTP configuration commands.";
 	    leaf admin_mode {
         description
-            "Configuration options available for ZTP:
-               - 0 : disable ZTP administrative mode. This command can also be used to abort a current ZTP session and load the factory default switch configuration.
-               - 1 : enable ZTP administrative mode.
-               - 2 : manually restart a new ZTP session. This command deletes the existing /etc/sonic/config_db.json file and starts the ZTP service. It also erases the previous ZTP session data. ZTP configuration is loaded on to the switch and ZTP discovery is performed.";
-		type uint32;
+            "Enable or Disable ZTP administrative mode. The Disable command can also be used to abort a current ZTP session and load the factory default switch configuration.";
+		type boolean;
 	    }
 	}
    }
