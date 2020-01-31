@@ -1,0 +1,94 @@
+{% set vars = {'prefix': ""} %}
+{% set vars = {'protocol': ""} %}
+{% set vars = {'distance': ""} %}
+{% set vars = {'metric': ""} %}
+{% set vars = {'selected': False} %}
+{% set vars = {'installed': False} %}
+{% set vars = {'directlyConnected': False} %}
+{% set vars = {'fib': False} %}
+{% set vars = {'queued': False} %}
+{% set vars = {'rejected': False} %}
+{% set vars = {'active': False} %}
+{% set vars = {'gateway': ""} %}
+{% set vars = {'interface': ""} %}
+{% set vars = {'uptime': ""} %}
+{% if json_output %}
+{% if json_output is iterable %}
+Codes:  K - kernel route, C - connected, S - static, B - BGP, O - OSPF
+        > - selected route, * - FIB route, q - queued route, r - rejected route, # - not installed in hardware
+      {{'%-29s'|format("Destination")}}{{'%-48s'|format("Gateway")}}{{'%-17s'|format("Dist/Metric")}}{{'%-12s'|format("Uptime")}}
+----------------------------------------------------------------------------------------------------------
+{% set routeList = json_output %}
+{% if routeList %}
+{% for key in routeList %}
+  {% if vars.update({'prefix':key}) %}{% endif %}
+  {% set routes = routeList[key] %}
+  {% for route in routes %}
+  {% if vars.update({'distance':route["distance"]}) %}{% endif %}
+  {% if vars.update({'metric':route["metric"]}) %}{% endif %}
+  {% if vars.update({'protocol':route["protocol"]}) %}{% endif %}
+  {% if vars.update({'selected':route["selected"]}) %}{% endif %}
+  {% if vars.update({'queued':route["queued"]}) %}{% endif %}
+  {% if vars.update({'rejected':route["rejected"]}) %}{% endif %}
+  {% if vars.update({'installed':route["installed"]}) %}{% endif %}
+  {% if vars.update({'uptime':route["uptime"]}) %}{% endif %}
+  {% if vars.protocol == 'kernel' %}
+     {% if vars.update({'protocol':"K"}) %}{% endif %}
+  {% elif vars.protocol == 'connected' %}
+     {% if vars.update({'protocol':"C"}) %}{% endif %}
+  {% elif vars.protocol == 'bgp' %}
+     {% if vars.update({'protocol':"B"}) %}{% endif %}
+  {% elif vars.protocol == 'ospf' %}
+     {% if vars.update({'protocol':"O"}) %}{% endif %}
+  {% else %}
+     {% if vars.update({'protocol':""}) %}{% endif %}
+  {% endif %}
+  {% if vars.selected == True %}
+     {% if vars.update({'selected':">"}) %}{% endif %}
+  {% else %}
+     {% if vars.update({'selected':""}) %}{% endif %}
+  {% endif %}
+  {% if vars.queued == True %}
+     {% if vars.update({'queued':"q"}) %}{% endif %}
+  {% else %}
+     {% if vars.update({'queued':""}) %}{% endif %}
+  {% endif %}
+  {% if vars.rejected == True %}
+     {% if vars.update({'rejected':"r"}) %}{% endif %}
+  {% else %}
+     {% if vars.update({'rejected':""}) %}{% endif %}
+  {% endif %}
+  {% if vars.installed == True %}
+     {% if vars.update({'installed':""}) %}{% endif %}
+  {% else %}
+     {% if vars.update({'installed':"#"}) %}{% endif %}
+  {% endif %}
+  {% set nexthops = route["nexthops"] %}
+  {% for nexthop in nexthops %}
+     {% if vars.update({'active':nexthop["active"]}) %}{% endif %}
+     {% if vars.update({'fib':nexthop["fib"]}) %}{% endif %}
+     {% if vars.fib == True %}
+        {% if vars.update({'fib':"*"}) %}{% endif %}
+     {% else %}
+        {% if vars.update({'fib':""}) %}{% endif %}
+     {% endif %}
+     {% if vars.update({'directlyConnected':nexthop["directlyConnected"]}) %}{% endif %}
+     {% if vars.directlyConnected == True %}
+        {% if vars.update({'gateway':"Direct"}) %}{% endif %}
+     {% else %}
+        {% if vars.update({'gateway': 'via ' + nexthop['ip']}) %}{% endif %}
+     {% endif %}
+     {% if vars.update({'interface':nexthop['interface']}) %}{% endif %}
+     {% set temp = vars.distance |string() + "/" + vars.metric | string() %}
+     {% set codes = vars.protocol + vars.selected + vars.fib + vars.queued + vars.rejected + vars.installed %}
+     {% if loop.index == 1 %}
+{{'%-6s'|format(codes)}}{{'%-29s'|format(vars.prefix)}}{{'%-30s'|format(vars.gateway)}}{{'%-18s'|format(vars.interface)}}{{'%-17s'|format(temp)}}{{'%-12s'|format(vars.uptime)}}
+     {% else %}
+{{'%-35s'|format(" ")}}{{'%-30s'|format(vars.gateway)}}{{'%-18s'|format(vars.interface)}}{{'%-17s'|format(" ")}}
+     {% endif %}
+  {% endfor %}
+  {% endfor %}
+{% endfor %}
+{% endif %}
+{% endif %}
+{% endif %}

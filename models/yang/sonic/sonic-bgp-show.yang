@@ -1,0 +1,52 @@
+module sonic-bgp-show {
+    namespace "http://github.com/Azure/sonic-bgp-show";
+    prefix sbgpshow;
+    yang-version 1.1;
+
+    organization
+        "SONiC";
+
+    contact
+        "SONiC";
+
+    description
+        "SONiC yang for RPC based BGP show.";
+
+    revision 2020-01-20 {
+        description
+            "Initial revision.";
+    }
+
+   rpc show-bgp {
+
+    description "RPC for showing BGP routes. Input can be :
+        1. All routes per VRF.";
+
+    input {
+        leaf vrf-name {
+            type string;
+            default "default";
+            description
+                "Shows BGP routes for given VRF name. if VRF name is not present, the default VRF is used";
+        }
+
+        leaf family {
+            type enumeration {
+                enum IPV4_UNICAST;
+                enum IPV6_UNICAST;
+            }
+            default "IPV4_UNICAST";
+            description
+                "Address family(IPv4/IPv6)";
+        }
+    }
+
+    output {
+        leaf status {
+            type string;
+            description
+                "Success / failure in BGP show execution request.";
+        }
+    }
+  }
+}
