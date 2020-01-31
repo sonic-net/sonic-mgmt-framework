@@ -46,6 +46,11 @@ module sonic-vxlan {
                 max-elements 1;
 
                 leaf name {
+                    must "(starts-with(../name, 'vtep'))"
+                    {
+                        error-message "Error: Name should start with vtep";
+                        error-app-tag invalid-vtep-name;
+                    }
                     type string;
                 }
 
@@ -121,7 +126,9 @@ module sonic-vxlan {
                     type string;
                 }
                 leaf suppress {
-                    type string;
+                    type enumeration {
+                        enum on;
+                    }
                 }
 
             }

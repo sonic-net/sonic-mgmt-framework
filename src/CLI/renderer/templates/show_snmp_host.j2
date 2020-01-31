@@ -7,7 +7,7 @@
     {% set u_p1 = i1['security-name'][0:14] %}
     {% set u_p2 = i1['security-name'][14:28] %}
     {% set u_p3 = i1['security-name'][28:32] %}
-{{ '%-39s'|format(i1['target']) -}}
+{{ '%-39s'|format(i1['ipaddr']) -}}
 {{ ' %-6s'|format(i1['trapOrInform']) -}}
 {{ ' %-14s'|format(u_p1) -}}
 {{ ' %-3s'|format(i1['version']) -}}

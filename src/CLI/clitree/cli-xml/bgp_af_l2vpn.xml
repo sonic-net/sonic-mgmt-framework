@@ -172,35 +172,35 @@ limitations under the License.
   </COMMAND>
 
   <COMMAND name="advertise-all-vni" help="Advertise all local VNIs">
-    <ACTION> python $SONIC_CLI_ROOT/sonic_cli_bgp-evpn.py patch_bgp_evpn_advertise_all_vni ${vrf-name} L2VPN_EVPN True</ACTION>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp-evpn.py patch_bgp_evpn_advertise_all_vni ${vrf-name} L2VPN_EVPN True</ACTION>
   </COMMAND>
   <COMMAND name="advertise-default-gw" help="Advertise all default gw mac-ip routes in EVPN">
-    <ACTION> python $SONIC_CLI_ROOT/sonic_cli_bgp-evpn.py patch_bgp_evpn_advertise_default_gw ${vrf-name} L2VPN_EVPN True</ACTION>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp-evpn.py patch_bgp_evpn_advertise_default_gw ${vrf-name} L2VPN_EVPN True</ACTION>
   </COMMAND>
 
   <COMMAND name="advertise" help="Advertise prefix routes"/>
   <COMMAND name="advertise ipv4" help="Address family IPv4"/>
   <COMMAND name="advertise ipv4 unicast" help="SAFI unicast">
-    <ACTION> python $SONIC_CLI_ROOT/sonic_cli_bgp-evpn.py patch_bgp_evpn_advertise ${vrf-name} L2VPN_EVPN IPV4_UNICAST</ACTION>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp-evpn.py patch_bgp_evpn_advertise ${vrf-name} L2VPN_EVPN IPV4_UNICAST</ACTION>
   </COMMAND>
 
   <COMMAND name="advertise ipv6" help="Address family IPv6"/>
   <COMMAND name="advertise ipv6 unicast" help="SAFI unicast">
-    <ACTION> python $SONIC_CLI_ROOT/sonic_cli_bgp-evpn.py patch_bgp_evpn_advertise ${vrf-name} L2VPN_EVPN IPV6_UNICAST</ACTION>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp-evpn.py patch_bgp_evpn_advertise ${vrf-name} L2VPN_EVPN IPV6_UNICAST</ACTION>
   </COMMAND>
 
   <COMMAND name="default-originate" help="originate a default route"/>
   <COMMAND name="default-originate ipv4" help="Address family IPv4">
-    <ACTION> python $SONIC_CLI_ROOT/sonic_cli_bgp-evpn.py patch_bgp_evpn_default_originate ${vrf-name} L2VPN_EVPN ipv4</ACTION>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp-evpn.py patch_bgp_evpn_default_originate ${vrf-name} L2VPN_EVPN ipv4</ACTION>
   </COMMAND>
   <COMMAND name="default-originate ipv6" help="Address family IPv6">
-    <ACTION> python $SONIC_CLI_ROOT/sonic_cli_bgp-evpn.py patch_bgp_evpn_default_originate ${vrf-name} L2VPN_EVPN ipv6</ACTION>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp-evpn.py patch_bgp_evpn_default_originate ${vrf-name} L2VPN_EVPN ipv6</ACTION>
   </COMMAND>
 
   <COMMAND name="autort" help="Auto-derivation of RT">
     <PARAM name="rfc8365-compatible" mode="subcommand" ptype="SUBCOMMAND" help="Auto-derivation of RT using RFC8365">
     </PARAM>
-    <ACTION> python $SONIC_CLI_ROOT/sonic_cli_bgp-evpn.py patch_bgp_evpn_autort ${vrf-name} L2VPN_EVPN rfc8365-compatible</ACTION>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp-evpn.py patch_bgp_evpn_autort ${vrf-name} L2VPN_EVPN rfc8365-compatible</ACTION>
   </COMMAND>
 
   <COMMAND name="flooding" help="Specify handling for BUM packets">
@@ -210,13 +210,13 @@ limitations under the License.
       <PARAM name="head-end-replication" help="Flood BUM packets using head-end replication" mode="subcommand" ptype="SUBCOMMAND">
       </PARAM>
     </PARAM>
-    <ACTION> python $SONIC_CLI_ROOT/sonic_cli_bgp-evpn.py patch_bgp_evpn_flooding ${vrf-name} L2VPN_EVPN ${flooding-type}</ACTION>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp-evpn.py patch_bgp_evpn_flooding ${vrf-name} L2VPN_EVPN ${flooding-type}</ACTION>
   </COMMAND>
 
   <COMMAND name="rd" help="Route distinguisher" >
     <!--PARAM name="rdvalue" help="Route Distinguisher value" ptype="RD"/-->
     <PARAM name="rdvalue" help="Route Distinguisher value" ptype="STRING"/>
-    <ACTION> python $SONIC_CLI_ROOT/sonic_cli_bgp-evpn.py patch_bgp_evpn_rd ${vrf-name} L2VPN_EVPN ${rdvalue}</ACTION>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp-evpn.py patch_bgp_evpn_rd ${vrf-name} L2VPN_EVPN ${rdvalue}</ACTION>
   </COMMAND>
 
   <COMMAND name="route-target" help="Route target">
@@ -224,7 +224,7 @@ limitations under the License.
       <!--PARAM name="rt" help="Route target value" ptype="RT"/-->
       <PARAM name="rt" help="Route target value" ptype="STRING"/>
     </PARAM>
-    <ACTION> python $SONIC_CLI_ROOT/sonic_cli_bgp-evpn.py patch_bgp_evpn_rt ${vrf-name} L2VPN_EVPN ${rt} ${rttype}</ACTION>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp-evpn.py patch_bgp_evpn_rt ${vrf-name} L2VPN_EVPN ${rt} ${rttype}</ACTION>
   </COMMAND>
 
   <COMMAND name="dup-addr-detection" help="Duplicate address detection" >
@@ -238,9 +238,9 @@ limitations under the License.
     </PARAM>
     <ACTION> 
       if test "${nummoves}" = "" -a "${timevalue}" = ""; then&#xA;
-        python $SONIC_CLI_ROOT/sonic_cli_bgp-evpn.py patch_bgp_evpn_dad_enable ${vrf-name} L2VPN_EVPN&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-bgp-evpn.py patch_bgp_evpn_dad_enable ${vrf-name} L2VPN_EVPN&#xA;
       else&#xA;
-        python $SONIC_CLI_ROOT/sonic_cli_bgp-evpn.py patch_bgp_evpn_dad_params ${vrf-name} L2VPN_EVPN ${nummoves} ${timevalue}&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-bgp-evpn.py patch_bgp_evpn_dad_params ${vrf-name} L2VPN_EVPN ${nummoves} ${timevalue}&#xA;
       fi&#xA;
     </ACTION>
   </COMMAND>
@@ -254,49 +254,49 @@ limitations under the License.
     </PARAM>
     <ACTION> 
       if test "${freezetype}" = "permanent"; then&#xA;
-        python $SONIC_CLI_ROOT/sonic_cli_bgp-evpn.py patch_bgp_evpn_dad_freeze ${vrf-name} L2VPN_EVPN permanent&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-bgp-evpn.py patch_bgp_evpn_dad_freeze ${vrf-name} L2VPN_EVPN permanent&#xA;
       else&#xA;
-        python $SONIC_CLI_ROOT/sonic_cli_bgp-evpn.py patch_bgp_evpn_dad_freeze ${vrf-name} L2VPN_EVPN ${time}&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-bgp-evpn.py patch_bgp_evpn_dad_freeze ${vrf-name} L2VPN_EVPN ${time}&#xA;
       fi&#xA;
     </ACTION> 
   </COMMAND>
 
   <COMMAND name="vni" help="Enter VNI config mode" view="configure-router-bgp-l2vpn-vni-view" viewid="vrf-name=${vrf-name};family=l2vpn;vninum=${vninum}">
     <PARAM name="vninum" help="VxLAN Network Identifier" ptype="VNI_RANGE" view="configure-router-bgp-l2vpn-vni-view" viewid="vrf-name=${vrf-name};family=l2vpn;vninum=${vninum}"/>
-    <ACTION> python $SONIC_CLI_ROOT/sonic_cli_bgp-evpn.py patch_bgp_evpn_vni ${vrf-name} L2VPN_EVPN ${vninum}</ACTION>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp-evpn.py patch_bgp_evpn_vni ${vrf-name} L2VPN_EVPN ${vninum}</ACTION>
   </COMMAND>
 
 
   <COMMAND name="no advertise-all-vni" help="Advertise all local VNIs">
-    <ACTION> python $SONIC_CLI_ROOT/sonic_cli_bgp-evpn.py delete_bgp_evpn_advertise_all_vni ${vrf-name} L2VPN_EVPN True</ACTION>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp-evpn.py delete_bgp_evpn_advertise_all_vni ${vrf-name} L2VPN_EVPN True</ACTION>
   </COMMAND>
   <COMMAND name="no advertise-default-gw" help="Advertise all default gw mac-ip routes in EVPN">
-    <ACTION> python $SONIC_CLI_ROOT/sonic_cli_bgp-evpn.py delete_bgp_evpn_advertise_default_gw ${vrf-name} L2VPN_EVPN True</ACTION>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp-evpn.py delete_bgp_evpn_advertise_default_gw ${vrf-name} L2VPN_EVPN True</ACTION>
   </COMMAND>
 
   <COMMAND name="no advertise" help="Advertise prefix routes"/>
   <COMMAND name="no advertise ipv4" help="Address family IPv4"/>
   <COMMAND name="no advertise ipv4 unicast" help="SAFI unicast">
-    <ACTION> python $SONIC_CLI_ROOT/sonic_cli_bgp-evpn.py delete_bgp_evpn_advertise ${vrf-name} L2VPN_EVPN IPV4_UNICAST</ACTION>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp-evpn.py delete_bgp_evpn_advertise ${vrf-name} L2VPN_EVPN IPV4_UNICAST</ACTION>
   </COMMAND>
 
   <COMMAND name="no advertise ipv6" help="Address family IPv6"/>
   <COMMAND name="no advertise ipv6 unicast" help="SAFI unicast">
-    <ACTION> python $SONIC_CLI_ROOT/sonic_cli_bgp-evpn.py delete_bgp_evpn_advertise ${vrf-name} L2VPN_EVPN IPV6_UNICAST</ACTION>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp-evpn.py delete_bgp_evpn_advertise ${vrf-name} L2VPN_EVPN IPV6_UNICAST</ACTION>
   </COMMAND>
 
   <COMMAND name="no default-originate" help="originate a default route"/>
   <COMMAND name="no default-originate ipv4" help="Address family IPv4">
-    <ACTION> python $SONIC_CLI_ROOT/sonic_cli_bgp-evpn.py delete_bgp_evpn_default_originate ${vrf-name} L2VPN_EVPN ipv4</ACTION>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp-evpn.py delete_bgp_evpn_default_originate ${vrf-name} L2VPN_EVPN ipv4</ACTION>
   </COMMAND>
   <COMMAND name="no default-originate ipv6" help="Address family IPv6">
-    <ACTION> python $SONIC_CLI_ROOT/sonic_cli_bgp-evpn.py delete_bgp_evpn_default_originate ${vrf-name} L2VPN_EVPN ipv6</ACTION>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp-evpn.py delete_bgp_evpn_default_originate ${vrf-name} L2VPN_EVPN ipv6</ACTION>
   </COMMAND>
 
   <COMMAND name="no autort" help="Auto-derivation of RT">
     <PARAM name="rfc8365-compatible" mode="subcommand" ptype="SUBCOMMAND" help="Auto-derivation of RT using RFC8365">
     </PARAM>
-    <ACTION> python $SONIC_CLI_ROOT/sonic_cli_bgp-evpn.py delete_bgp_evpn_autort ${vrf-name} L2VPN_EVPN rfc8365-compatible</ACTION>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp-evpn.py delete_bgp_evpn_autort ${vrf-name} L2VPN_EVPN rfc8365-compatible</ACTION>
   </COMMAND>
 
   <COMMAND name="no flooding" help="Specify handling for BUM packets">
@@ -306,13 +306,13 @@ limitations under the License.
       <PARAM name="head-end-replication" help="Flood BUM packets using head-end replication" mode="subcommand" ptype="SUBCOMMAND">
       </PARAM>
     </PARAM>
-    <ACTION> python $SONIC_CLI_ROOT/sonic_cli_bgp-evpn.py delete_bgp_evpn_flooding ${vrf-name} L2VPN_EVPN ${flooding-type}</ACTION>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp-evpn.py delete_bgp_evpn_flooding ${vrf-name} L2VPN_EVPN ${flooding-type}</ACTION>
   </COMMAND>
 
   <COMMAND name="no rd" help="Route distinguisher" >
     <!--PARAM name="rdvalue" help="Route Distinguisher value" ptype="RD"/-->
     <PARAM name="rdvalue" help="Route Distinguisher value" ptype="STRING"/>
-    <ACTION> python $SONIC_CLI_ROOT/sonic_cli_bgp-evpn.py delete_bgp_evpn_rd ${vrf-name} L2VPN_EVPN ${rdvalue}</ACTION>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp-evpn.py delete_bgp_evpn_rd ${vrf-name} L2VPN_EVPN ${rdvalue}</ACTION>
   </COMMAND>
 
   <COMMAND name="no route-target" help="Route target">
@@ -320,7 +320,7 @@ limitations under the License.
       <!--PARAM name="rt" help="Route target value" ptype="RT"/-->
       <PARAM name="rt" help="Route target value" ptype="STRING"/>
     </PARAM>
-    <ACTION> python $SONIC_CLI_ROOT/sonic_cli_bgp-evpn.py delete_bgp_evpn_rt ${vrf-name} L2VPN_EVPN ${rt} ${rttype}</ACTION>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp-evpn.py delete_bgp_evpn_rt ${vrf-name} L2VPN_EVPN ${rt} ${rttype}</ACTION>
   </COMMAND>
 
   <COMMAND name="no dup-addr-detection" help="Duplicate address detection" >
@@ -334,9 +334,9 @@ limitations under the License.
     </PARAM>
     <ACTION> 
       if test "${nummoves}" = "" -a "${timevalue}" = ""; then&#xA;
-        python $SONIC_CLI_ROOT/sonic_cli_bgp-evpn.py delete_bgp_evpn_dad_enable ${vrf-name} L2VPN_EVPN&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-bgp-evpn.py delete_bgp_evpn_dad_enable ${vrf-name} L2VPN_EVPN&#xA;
       else&#xA;
-        python $SONIC_CLI_ROOT/sonic_cli_bgp-evpn.py delete_bgp_evpn_dad_params ${vrf-name} L2VPN_EVPN ${nummoves} ${timevalue}&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-bgp-evpn.py delete_bgp_evpn_dad_params ${vrf-name} L2VPN_EVPN ${nummoves} ${timevalue}&#xA;
       fi&#xA;
     </ACTION>
   </COMMAND>
@@ -348,12 +348,12 @@ limitations under the License.
       <PARAM name="time" help="" ptype="DAD_FREEZE_TIME">
       </PARAM>
     </PARAM>
-    <ACTION> python $SONIC_CLI_ROOT/sonic_cli_bgp-evpn.py delete_bgp_evpn_dad_freeze ${vrf-name} L2VPN_EVPN</ACTION>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp-evpn.py delete_bgp_evpn_dad_freeze ${vrf-name} L2VPN_EVPN</ACTION>
   </COMMAND>
 
   <COMMAND name="no vni" help="Enter VNI config mode" >
     <PARAM name="vninum" help="VxLAN Network Identifier" ptype="VNI_RANGE"/>
-    <ACTION> python $SONIC_CLI_ROOT/sonic_cli_bgp-evpn.py delete_bgp_evpn_vni ${vrf-name} L2VPN_EVPN ${vninum}</ACTION>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp-evpn.py delete_bgp_evpn_vni ${vrf-name} L2VPN_EVPN ${vninum}</ACTION>
   </COMMAND>
 
 </VIEW>
@@ -1119,6 +1119,14 @@ limitations under the License.
            python $SONIC_CLI_ROOT/sonic-cli-show-bgp-evpn.py get_bgp_evpn_routes show_evpn_routes_detail.j2 default L2VPN_EVPN&#xA;
         fi&#xA;
   </ACTION>
+  </COMMAND>
+
+  <COMMAND name="clear bgp l2vpn" help="Address family"/>
+  <COMMAND name="clear bgp l2vpn evpn" help="Address family modifier">
+    <PARAM name="clear_bgp_subcommands" help="BGP Subcommands" ptype="SUBCOMMAND" mode="switch">
+        <MACRO name="CLEAR_EVPN_BGP_OPTIONS_SUB_CMDS" arg=""></MACRO>
+    </PARAM>
+    <ACTION builtin="clish_pyobj">sonic_cli_clear_bgp clear_bgp asn=${as-num-dot} n-ipv4=${neighbor-ipv4} n-ipv6=${neighbor-ipv6} ${__full_line}</ACTION>
   </COMMAND>
 </VIEW>
 

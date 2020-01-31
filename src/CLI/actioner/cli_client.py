@@ -207,6 +207,10 @@ def _has_json_content(resp):
     ctype = resp.headers.get('Content-Type')
     return (ctype is not None and 'json' in ctype)
 
+def _has_json_content(resp):
+    ctype = resp.headers.get('Content-Type')
+    return (ctype is not None and 'json' in ctype)
+
 def default_error_message_formatter(status_code, err_entry):
     if 'error-message' in err_entry:
         err_msg = err_entry['error-message']

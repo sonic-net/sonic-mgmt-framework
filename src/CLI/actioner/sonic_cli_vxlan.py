@@ -37,8 +37,22 @@ def config_response_handler(api_response, func, args):
     else:
         try:
             error_data = api_response.content['ietf-restconf:errors']['error'][0]
+            err_app_tag = 'NOERROR'
+            err_msg = 'NOERROR'
+            err_tag = 'NOERROR'
+
             if 'error-app-tag' in error_data: 
-                err_app_tag = error_data['error-app-tag'] 
+               err_app_tag = error_data['error-app-tag'] 
+
+            if 'error-message' in error_data: 
+               err_msg = error_data['error-message']
+
+            if 'error-tag' in error_data: 
+               err_tag = error_data['error-tag']
+
+            if err_app_tag is not 'NOERROR': 
+                #err_app_tag = error_data['error-app-tag'] 
+                #err_msg = error_data['error-message']
                 if err_app_tag == 'too-many-elements':
                    if (func == 'patch_sonic_vxlan_sonic_vxlan_vxlan_tunnel_vxlan_tunnel_list'):
                      print('Error: VTEP already configured')
@@ -50,19 +64,22 @@ def config_response_handler(api_response, func, args):
                    print('Error: VNI Id already mapped')
                 elif err_app_tag == 'vnid-invalid':
                    print('Error: Invalid VNI. Valid range [1 to 16777215]')
-                else:
-                   print('Error: Unknown err-app-tag {}'.format(str(err_app_tag)))
-            elif 'error-message' in error_data: 
-                err_msg = error_data['error-message'] 
-                if err_msg == 'Entry not found':
-                   if func == 'delete_sonic_vxlan_sonic_vxlan_vxlan_tunnel_map_vxlan_tunnel_map_list':
-                      print('Error:{} Vlan:{} VNI:{}'.format(str(err_msg),str(args[0]),str(args[1]))) 
+                elif err_app_tag == 'invalid-vtep-name':
+                   print('Error: VTEP name should start with "vtep"')
+                elif err_app_tag == 'instance-required':
+                   if err_msg is not None:
+                      print("Error: {}".format(err_msg))
                    else:
-                       print 'unknown func'
+                      print err_app_tag
+                else :
+                   print('Error: Unknown err-app-tag {}'.format(str(err_app_tag)))
+            elif err_tag is not 'NOERROR': 
+                if (func == 'delete_sonic_vxlan_sonic_vxlan_vxlan_tunnel_vxlan_tunnel_list'):
+                    print("Error: Please delete EVPN NVO and VLAN VNI mappings.")
                 else:
-                    print 'unknown error message'
-
+                    print("Error: {}".format(err_tag))
             else:
+                print error_data
                 print(api_response.error_message())
 
         except Exception as e:
@@ -140,6 +157,7 @@ def invoke(func, args):
               if (func.startswith("delete") is True):
                 delkeypath = cc.Path('/restconf/data/sonic-vxlan:sonic-vxlan/VXLAN_TUNNEL_MAP/VXLAN_TUNNEL_MAP_LIST={name},{mapname1}', name=args[1][6:], mapname1=mapname)
                 api_response = aa.delete(delkeypath)
+                config_response_handler(api_response, func, resp_args)
 
               else:
                 listobj = {
@@ -150,12 +168,12 @@ def invoke(func, args):
                     }
                 maplist.append(listobj)
 
-                body = {
-                  "sonic-vxlan:VXLAN_TUNNEL_MAP_LIST": maplist
-                }
-                api_response =  aa.patch(keypath, body)
-
-              config_response_handler(api_response, func, resp_args)
+            if (func.startswith("patch") is True):
+               body = {
+                   "sonic-vxlan:VXLAN_TUNNEL_MAP_LIST": maplist
+               }
+               api_response =  aa.patch(keypath, body)
+               config_response_handler(api_response, func, args)
 
         return api_response
 

@@ -127,7 +127,7 @@ limitations under the License.
             name="donor-interface"
             help="Donor Interface Name"
             ptype="STRING" />
-    <ACTION builtin="clish_restcl">oper=PATCH url=/restconf/data/openconfig-interfaces:interfaces/interface=${iface}/subinterfaces/subinterface=0/openconfig-if-ip:ipv4/unnumbered/interface-ref/config/interface body={"openconfig-if-ip:interface": "${donor-interface}"}</ACTION>
+        <ACTION builtin="clish_restcl">oper=PATCH url=/restconf/data/openconfig-interfaces:interfaces/interface=${iface}/subinterfaces/subinterface=0/openconfig-if-ip:ipv4/unnumbered/interface-ref/config/interface body={"openconfig-if-ip:interface": "${donor-interface}"}</ACTION>
     </COMMAND>
 
     <COMMAND
