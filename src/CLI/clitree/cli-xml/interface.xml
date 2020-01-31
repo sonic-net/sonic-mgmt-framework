@@ -312,7 +312,7 @@ limitations under the License.
                 <PARAM 
                         name="min-links-value" 
                         help="Minimum links value" 
-                        ptype="UINT"
+                        ptype="MIN_LINK"
                         > 
                 </PARAM>
         </PARAM>
