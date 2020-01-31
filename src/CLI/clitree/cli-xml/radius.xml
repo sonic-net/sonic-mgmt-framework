@@ -36,7 +36,7 @@ limitations under the License.
 <PTYPE
      name="RADIUS_TIMEOUT"
      method="integer"
-     pattern="0..60"
+     pattern="1..60"
      help="seconds"
      />
 <!--=======================================================-->
