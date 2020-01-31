@@ -5,13 +5,20 @@ module sonic-kdump {
     prefix "sonic-kdump";
 
     description
-        "kdump support module for SONiC Management REST Server";
+        "KDUMP support module for SONiC Management REST Server.";
 
 
     rpc kdump-config {
+        description
+            "Allow to configure kdump:
+               - Enable or disable kdump
+               - Maximum number of kernel dump files which can be stored locally
+               - Amount of memory reserved for kdump.";
         input {
             leaf enabled {
                 type boolean;
+                description
+                    "Enable or Disable kdump.";
             }
             leaf num_dumps {
                 type int32 {
@@ -19,6 +26,8 @@ module sonic-kdump {
                         error-message "Maximum number of stored kernel core files out of range";
                     }
                 }
+                description
+                    "Maximum number of kernel core files stored locally.";
             }
             leaf memory {
                 type string {
@@ -26,26 +35,41 @@ module sonic-kdump {
                         error-message "Invalid kdump memory pattern";
                     }
                 }
+                description
+                    "Amount of memory reserved for kdump.";
             }
         }
         output {
             leaf result {
                 type string;
+                description
+                    "Detailed status the requested kdump operation.";
             }
         }
    }
 
     rpc kdump-state {
+        description
+            "Allow to retrieve the kdump current configuration:
+                - status : Show kdump status
+                - memory : Show memory allocated for kdump
+                - num_dumps : Show maximum number of kernel core dump files which can stored locally
+                - files : Show kdump kernel core dump files
+                - log : Show kdump kernel core dump file kernel log.
+
+            The result of the requested command is sent as a string.";
         input {
             leaf param {
                 type string {
-                    pattern "status(status) memory(memory) num_dumps(num_dump)";
+                    pattern "status(status) memory(memory) num_dumps(num_dump) files(files) log(log)";
                 }
             }
         }
         output {
             leaf result {
                 type string;
+                description
+                    "String showing the result of the last requested command (status, memory or num_dumps).";
             }
         }
     }
