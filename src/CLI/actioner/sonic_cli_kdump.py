@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python
 
 import sys
 import os
@@ -68,34 +68,44 @@ def cmd_set_memory(memory):
 def cmd_set_num_dumps(num_dumps):
     run_config_cmd({"Enabled":False, "Num_Dumps":num_dumps, "Memory":""})
 
-if __name__ == '__main__':
+## Main function
+def run(func, args):
 
-    if len(sys.argv) == 3:
-        if sys.argv[1] == 'show' and sys.argv[2] == 'kdump':
+    argv = []
+    argv.append("sonic_cli_kdump")
+    argv.append(func)
+    for x in args:
+        argv.append(x)
+
+    if len(argv) == 3:
+        if argv[1] == 'show' and argv[2] == 'kdump':
             cmd_show_status()
-        elif sys.argv[1] == 'kdump' and sys.argv[2] == 'enable':
+        elif argv[1] == 'kdump' and argv[2] == 'enable':
             cmd_enable()
-        elif sys.argv[1] == 'no' and sys.argv[2] == 'kdump':
+        elif argv[1] == 'no' and argv[2] == 'kdump':
             cmd_disable()
-    elif len(sys.argv) == 4:
-        if sys.argv[1] == 'show' and sys.argv[2] == 'kdump' and sys.argv[3] == 'status':
+    elif len(argv) == 4:
+        if argv[1] == 'show' and argv[2] == 'kdump' and argv[3] == 'status':
             cmd_show_status()
-        elif sys.argv[1] == 'show' and sys.argv[2] == 'kdump' and sys.argv[3] == 'memory':
+        elif argv[1] == 'show' and argv[2] == 'kdump' and argv[3] == 'memory':
             cmd_show_memory()
-        elif sys.argv[1] == 'show' and sys.argv[2] == 'kdump' and sys.argv[3] == 'num_dumps':
+        elif argv[1] == 'show' and argv[2] == 'kdump' and argv[3] == 'num_dumps':
             cmd_show_num_dumps()
-        elif sys.argv[1] == 'kdump' and sys.argv[2] == 'memory':
-            cmd_set_memory(sys.argv[3])
-        elif sys.argv[1] == 'kdump' and sys.argv[2] == 'num_dumps':
-            cmd_set_num_dumps(int(sys.argv[3]))
-        elif sys.argv[1] == 'no' and sys.argv[2] == 'kdump' and sys.argv[3] == 'memory':
+        elif argv[1] == 'kdump' and argv[2] == 'memory':
+            cmd_set_memory(argv[3])
+        elif argv[1] == 'kdump' and argv[2] == 'num_dumps':
+            cmd_set_num_dumps(int(argv[3]))
+        elif argv[1] == 'no' and argv[2] == 'kdump' and argv[3] == 'memory':
             cmd_set_memory("0M-2G:256M,2G-4G:320M,4G-8G:384M,8G-:448M")
-        elif sys.argv[1] == 'no' and sys.argv[2] == 'kdump' and sys.argv[3] == 'num_dumps':
+        elif argv[1] == 'no' and argv[2] == 'kdump' and argv[3] == 'num_dumps':
             cmd_set_num_dumps(int(3))
-    elif len(sys.argv) == 5 and sys.argv[1] == 'do':
-        if sys.argv[2] == 'show' and sys.argv[3] == 'kdump' and sys.argv[4] == 'status':
+    elif len(argv) == 5 and argv[1] == 'do':
+        if argv[2] == 'show' and argv[3] == 'kdump' and argv[4] == 'status':
             cmd_show_status()
-        elif sys.argv[2] == 'show' and sys.argv[3] == 'kdump' and sys.argv[4] == 'memory':
+        elif argv[2] == 'show' and argv[3] == 'kdump' and argv[4] == 'memory':
             cmd_show_memory()
-        elif sys.argv[2] == 'show' and sys.argv[3] == 'kdump' and sys.argv[4] == 'num_dumps':
+        elif argv[2] == 'show' and argv[3] == 'kdump' and argv[4] == 'num_dumps':
             cmd_show_num_dumps()
+
+if __name__ == '__main__':
+    run(sys.argv[1], sys.argv[2:])
