@@ -1954,6 +1954,12 @@ var YangToDb_intf_eth_port_config_xfmr SubTreeXfmrYangToDb = func(inParams XfmrP
                     errStr := "Interface already part of a PortChannel"
                     return nil, tlerr.InvalidArgsError{Format: errStr}
                 }
+                /* Restrict configuring member-port if iface configured as member-port of any vlan */
+                err = validateIntfAssociatedWithVlan(inParams.d, &ifName)
+                if err != nil {
+                    errStr := "PortChannel config not permitted on Vlan member-port"
+                    return nil, tlerr.InvalidArgsError{Format: errStr}
+                }
                 /* Check if L3 configs present on given physical interface */
                 err = validateL3ConfigExists(inParams.d, &ifName)
                 if err != nil {
