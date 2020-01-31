@@ -17,7 +17,7 @@
 #                                                                              #
 ################################################################################
 
-.PHONY: all clean cleanall codegen rest-server rest-clean yamlGen cli clitree ham
+.PHONY: all clean cleanall codegen rest-server rest-clean yamlGen cli clitree ham clidocgen clidocgen-clean
 
 TOPDIR := $(abspath .)
 BUILD_DIR := $(TOPDIR)/build
@@ -86,6 +86,12 @@ clish:
 
 clitree:
 	 TGT_DIR=$(BUILD_DIR)/cli $(MAKE) -C src/CLI/clitree
+
+clidocgen:
+	 TGT_DIR=$(BUILD_DIR)/cli $(MAKE) -C src/CLI/clitree doc_gen
+
+clidocgen-clean:
+	TGT_DIR=$(BUILD_DIR)/cli $(MAKE) -C src/CLI/clitree doc_gen_clean
 
 cvl: $(go-deps) $(go-patch) $(go-redis-patch)
 	$(MAKE) -C src/cvl
