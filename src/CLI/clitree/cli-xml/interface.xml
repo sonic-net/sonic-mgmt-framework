@@ -242,7 +242,7 @@ limitations under the License.
                 help="Vlan identifier"
                 ptype="VLAN_INTERFACE"
                 view="configure-vlan-view"
-                viewid="vlan_id=${vlan-if-name}"
+                viewid="vlan_name=${vlan-if-name}"
         />
         </PARAM>
 	<ACTION builtin="clish_pyobj">sonic_cli_if if_config ${if-switch} ${phy-if-name}${vlan-if-name}</ACTION>
