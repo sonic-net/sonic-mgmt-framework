@@ -26,7 +26,7 @@ module sonic-ssh-server-vrf {
 
                 leaf vrf_name {
                     type string {
-                        pattern "^mgmt$" {
+                        pattern "mgmt|Vrf[a-zA-Z0-9_-]+" {
                             error-message "Invalid VRF name for SSH server";
                             error-app-tag vrf-name-ssh-invalid;
                         }
