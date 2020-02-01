@@ -520,16 +520,23 @@ var YangToDb_bgp_gbl_tbl_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (s
     log.Info("URI VRF ", niName)
 
     if inParams.oper == DELETE && niName == "default" {
-        bgpGblTblTs := &db.TableSpec{Name: "BGP_GLOBALS"}
-        if bgpGblTblKeys, err := inParams.d.GetKeys(bgpGblTblTs) ; err == nil {
-            for _, key := range bgpGblTblKeys {
-                /* If "default" VRF is present in keys-list & still list-len is greater than 1,
-                 * then don't allow "default" VRF BGP-instance delete.
-                 * "default" VRF BGP-instance should be deleted, only after all non-default VRF instances are deleted from the system */
-                if key.Get(0) == niName && len(bgpGblTblKeys) > 1 {
-                    return "", tlerr.NotSupported("Delete not allowed, since non-default-VRF BGP-instance present in system")
-                }
-            }
+        xpath, _ := XfmrRemoveXPATHPredicates(inParams.requestUri)
+        switch xpath {
+            case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp": fallthrough
+            case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/global": fallthrough
+            case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/global/config":
+                 log.Info ("DELELE op for niName: ", niName, " XPATH: ", xpath)
+                 bgpGblTblTs := &db.TableSpec{Name: "BGP_GLOBALS"}
+                 if bgpGblTblKeys, err := inParams.d.GetKeys(bgpGblTblTs) ; err == nil {
+                     for _, key := range bgpGblTblKeys {
+                         /* If "default" VRF is present in keys-list & still list-len is greater than 1,
+                          * then don't allow "default" VRF BGP-instance delete.
+                          * "default" VRF BGP-instance should be deleted, only after all non-default VRF instances are deleted from the system */
+                         if key.Get(0) == niName && len(bgpGblTblKeys) > 1 {
+                             return "", tlerr.NotSupported("Delete not allowed, since non-default-VRF BGP-instance present in system")
+                         }
+                     }
+                 }
         }
     }
 
