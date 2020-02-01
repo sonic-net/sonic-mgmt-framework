@@ -1078,7 +1078,7 @@ limitations under the License.
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-show-bgp-evpn.py get_bgp_evpn_routes show_evpn_routes_detail.j2 default L2VPN_EVPN</ACTION>
   </COMMAND>
   <COMMAND name="show bgp l2vpn evpn summary" help="Summary of BGP neighbor status">
-    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py get_ip_bgp_summary show_evpn_summary.j2 default</ACTION>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-show-bgp-evpn.py get_bgp_evpn_summary show_evpn_summary.j2 default L2VPN_EVPN</ACTION>
   </COMMAND>
   <COMMAND name="show bgp l2vpn evpn route type" help="Specify Route type">
     <PARAM name="type" help="EVPN route type subcommands" ptype="SUBCOMMAND" mode="switch">

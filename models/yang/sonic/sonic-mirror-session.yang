@@ -7,10 +7,6 @@ module sonic-mirror-session {
         prefix inet;
     }
 
-    import ietf-yang-types {
-        prefix yang;
-    }
-
     import sonic-extension {
         prefix sonic-ext;
     }
@@ -46,41 +42,92 @@ module sonic-mirror-session {
                 key "name";
 
                 leaf name {
-                    type string;
+                    type string {
+                        pattern '[a-zA-Z0-9]{1}([-a-zA-Z0-9_]{0,71})';
+                        length 1..72 {
+                            error-message "Invalid mirror session name";
+                            error-app-tag session-name-invalid;
+                        }
+                    }
+                    description
+                        "Mirror session name.";
                 }
 
                 leaf src_ip {
                     type inet:ipv4-address;
+                    description
+                        "ERSPAN source ip. This IP will be set as source ip in
+                        outer header of mirrored frame ";
                 }
 
                 leaf dst_ip {
                     type inet:ipv4-address;
+                    description
+                        "ERSPAN destination ip. Mirrored frames will be routed to this destination.
+                        This IP will be set as destination ip in outer header of mirrored frame ";
                 }
 
                 leaf gre_type {
                     type string {
                         pattern "0[xX][0-9a-fA-F]*";
+                        length 1..6 {
+                            error-message "Invalid GRE type";
+                            error-app-tag gre-type-invalid;
+                        }
                     }
+                    description
+                        "ERSPAN GRE type. Mirrored frames will be sent with the configured GRE type";
                 }
 
                 leaf dscp {
-                    type uint8;
+                    type uint8 {
+                        range "0..63" {
+                            error-message "Invalid dscp value";
+                            error-app-tag dscp-invalid;
+                        }
+                    }
+                    description
+                        "ERSPAN outer header DSCP value. Mirrored frames will be sent with configured DSCP value";
                 }
 
                 leaf ttl {
-                    type uint8;
+                    type uint8 {
+                        range "0..63" {
+                            error-message "Invalid TTL value";
+                            error-app-tag ttl-invalid;
+                        }
+                    }
+                    description
+                        "ERSPAN outer header TTL value. Mirrored frames will be sent with configured TTL value";
                 }
 
                 leaf queue {
-                    type uint8;
+                    type uint8 {
+                        range "0..63" {
+                            error-message "Invalid Queue value";
+                            error-app-tag queue-invalid;
+                        }
+                    }
+                    description
+                        "ERSPAN Queue. Mirrored frames will be sent to configured queue";
                 }
 
                 leaf dst_port {
-                    type string;
-                    must "count(../../MIRROR_SESSION_LIST[src_port=current()]) = 0" {
-                        error-message "destination port cannot be same as source port";
-                        error-app-tag mirror-session-invalid_dst_port;
+                    type union{
+                        type leafref {
+                            path "/prt:sonic-port/prt:PORT/prt:PORT_LIST/prt:ifname";
+                        }
+                        type enumeration {
+                            enum erspan;
+                        }
                     }
+                    must "count(../../MIRROR_SESSION_LIST[src_port=current()]) = 0" {
+                        error-message "destination port already configured in other mirror session";
+                        error-app-tag dst-port-already-configured;
+                    }
+                    description
+                        "Destination port configuration for port mirroring(SPAN).
+                        For ERSPAN session this is set as erspan";
                 }
 
                 leaf src_port {
@@ -93,9 +140,12 @@ module sonic-mirror-session {
                         }
                     }
                     must "count(../../MIRROR_SESSION_LIST[dst_port=current()]) = 0" {
-                        error-message "source port cannot be same as destination port";
-                        error-app-tag mirror-session-invalid_src_port;
+                        error-message "source port already configured in other mirror session as destination port";
+                        error-app-tag src-port-already-configured-as-dst-port;
                     }
+                    description
+                        "Source port configuration for mirroring. Can be configured for both SPAN/ERSPAN.
+                        Supports both port and port-channel as arguments";
                 }
 
                 leaf direction {
@@ -104,11 +154,17 @@ module sonic-mirror-session {
                         enum tx;
                         enum both;
                     }
+                    description
+                        "Direction configuration for mirroring. Can be configured for both SPAN/ERSPAN.
+                        Supports rx/tx/both as direction config.
+                           rx: Captures frames ingressing on source port.
+                           rx: Captures frames egressing on source port.
+                           both: Captures frames ingressing or egressing on source port.";
                 }
 
                 must "not (src_port) or not (dst_port) or (dst_port != src_port)" {
                     error-message "destination port cant be same as source port";
-                    error-app-tag mirror-session-invalid;
+                    error-app-tag dst-port-same-as-src-port;
                 }
             }
         }
@@ -129,10 +185,17 @@ module sonic-mirror-session {
 
                 leaf name {
                     type string;
+                    description
+                        "Mirror session name.";
                 }
 
                 leaf status {
                     type string;
+                    description
+                        "Mirror session status. Valid valures are active/inactive/error
+                        active: mirror session is active
+                        inactive: mirror session is inactive when destination ip is not reachable in ERSPAN
+                        error: configuration error";
                 }
 
                 leaf monitor_port {

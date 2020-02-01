@@ -27,7 +27,7 @@
 
       <!--show vxlan tunnel -->
       <COMMAND name="show vxlan tunnel" help="Show Vxlan Tunnels">
-        <ACTION builtin="clish_pyobj">sonic_cli_vxlan show_vxlan_tunnel show_vxlan_vlanvnimap.j2</ACTION>
+        <ACTION builtin="clish_pyobj">sonic_cli_vxlan show_vxlan_tunnel show_vxlan_tunnel.j2</ACTION>
       </COMMAND>
 
       <!--show vxlan evpn remote vni-->
@@ -40,7 +40,7 @@
               optional="true"
               >
           </PARAM>
-        <ACTION builtin="clish_pyobj">sonic_cli_vxlan show_vxlan_remote_vni show_vxlan_evpn_remote_vni.j2 ${remote_ip_addr}</ACTION>
+        <ACTION builtin="clish_pyobj">sonic_cli_vxlan show_vxlan_remote_vni show_vxlan_remote_vni.j2 ${remote_ip_addr}</ACTION>
       </COMMAND>
       <COMMAND name="show vxlan remote mac" help="Show Vxlan Remote mac">
           <PARAM
@@ -50,7 +50,7 @@
               optional="true"
               >
           </PARAM>
-        <ACTION builtin="clish_pyobj">sonic_cli_vxlan show_vxlan_remote_mac show_vxlan_evpn_remote_mac.j2 ${remote_ip_addr}</ACTION>
+        <ACTION builtin="clish_pyobj">sonic_cli_vxlan show_vxlan_remote_mac show_vxlan_remote_mac.j2 ${remote_ip_addr}</ACTION>
       </COMMAND>
 
     </VIEW>

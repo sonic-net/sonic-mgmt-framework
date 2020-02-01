@@ -33,7 +33,7 @@ limitations under the License.
              help="Show TAM IFA feature info" 
              mode="subcommand" 
              ptype="SUBCOMMAND">
-      <ACTION>python $SONIC_CLI_ROOT/sonic-cli-ifa.py get_sonic_ifa_sonic_ifa_tam_int_ifa_feature_table show_tam_feature.j2</ACTION>
+      <ACTION builtin="clish_pyobj">sonic_cli_ifa get_sonic_ifa_sonic_ifa_tam_int_ifa_feature_table show_tam_feature.j2</ACTION>
     </COMMAND>
     <COMMAND name="show tam int-ifa flow" 
              help="Show TAM IFA flow info" 
@@ -44,15 +44,7 @@ limitations under the License.
              ptype="STRING_32" 
              optional="true"> 
       </PARAM>
-      <ACTION>
-        if test "${name}" = "all" ; then&#xA;
-          python $SONIC_CLI_ROOT/sonic-cli-ifa.py get_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table show_tam_flow.j2&#xA;
-        elif test -z "${name}"; then&#xA;
-          python $SONIC_CLI_ROOT/sonic-cli-ifa.py get_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table show_tam_flow.j2&#xA;
-        else&#xA;
-          python $SONIC_CLI_ROOT/sonic-cli-ifa.py get_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table_tam_int_ifa_flow_table_list ${name} show_tam_flow.j2&#xA;
-        fi&#xA;
-      </ACTION>
+       <ACTION builtin="clish_pyobj">sonic_cli_ifa get_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table show_tam_flow.j2 ${name}</ACTION>
     </COMMAND>
 
     <COMMAND name="show tam int-ifa statistics"
@@ -64,22 +56,14 @@ limitations under the License.
              ptype="STRING_32"
              optional="true">
       </PARAM>
-      <ACTION>
-        if test "${name}" = "all" ; then&#xA;
-          python $SONIC_CLI_ROOT/sonic-cli-ifa.py get_tam_ifa_flow_stats&#xA;
-        elif test -z "${name}"; then&#xA;
-          python $SONIC_CLI_ROOT/sonic-cli-ifa.py get_tam_ifa_flow_stats&#xA;
-        else&#xA;
-          python $SONIC_CLI_ROOT/sonic-cli-ifa.py get_tam_ifa_flow_stats ${name}&#xA;
-        fi&#xA;
-      </ACTION>
+       <ACTION builtin="clish_pyobj">sonic_cli_ifa get_tam_ifa_flow_stats ${name}</ACTION>
     </COMMAND>
 
     <COMMAND name="show tam int-ifa status"
              help="Show TAM IFA flow status"
              mode="subcommand"
              ptype="SUBCOMMAND">
-      <ACTION>python $SONIC_CLI_ROOT/sonic-cli-ifa.py get_tam_ifa_status</ACTION>
+      <ACTION builtin="clish_pyobj">sonic_cli_ifa get_tam_ifa_status</ACTION>
     </COMMAND>
 
   </VIEW>
@@ -99,12 +83,7 @@ limitations under the License.
              help="Device ID" 
              ptype="ENA_DISA"> 
       </PARAM>
-      <ACTION> if test "${enable}" = "enable" ; then&#xA;
-        python $SONIC_CLI_ROOT/sonic-cli-ifa.py patch_sonic_ifa_sonic_ifa_tam_int_ifa_feature_table_tam_int_ifa_feature_table_list_enable feature True&#xA;
-          else&#xA;
-        python $SONIC_CLI_ROOT/sonic-cli-ifa.py patch_sonic_ifa_sonic_ifa_tam_int_ifa_feature_table_tam_int_ifa_feature_table_list_enable feature False&#xA;
-          fi&#xA;
-      </ACTION>
+      <ACTION builtin="clish_pyobj">sonic_cli_ifa patch_sonic_ifa_sonic_ifa_tam_int_ifa_feature_table_tam_int_ifa_feature_table_list_enable ${__params}</ACTION>
     </COMMAND>
 
     <!-- tam-int-ifa flow-->
@@ -154,7 +133,7 @@ limitations under the License.
                ptype="STRING"> 
         </PARAM>
       </PARAM>
-      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-ifa.py patch_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table_tam_int_ifa_flow_table_list ${flow-name} ${acl-rule-val} ${acl-table-val} sv ${sampling-rate-val} cv ${collector-val} </ACTION>
+      <ACTION builtin="clish_pyobj">sonic_cli_ifa patch_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table_tam_int_ifa_flow_table_list ${flow-name} ${acl-rule-val} ${acl-table-val} sv ${sampling-rate-val} cv ${collector-val}</ACTION>
     </COMMAND>
 
     <!-- no tam-int-ifa flow -->
@@ -166,13 +145,7 @@ limitations under the License.
              help="Flow Name" 
              ptype="STRING"> 
       </PARAM>
-      <ACTION>
-        if test "${name}" = "all" ; then&#xA;
-          python $SONIC_CLI_ROOT/sonic-cli-ifa.py delete_list_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table_tam_int_ifa_flow_table_list&#xA;
-        else&#xA;
-          python $SONIC_CLI_ROOT/sonic-cli-ifa.py delete_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table_tam_int_ifa_flow_table_list ${name}&#xA;
-        fi&#xA;
-      </ACTION>
+      <ACTION builtin="clish_pyobj">sonic_cli_ifa delete_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table_tam_int_ifa_flow_table_list ${name}</ACTION>
     </COMMAND>
   </VIEW>
 
