@@ -1,0 +1,58 @@
+{% set vars = {'name': ""} %}
+{% set vars = {'admin_state': ""} %}
+{% set vars = {'oper_state': "down"} %}
+{% set vars = {'admin_oper': "down"} %}
+{% set vars = {'master': ""} %}
+{% set vars = {'flags': ""} %}
+{% set vars = {'ipv4_src_pfx': ""} %}
+{% if json_output -%}
+------------------------------------------------------------------------------------
+{{'%-20s'|format("Interface")}}{{'%-20s'|format("IPv4 address/mask")}}{{'%-15s'|format("Master")}}{{'%-15s'|format("Admin/Oper")}}{{'%-15s'|format("Flags")}}
+------------------------------------------------------------------------------------
+{% for key_json in json_output %}
+{% set interface_list = json_output[key_json]["interface"] %}
+{% for interface in interface_list %}
+    {% for key in interface %}
+      {% if "state" in key %}
+        {% if vars.update({'name':interface[key]["name"]}) %}{% endif %}
+        {% if vars.name.startswith('Loopback') %}
+            {% if vars.update({'admin_state':"UP"}) %}{% endif %}
+            {% if vars.update({'oper_state':"UP"}) %}{% endif %}
+        {% else %}
+        {% if "admin-status" in interface[key] %}
+           {% if vars.update({'admin_state':interface[key]["admin-status"]}) %}{% endif %}
+        {% else %}
+           {% if vars.update({'admin_state':"DOWN"}) %}{% endif %}
+        {% endif %}
+        {% if "oper-status" in interface[key] %}
+            {% if vars.update({'oper_state':interface[key]["oper-status"]}) %}{% endif %}
+        {% else %}
+            {% if vars.update({'oper_state':"DOWN"}) %}{% endif %}
+        {% endif %}
+        {% endif %}
+        {% set admin_op = vars.admin_state + "/" + vars.oper_state|string() %}
+        {% if vars.update({'admin_oper':admin_op}) %}{% endif %}
+      {% endif %}
+    {% endfor %}
+    {% for key in interface %}
+    {% if "subinterfaces" in key  %}
+        {% for subinterface in interface[key] %}
+          {% set subif_list = interface[key][subinterface] %}
+          {% for subif in subif_list %}
+            {% if subif["openconfig-if-ip:ipv4"] %}
+              {% set ip_list = subif["openconfig-if-ip:ipv4"]["addresses"]["address"] %}
+              {% set ip_all = [] %}
+              {% for ip in ip_list %}
+                {% set ipfx = ip["state"]["ip"] + "/" + ip["state"]["prefix-length"]|string() %}
+                {% if vars.update({'ipv4_src_pfx':ipfx}) %}{% endif %}
+{{'%-20s'|format(vars.name)}}{{'%-20s'|format(vars.ipv4_src_pfx)}}{{'%-15s'|format(vars.master)}}{{'%-15s'|format(vars.admin_oper)}}{{'%-15s'|format(vars.flags)}}
+              {% endfor %}
+            {% endif %}
+          {% endfor %}
+        {% endfor %}
+      {% endif %}
+    {% endfor %}
+{% endfor %}
+{% endfor %}
+{% endif %}
+

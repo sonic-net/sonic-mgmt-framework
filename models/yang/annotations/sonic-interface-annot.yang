@@ -13,4 +13,10 @@ module sonic-interface-annot {
 	    sonic-ext:rpc-callback "rpc_clear_counters";
         }
     }
+    deviation /sintf:sonic-interface/sintf:INTF_TABLE {
+        deviate add {
+            sonic-ext:db-name "APPL_DB";
+        }
+    }
+
 }

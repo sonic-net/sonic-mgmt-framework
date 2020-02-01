@@ -4,6 +4,8 @@ import (
     "errors"
     "strings"
     log "github.com/golang/glog"
+    "encoding/json"
+    "translib/db"
 )
 
 
@@ -12,6 +14,7 @@ func init () {
     XlateFuncBind("DbToYang_route_table_conn_key_xfmr", DbToYang_route_table_conn_key_xfmr)
     XlateFuncBind("YangToDb_route_table_addr_family_xfmr", YangToDb_route_table_addr_family_xfmr)
     XlateFuncBind("DbToYang_route_table_addr_family_xfmr", DbToYang_route_table_addr_family_xfmr)
+    XlateFuncBind("rpc_show_ip_route", rpc_show_ip_route)
 }
 
 var YangToDb_route_table_addr_family_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
@@ -150,3 +153,69 @@ var DbToYang_route_table_conn_key_xfmr KeyXfmrDbToYang = func(inParams XfmrParam
     return rmap, nil
 }
 
+var rpc_show_ip_route RpcCallpoint = func(body []byte, dbs [db.MaxDB]*db.DB) ([]byte, error) {
+    log.Info("In rpc_show_ip_route")
+    var cmd string
+    var af_str, vrf_name, prefix string
+    var err error
+    var mapData map[string]interface{}
+    err = json.Unmarshal(body, &mapData)
+    if err != nil {
+        log.Info("Failed to unmarshall given input data")
+        return nil,  errors.New("RPC show ip route, invalid input")
+    }
+
+    var result struct {
+        Output struct {
+              Status string `json:"response"`
+        } `json:"sonic-ip-show:output"`
+    }
+
+    log.Info("In rpc_show_route, RPC data:", mapData)
+
+    input, _ := mapData["sonic-ip-show:input"]
+    mapData = input.(map[string]interface{})
+
+    log.Info("In rpc_show_route, RPC Input data:", mapData)
+
+    if value, ok := mapData["vrf-name"].(string) ; ok {
+        if value != "" {
+            vrf_name = "vrf " + value + " "
+        }
+    }
+
+    af_str = "ip "
+    if value, ok := mapData["family"].(string) ; ok {
+        if value == "IPv4" {
+            af_str = "ip "
+        } else if value == "IPv6" {
+            af_str = "ipv6 "
+        }
+    }
+    if value, ok := mapData["prefix"].(string) ; ok {
+        if value != "" {
+            prefix = value + " "
+        }
+    }
+
+    cmd = "show "
+    if af_str != "" {
+       cmd = cmd + af_str
+    }
+
+    cmd = cmd + "route "
+
+    if vrf_name != "" {
+        cmd = cmd + vrf_name
+    }
+
+    if prefix != "" {
+        cmd = cmd + prefix
+    }
+
+    cmd = cmd + "json"
+
+    bgpOutput, err := exec_raw_vtysh_cmd(cmd)
+    result.Output.Status = bgpOutput
+    return json.Marshal(&result)
+}

@@ -62,19 +62,19 @@ limitations under the License.
     <COMMAND
         help="ARP entries for this interface"
         name="show ip arp interface">
-        <PARAM 
-            name="iftype" 
-            help="interface type" 
-            mode="switch" 
+        <PARAM
+            name="iftype"
+            help="interface type"
+            mode="switch"
             ptype="SUBCOMMAND">
-            <PARAM 
-                name="Ethernet" 
-                help="Select an interface" 
-                mode="subcommand" 
+            <PARAM
+                name="Ethernet"
+                help="Select an interface"
+                mode="subcommand"
                 ptype="SUBCOMMAND">
-                <PARAM 
-                    name="phy-if-name" 
-                    help="Physical interface" 
+                <PARAM
+                    name="phy-if-name"
+                    help="Physical interface"
                     ptype="UINT">
                     <PARAM
                         help="Summary of ARP entries"
@@ -85,14 +85,14 @@ limitations under the License.
                     </PARAM>
                 </PARAM>
             </PARAM>
-            <PARAM 
-                name="Loopback" 
-                help="Loopback Interface Configuration" 
-                mode="subcommand" 
+            <PARAM
+                name="Loopback"
+                help="Loopback Interface Configuration"
+                mode="subcommand"
                 ptype="SUBCOMMAND">
-                <PARAM 
-                    name="lo-id" 
-                    help="Loopback identifier" 
+                <PARAM
+                    name="lo-id"
+                    help="Loopback identifier"
                     ptype="LO_ID">
                     <PARAM
                         help="Summary of ARP entries"
@@ -103,14 +103,14 @@ limitations under the License.
                     </PARAM>
                 </PARAM>
             </PARAM>
-            <PARAM 
-                name="Management" 
-                help="Management Interface commands" 
-                mode="subcommand" 
+            <PARAM
+                name="Management"
+                help="Management Interface commands"
+                mode="subcommand"
                 ptype="SUBCOMMAND">
-                <PARAM 
-                    name="mgmt-if-id" 
-                    help="Management interface" 
+                <PARAM
+                    name="mgmt-if-id"
+                    help="Management interface"
                     ptype="MGMT_INTF_ID">
                     <PARAM
                         help="Summary of ARP entries"
@@ -121,14 +121,14 @@ limitations under the License.
                     </PARAM>
                 </PARAM>
             </PARAM>
-            <PARAM 
-                name="PortChannel" 
-                help="Port channel Interface Configuration" 
-                mode="subcommand" 
+            <PARAM
+                name="PortChannel"
+                help="Port channel Interface Configuration"
+                mode="subcommand"
                 ptype="SUBCOMMAND">
-                <PARAM 
-                    name="lag-id" 
-                    help="PortChannel identifier" 
+                <PARAM
+                    name="lag-id"
+                    help="PortChannel identifier"
                     ptype="LAG_ID">
                     <PARAM
                         help="Summary of ARP entries"
@@ -139,14 +139,14 @@ limitations under the License.
                     </PARAM>
                 </PARAM>
             </PARAM>
-            <PARAM 
-                name="Vlan" 
-                help="Vlan Interface Configuration" 
-                mode="subcommand" 
+            <PARAM
+                name="Vlan"
+                help="Vlan Interface Configuration"
+                mode="subcommand"
                 ptype="SUBCOMMAND">
-                <PARAM 
-                    name="vlan-id" 
-                    help="Vlan identifier" 
+                <PARAM
+                    name="vlan-id"
+                    help="Vlan identifier"
                     ptype="VLAN_ID">
                     <PARAM
                         help="Summary of ARP entries"
@@ -157,14 +157,14 @@ limitations under the License.
                     </PARAM>
                 </PARAM>
             </PARAM>
-            <PARAM 
-                name="Vxlan" 
-                help="VXLAN Configuration mode" 
-                mode="subcommand" 
+            <PARAM
+                name="Vxlan"
+                help="VXLAN Configuration mode"
+                mode="subcommand"
                 ptype="SUBCOMMAND">
-                <PARAM 
-                    name="vxlan-if-name" 
-                    help="VTEP Name" 
+                <PARAM
+                    name="vxlan-if-name"
+                    help="VTEP Name"
                     ptype="STRING_63">
                     <PARAM
                         help="Summary of ARP entries"
@@ -185,7 +185,7 @@ limitations under the License.
                     python $SONIC_CLI_ROOT/sonic-cli-neighbors.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_neighbors arp_show.j2 ${iftype}${lo-id} None&#xA;
                 fi&#xA;
                 if test "${iftype}" = "Management" ; then&#xA;
-                    python $SONIC_CLI_ROOT/sonic-cli-neighbors.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_neighbors arp_show.j2 ${iftype}${mgmt-if-id} None&#xA;
+                    python $SONIC_CLI_ROOT/sonic-cli-neighbors.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_neighbors arp_show.j2 eth${mgmt-if-id} None&#xA;
                 fi&#xA;
                 if test "${iftype}" = "PortChannel" ; then&#xA;
                     python $SONIC_CLI_ROOT/sonic-cli-neighbors.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_neighbors arp_show.j2 ${iftype}${lag-id} None&#xA;
@@ -198,22 +198,22 @@ limitations under the License.
                 fi&#xA;
             else&#xA;
                 if test "${iftype}" = "Ethernet" ; then&#xA;
-                    python $SONIC_CLI_ROOT/sonic-cli-neighbors.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_neighbors arp_show.j2 ${iftype}${phy-if-name} summary&#xA;
+                    python $SONIC_CLI_ROOT/sonic-cli-neighbors.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_neighbors arp_summary_show.j2 ${iftype}${phy-if-name} summary&#xA;
                 fi&#xA;
                 if test "${iftype}" = "Loopback" ; then&#xA;
-                    python $SONIC_CLI_ROOT/sonic-cli-neighbors.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_neighbors arp_show.j2 ${iftype}${lo-id} summary&#xA;
+                    python $SONIC_CLI_ROOT/sonic-cli-neighbors.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_neighbors arp_summary_show.j2 ${iftype}${lo-id} summary&#xA;
                 fi&#xA;
                 if test "${iftype}" = "Management" ; then&#xA;
-                    python $SONIC_CLI_ROOT/sonic-cli-neighbors.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_neighbors arp_show.j2 ${iftype}${mgmt-if-id} summary&#xA;
+                    python $SONIC_CLI_ROOT/sonic-cli-neighbors.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_neighbors arp_summary_show.j2 eth${mgmt-if-id} summary&#xA;
                 fi&#xA;
                 if test "${iftype}" = "PortChannel" ; then&#xA;
-                    python $SONIC_CLI_ROOT/sonic-cli-neighbors.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_neighbors arp_show.j2 ${iftype}${lag-id} summary&#xA;
+                    python $SONIC_CLI_ROOT/sonic-cli-neighbors.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_neighbors arp_summary_show.j2 ${iftype}${lag-id} summary&#xA;
                 fi&#xA;
                 if test "${iftype}" = "Vlan" ; then&#xA;
-                    python $SONIC_CLI_ROOT/sonic-cli-neighbors.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_neighbors arp_show.j2 ${iftype}${vlan-id} summary&#xA;
+                    python $SONIC_CLI_ROOT/sonic-cli-neighbors.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_neighbors arp_summary_show.j2 ${iftype}${vlan-id} summary&#xA;
                 fi&#xA;
                 if test "${iftype}" = "Vxlan" ; then&#xA;
-                    python $SONIC_CLI_ROOT/sonic-cli-neighbors.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_neighbors arp_show.j2 ${iftype}${vxlan-if-name} summary&#xA;
+                    python $SONIC_CLI_ROOT/sonic-cli-neighbors.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_neighbors arp_summary_show.j2 ${iftype}${vxlan-if-name} summary&#xA;
                 fi&#xA;
             fi&#xA;
 

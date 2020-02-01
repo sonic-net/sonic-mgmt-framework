@@ -1,4 +1,25 @@
+/*
+###########################################################################
+#
+# Copyright 2019 Dell, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+###########################################################################
+*/
+#include "lub/dump.h"
 #include "private.h"
+
 #include <stdio.h>
 #include <Python.h>
 #include <stdarg.h>
@@ -8,29 +29,98 @@ void pyobj_init() {
     Py_Initialize();
 }
 
-static int pyobj_set_user_cmd(const char *cmd) {
-    PyObject *module, *value;
+static void pyobj_handle_error() {
+    PyObject *type, *value, *traceback;
+    PyObject *pystr, *py_module, *py_func;
+    char *str;
 
-    module = PyImport_ImportModule("cli_client");
+    if (!PyErr_Occurred()) {
+        return;
+    }
+
+    PyErr_Fetch(&type, &value, &traceback);
+    PyErr_NormalizeException(&type, &value, &traceback);
+
+    py_module = PyImport_ImportModule("traceback");
+    if (py_module) {
+        py_func = PyObject_GetAttrString(py_module, "format_exception");
+
+        if (py_func && PyCallable_Check(py_func)) {
+            PyObject *py_val;
+            py_val = PyObject_CallFunctionObjArgs(py_func,
+                        type, value, traceback, NULL);
+
+            pystr = PyObject_Str(py_val);
+            if (pystr)  {
+                str = PyString_AsString(pystr);
+                syslog(LOG_WARNING, "clish_pyobj: Traceback: %s", str);
+            }
+
+            Py_XDECREF(pystr);
+            Py_XDECREF(py_func);
+            Py_XDECREF(py_val);
+        }
+    }
+
+    pystr = PyObject_Str(value);
+    if (pystr) {
+        str = PyString_AsString(pystr);
+        syslog(LOG_WARNING, "clish_pyobj: Error: %s", str);
+    }
+
+    Py_XDECREF(pystr);
+    Py_XDECREF(type);
+    Py_XDECREF(value);
+    Py_XDECREF(traceback);
+    Py_XDECREF(py_module);
+}
+
+int pyobj_update_environ(const char *key, const char *val) {
+
+    PyObject *module = PyImport_ImportModule("os");
     if (module == NULL) {
-        PyErr_Print();
+        pyobj_handle_error();
         return -1;
     }
 
-    value = PyObject_CallMethod(module, "set_command", "(s)", cmd);
-    if (value == NULL) {
-        syslog(LOG_WARNING, "%s failed calling set_command", __FUNCTION__);
-        PyErr_Print();
+    PyObject *dict = PyModule_GetDict(module);
+    PyObject *env_obj = PyDict_GetItemString(dict, "environ");
+
+    PyObject *func = PyObject_GetAttrString(env_obj, "update");
+   
+    PyObject *pMap = PyDict_New();
+    PyObject *v_obj = PyString_FromString(val);
+    PyDict_SetItemString(pMap, key, v_obj);
+
+    PyObject *args = PyTuple_New(1);
+    PyTuple_SetItem(args, 0, pMap);
+
+    PyObject_CallObject(func, args);
+
+    if (PyErr_Occurred()) {
+        pyobj_handle_error();
         return 1;
     }
 
-    Py_DECREF(module);
-    Py_DECREF(value);
+    Py_XDECREF(module);
+    Py_XDECREF(func);
+    Py_XDECREF(v_obj);
+    Py_XDECREF(pMap);
+    Py_XDECREF(args);
 
     return 0;
 }
 
+static int pyobj_set_user_cmd(const char *cmd) {
+    return pyobj_update_environ("USER_COMMAND", cmd);
+}
+
+int pyobj_set_rest_token(const char *token) {
+    return pyobj_update_environ("REST_API_TOKEN", token);
+}
+
 int call_pyobj(char *cmd, const char *arg) {
+    int ret_code = 0;
     char *token[20];
     char buf[1024]; 
 
@@ -50,7 +140,8 @@ int call_pyobj(char *cmd, const char *arg) {
     name = PyBytes_FromString(token[0]);
     module = PyImport_Import(name);
     if (module == NULL) {
-    	PyErr_Print();
+        pyobj_handle_error();
+        Py_XDECREF(name);
     	return -1;
     }
 
@@ -65,17 +156,19 @@ int call_pyobj(char *cmd, const char *arg) {
     }
     PyTuple_SetItem(args, 1, args_list);
 
-
     value = PyObject_CallObject(func, args);
     if (value == NULL) {
+        lub_dump_printf("%%Error: Internal error.\n");
+        pyobj_handle_error();
         syslog(LOG_WARNING, "clish_pyobj: Failed [cmd=%s][args:%s]", cmd, arg);
-        return 1;
+        ret_code = 1;
     }
-    return 0;
-}
 
-CLISH_PLUGIN_SYM(clish_pyobj)
-{
-    char *cmd = clish_shell__get_full_line(clish_context);
-    return call_pyobj(cmd, script);
+    Py_XDECREF(module);
+    Py_XDECREF(func);
+    Py_XDECREF(args);
+    Py_XDECREF(value);
+    Py_XDECREF(args_list);
+
+    return ret_code;
 }

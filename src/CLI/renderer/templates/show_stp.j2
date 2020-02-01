@@ -101,21 +101,23 @@ STP Port Parameters:
             {% if vars.update({'intf_desig_root':intf['state']['designated-root-address']}) %}{% endif %}
             {% if vars.update({'intf_desig_bridge':intf['state']['designated-bridge-address']}) %}{% endif %}
         {%endif %}
-                {% if stp_intf['config']['bpdu-filter'] == true %}
-                   {% if vars.update({'intf_bpdu_filter': "Y"}) %}{% endif %}
-                {%else %}
-                   {% if vars.update({'intf_bpdu_filter': "N"}) %}{% endif %}
-                {%endif %}
-                {% if stp_intf['config']['openconfig-spanning-tree-ext:portfast'] == true %}
-                   {% if vars.update({'intf_fast': "Y"}) %}{% endif %}
-                {%else %}
-                   {% if vars.update({'intf_fast': "N"}) %}{% endif %}
-                {%endif %}
-                {% if stp_intf['config']['openconfig-spanning-tree-ext:uplink-fast'] == true %}
-                   {% if vars.update({'intf_ufast': "Y"}) %}{% endif %}
-                {%else %}
-                   {% if vars.update({'intf_ufast': "N"}) %}{% endif %}
-                {%endif %}
+        {% if "state" is in stp_intf %}
+            {% if "bpdu-filter" in stp_intf['state'] and stp_intf['state']['bpdu-filter'] == true %}
+                {% if vars.update({'intf_bpdu_filter': "Y"}) %}{% endif %}
+            {%else %}
+                {% if vars.update({'intf_bpdu_filter': "N"}) %}{% endif %}
+            {%endif %}
+            {% if "openconfig-spanning-tree-ext:portfast" in stp_intf['state'] and stp_intf['state']['openconfig-spanning-tree-ext:portfast'] == true %}
+                {% if vars.update({'intf_fast': "Y"}) %}{% endif %}
+            {%else %}
+                {% if vars.update({'intf_fast': "N"}) %}{% endif %}
+            {%endif %}
+        {%endif %}
+        {% if stp_intf['config']['openconfig-spanning-tree-ext:uplink-fast'] == true %}
+            {% if vars.update({'intf_ufast': "Y"}) %}{% endif %}
+        {%else %}
+            {% if vars.update({'intf_ufast': "N"}) %}{% endif %}
+        {%endif %}
 {{'%-16s'|format(vars.intf_name)}}{{'%-5s'|format(vars.intf_pri)}}{{'%-10s'|format(vars.intf_path_cost)}}{{'%-5s'|format(vars.intf_fast)}}{{'%-7s'|format(vars.intf_ufast)}}{{'%-7s'|format(vars.intf_bpdu_filter)}}{{'%-11s'|format(vars.intf_state)}}{{'%-11s'|format(vars.intf_desig_cost)}}{{'%-17s'|format(vars.intf_desig_root)}}{{'%-17s'|format(vars.intf_desig_bridge)}}
         {%endif %}
         {%endfor %}
