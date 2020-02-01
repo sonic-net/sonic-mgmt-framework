@@ -485,7 +485,10 @@ def invoke(func, args):
       if 'ietf-snmp:community' in response.content.keys():
         communities = response.content['ietf-snmp:community']
         for community in communities:
-          community['group'] = groups[community['index']]
+          if community['security-name'] == 'None':
+            community['group'] = 'None'
+          else:
+            community['group'] = groups[community['index']]
         response.content['community'] = sorted(communities, key=itemgetter('index'))
     return response
 
@@ -500,7 +503,7 @@ def invoke(func, args):
                           "security-name" : group }]
     keypath = cc.Path('/restconf/data/ietf-snmp:snmp/community')
     response = aa.patch(keypath, entry)
-    if response.ok():
+    if response.ok() and not group == "None":
       member = [group, args[0], 'v2c']
       response = invoke('snmp_group_member_add', member)
     return response
