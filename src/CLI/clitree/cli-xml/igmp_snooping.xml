@@ -197,7 +197,7 @@
 									</PARAM>										
 							</PARAM>					
 				</PARAM>		    
-                <ACTION builtin="clish_pyobj">sonic_cli_igmp_snooping patch_igmp_snooping_interfaces_interface_config ${vlan_id} ${__params}</ACTION>
+                <ACTION builtin="clish_pyobj">sonic_cli_igmp_snooping patch_igmp_snooping_interfaces_interface_config ${vlan_name} ${__params}</ACTION>
     </COMMAND>
     
     <COMMAND name = "no ip igmp"
@@ -307,7 +307,7 @@
 									</PARAM>
 						</PARAM>					
 				</PARAM>		    
-        <ACTION builtin="clish_pyobj">sonic_cli_igmp_snooping delete_igmp_snooping_interfaces_interface_config ${vlan_id} ${__params}</ACTION>
+        <ACTION builtin="clish_pyobj">sonic_cli_igmp_snooping delete_igmp_snooping_interfaces_interface_config ${vlan_name} ${__params}</ACTION>
     </COMMAND>        
 </VIEW>
 </CLISH_MODULE>
