@@ -1,0 +1,16 @@
+module sonic-ip-show-annot {
+
+    yang-version "1";
+
+    namespace "http://openconfig.net/yang/annotation/sipshow-annot";
+    prefix "sipshow-annot";
+
+    import sonic-ip-show { prefix sipshow; }
+    import sonic-extensions { prefix sonic-ext; }
+
+    deviation /sipshow:show-ip-route {
+        deviate add {
+            sonic-ext:rpc-callback "rpc_show_ip_route";
+        }
+    }
+}

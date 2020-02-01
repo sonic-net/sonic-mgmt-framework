@@ -926,7 +926,11 @@ func intf_ip_addr_del (d *db.DB , ifName string, tblName string, subIntf *ocbind
         }
         count := 0
         _ = interfaceIPcount(tblName, d, &ifName, &count)
-        if (count - len(intfIpMap)) == 1 {
+
+        /*  If last L3 config, remove L3 entry with just interface name,
+         *  applicable to all interfaces except Loopback interface.
+         */
+        if (count - len(intfIpMap)) == 1 && (tblName != LOOPBACK_INTERFACE_TN) {
             IntfMapObj, err := d.GetMapAll(&db.TableSpec{Name:tblName+"|"+ifName})
             if err != nil {
                 return nil, errors.New("Entry "+tblName+"|"+ifName+" missing from ConfigDB")
@@ -1413,20 +1417,36 @@ func deleteLoopbackIntf(inParams *XfmrParams, loName *string) error {
 
     loMap[*loName] = db.Value{Field:map[string]string{}}
 
-    _, err = inParams.d.GetEntry(&db.TableSpec{Name:intTbl.cfgDb.portTN}, db.Key{Comp: []string{*loName}})
-    if err != nil {
-        log.Errorf("Retrieving data from LOOPBACK_INTERFACE table for Loopback: %s failed!", *loName)
-        return err
+    IntfMapObj, err := inParams.d.GetMapAll(&db.TableSpec{Name:intTbl.cfgDb.portTN + "|" + *loName})
+    if err != nil || !IntfMapObj.IsPopulated() {
+        errStr := "Retrieving data from LOOPBACK_INTERFACE table for Loopback: " + *loName + " failed!"
+        log.Errorf(errStr)
+        return tlerr.InvalidArgsError{Format:errStr}
     }
-    err = validateL3ConfigExists(inParams.d, loName)
+    /* If L3 config exist, return error */
+    ipKeys, err := doGetIntfIpKeys(inParams.d, intTbl.cfgDb.intfTN, *loName)
     if err != nil {
-        return err
+        log.Errorf("Get for IP keys failed, err:%v", err)
+        return tlerr.InvalidArgsError{Format:err.Error()}
     }
+    if (len(ipKeys)) > 0 {
+        l3ErrStr := "IP Configuration exists for Loopback: " + *loName
+        return tlerr.InvalidArgsError{Format:l3ErrStr}
+    }
+    IntfMap := IntfMapObj.Field
+    if len(IntfMap) > 1 {
+        if log.V(3) {
+            log.Infof("Existing entries in LOOPBACK_INTERFACE|%s: %v", *loName, IntfMap)
+        }
+        l3ErrStr := "L3 config exists in LOOPBACK_INTERFACE table for Loopback: " + *loName
+        return tlerr.InvalidArgsError{Format:l3ErrStr}
+    }
+
     resMap[intTbl.cfgDb.intfTN] = loMap
 
     subOpMap[db.ConfigDB] = resMap
     inParams.subOpDataMap[DELETE] = &subOpMap
-    return err
+    return nil
 }
 
 func getIntfIpByName(dbCl *db.DB, tblName string, ifName string, ipv4 bool, ipv6 bool, ip string) (map[string]db.Value, error) {
@@ -1563,22 +1583,24 @@ var DbToYang_intf_ip_addr_xfmr SubTreeXfmrDbToYang = func (inParams XfmrParams) 
 }
 
 func validIPv4(ipAddress string) bool {
-    ipAddress = strings.Trim(ipAddress, " ")
-
-    re, _ := regexp.Compile(`^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$`)
-    if re.MatchString(ipAddress) {
-        return true
+    /* dont allow ip addresses that start with "0." or "255."*/
+    if (strings.HasPrefix(ipAddress, "0.") || strings.HasPrefix(ipAddress, "255.")) {
+        log.Info("validIP: ip is reserved ", ipAddress)
+        return false
     }
-    return false
+
+    /* 'net' package would know if ipAddress is v4 vs v6 */
+    return (validIPv6(ipAddress))
 }
 
 func validIPv6(ip6Address string) bool {
-    ip6Address = strings.Trim(ip6Address, " ")
-    re, _ := regexp.Compile(`(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))`)
-    if re.MatchString(ip6Address) {
-        return true
+    ip := net.ParseIP(ip6Address)
+
+    if (ip.IsLinkLocalUnicast() || ip.IsUnspecified() ||  ip.IsLoopback() ||  ip.IsMulticast()) {
+        log.Info("validIP: ip is invalid ", ip6Address)
+        return false
     }
-    return false
+    return true
 }
 
 /* Get all keys for given interface tables */
@@ -2086,6 +2108,12 @@ var YangToDb_intf_eth_port_config_xfmr SubTreeXfmrYangToDb = func(inParams XfmrP
                 err = validateIntfAssociatedWithPortChannel(inParams.d, &ifName)
                 if err != nil {
                     errStr := "Interface already part of a PortChannel"
+                    return nil, tlerr.InvalidArgsError{Format: errStr}
+                }
+                /* Restrict configuring member-port if iface configured as member-port of any vlan */
+                err = validateIntfAssociatedWithVlan(inParams.d, &ifName)
+                if err != nil {
+                    errStr := "PortChannel config not permitted on Vlan member-port"
                     return nil, tlerr.InvalidArgsError{Format: errStr}
                 }
                 /* Check if L3 configs present on given physical interface */

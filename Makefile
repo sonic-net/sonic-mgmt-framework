@@ -194,6 +194,7 @@ $(addprefix $(DEST)/, $(MAIN_TARGET)): $(DEST)/% :
 clean: rest-clean
 	$(MAKE) -C src/translib clean
 	$(MAKE) -C src/cvl clean
+	(cd src/ham; ./build.sh clean)
 	rm -rf debian/.debhelper
 	(cd build && find .  -maxdepth 1 -name "gopkgs" -prune -o -not -name '.' -exec rm -rf {} +) || true
 

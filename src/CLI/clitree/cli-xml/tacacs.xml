@@ -35,7 +35,7 @@ limitations under the License.
   <PTYPE
      name="TACACS_TIMEOUT"
      method="integer"
-     pattern="0..60"
+     pattern="1..60"
      help="seconds"
   />
 <!--=======================================================-->

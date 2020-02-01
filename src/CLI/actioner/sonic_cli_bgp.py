@@ -17,10 +17,9 @@
 #
 ###########################################################################
 
+from collections import OrderedDict
 import sys
-import time
 import json
-import ast
 import netaddr
 from rpipe_utils import pipestr
 import cli_client as cc
@@ -99,6 +98,10 @@ OCEXTPREFIX_PATCH_LEN=len(OCEXTPREFIX_PATCH)
 OCEXTPREFIX_DELETE='DELETE'
 OCEXTPREFIX_DELETE_LEN=len(OCEXTPREFIX_DELETE)
 
+def getPrefixAndLen(item):
+    ip = netaddr.IPNetwork(item)
+    return (ip.value, ip.prefixlen)
+
 def getPrefix(item):
     ip = netaddr.IPNetwork(item['prefix'])
     return int(ip.ip)
@@ -145,29 +148,48 @@ def generate_show_bgp_routes(args):
         elif "neighbors" == arg:
            neighbour_ip = args[i+1]
            route_option = args[i+2]
-        elif "neighbors" == arg:
-           neighbour_ip = args[i+1]
-        elif "neighbors" == arg:
-           neighbour_ip = args[i+1]
         else:
            pass
         i = i + 1
    d = {}
+   method = "rpc"
    if route_option == "loc-rib":
-      keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/config', name=vrf, identifier=IDENTIFIER,name1=NAME1)
-      response = api.get(keypath)
-      if(response.ok()):
-         d.update(response.content)
-         keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/rib/afi-safis/afi-safi={afi_safi_name}/{type_name}/loc-rib', name=vrf, identifier=IDENTIFIER, name1=NAME1, afi_safi_name=afisafi, type_name=rib_type)
-         response1 = api.get(keypath)
-         if(response1.ok()):
-            if 'openconfig-network-instance:loc-rib' in response1.content:
-               route = response1.content['openconfig-network-instance:loc-rib']['routes']
-               tup = route['route']
-               route['route'] = sorted(tup, key=getPrefix)
-               response1.content['openconfig-network-instance:loc-rib']['routes'] = route
-               d.update(response1.content)
-               show_cli_output("show_ip_bgp_routes.j2", d)
+      if method == 'rpc':
+         keypath = cc.Path('/restconf/operations/sonic-bgp-show:show-bgp')
+         body = {"sonic-bgp-show:input": {"vrf-name":vrf, "address-family":afisafi}}
+         response = api.post(keypath, body)
+         if(response.ok()):
+            d = response.content['sonic-bgp-show:output']['response']
+            if len(d) != 0 and "warning" not in d:
+               d = json.loads(d)
+               routes = d["routes"]
+               keys = sorted(routes,key=getPrefixAndLen)
+               temp = OrderedDict()
+               for key in keys:
+                   temp[key] = routes[key]
+
+               d["routes"] = temp
+
+               show_cli_output("show_ip_bgp_routes_rpc.j2", d)
+         else:
+            print response.error_message()
+            exit(1)
+
+      else:
+         keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/config', name=vrf, identifier=IDENTIFIER,name1=NAME1)
+         response = api.get(keypath)
+         if(response.ok()):
+            d.update(response.content)
+            keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/rib/afi-safis/afi-safi={afi_safi_name}/{type_name}/loc-rib', name=vrf, identifier=IDENTIFIER, name1=NAME1, afi_safi_name=afisafi, type_name=rib_type)
+            response1 = api.get(keypath)
+            if(response1.ok()):
+               if 'openconfig-network-instance:loc-rib' in response1.content:
+                  route = response1.content['openconfig-network-instance:loc-rib']['routes']
+                  tup = route['route']
+                  route['route'] = sorted(tup, key=getPrefix)
+                  response1.content['openconfig-network-instance:loc-rib']['routes'] = route
+                  d.update(response1.content)
+                  show_cli_output("show_ip_bgp_routes.j2", d)
 
    elif route_option == "routes":
       keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/config', name=vrf, identifier=IDENTIFIER,name1=NAME1)
@@ -236,10 +258,11 @@ def generate_show_bgp_prefix_routes(args):
         elif "ipv6" == arg:
            afisafi = "IPV6_UNICAST"
            rib_type = "ipv6-unicast"
+        elif "prefix" == arg:
+           prefix_ip = args[i+1]
         else:
            pass
         i = i + 1
-   prefix_ip = args[i-1]
    d = { 'vrf': vrf }
    keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/config', name=vrf, identifier=IDENTIFIER,name1=NAME1)
    response = api.get(keypath)
@@ -1657,33 +1680,37 @@ def invoke_show_api(func, args=[]):
 
         return d
 
+    elif func == 'get_ip_bgp_neighbors_neighborip':
+        d = {}
+        iptype = 4
+        if args[2] == 'ipv6':
+            iptype = 6
+
+        keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/neighbors/neighbor={nbr_addr}', name=args[1], identifier=IDENTIFIER, name1=NAME1, nbr_addr=args[3])
+        response = api.get(keypath)
+        if response.ok():
+           if 'openconfig-network-instance:neighbor' in response.content:
+               tmp['neighbor'] = preprocess_bgp_nbrs(iptype, response.content['openconfig-network-instance:neighbor'])
+               d['openconfig-network-instance:neighbors'] = tmp
+           return d
+        else:
+           print response.error_message()
+        return d
     elif func == 'get_ip_bgp_neighbors':
         d = {}
         iptype = 4
         if args[2] == 'ipv6':
             iptype = 6
 
-        if len(args) == 4:
-            keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/neighbors/neighbor={nbr_addr}', name=args[1], identifier=IDENTIFIER, name1=NAME1, nbr_addr=args[3])
-            response = api.get(keypath)
-            if response.ok():
-                if 'openconfig-network-instance:neighbor' in response.content:
-                    tmp['neighbor'] = preprocess_bgp_nbrs(iptype, response.content['openconfig-network-instance:neighbor'])
-                    d['openconfig-network-instance:neighbors'] = tmp
-                return d
-            else:
-                print response.error_message()
-
+        keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/neighbors', name=args[1], identifier=IDENTIFIER, name1=NAME1)
+        response = api.get(keypath)
+        if response.ok():
+            if 'openconfig-network-instance:neighbors' in response.content:
+                tmp['neighbor'] = preprocess_bgp_nbrs(iptype, response.content['openconfig-network-instance:neighbors']['neighbor'])
+                d['openconfig-network-instance:neighbors'] = tmp
+            return d
         else:
-            keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/neighbors', name=args[1], identifier=IDENTIFIER, name1=NAME1)
-            response = api.get(keypath)
-            if response.ok():
-                if 'openconfig-network-instance:neighbors' in response.content:
-                    tmp['neighbor'] = preprocess_bgp_nbrs(iptype, response.content['openconfig-network-instance:neighbors']['neighbor'])
-                    d['openconfig-network-instance:neighbors'] = tmp
-                return d
-            else:
-                print response.error_message()
+            print response.error_message()
 
         return d
     elif func == 'get_show_bgp_prefix':
@@ -1704,6 +1731,9 @@ def run(func, args):
     if func == 'get_show_bgp':
         response = invoke_show_api(func, args)
     elif func == 'get_ip_bgp_summary':
+        response = invoke_show_api(func, args)
+        show_cli_output(args[0], response)
+    elif func == 'get_ip_bgp_neighbors_neighborip':
         response = invoke_show_api(func, args)
         show_cli_output(args[0], response)
     elif func == 'get_ip_bgp_neighbors':

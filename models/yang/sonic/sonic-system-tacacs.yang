@@ -30,6 +30,7 @@ module sonic-system-tacacs {
                 }
 
                 leaf priority {
+                    default 1;
                     type uint8 {
                         range "1..64" {
                             error-message "TACACS server priority must be 1..64";

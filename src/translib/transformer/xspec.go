@@ -342,8 +342,6 @@ func dbMapFill(tableName string, curPath string, moduleNm string, xDbSpecMap map
 		if entryType == "container" || entryType == "rpc" {
 			tableName = entry.Name
 		}
-
-		if !isYangResType(entryType) {
 			dbXpath := tableName
 			if entryType != "container" && entryType != "rpc" {
 				dbXpath = tableName + "/" + entry.Name
@@ -377,7 +375,6 @@ func dbMapFill(tableName string, curPath string, moduleNm string, xDbSpecMap map
 					}
 				}
 			}
-		}
 	} else {
 		moduleXpath := "/" + moduleNm + ":" + entry.Name
 		xDbSpecMap[moduleXpath] = new(dbInfo)
