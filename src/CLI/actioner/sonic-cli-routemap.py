@@ -80,6 +80,15 @@ def invoke_api(func, args=[]):
             keypath = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/policy-definitions/policy-definition={name}/statements/statement={name1}',
             name=args[0], name1=args[1])
             return api.delete(keypath)
+        elif attr == 'openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_actions_bgp_actions_set_community':
+            keypath = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/policy-definitions/policy-definition={name}/statements/statement={name1}/actions/openconfig-bgp-policy:bgp-actions/set-community',
+            name=args[0], name1=args[1])
+            return api.delete(keypath)
+        elif attr == 'openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_actions_bgp_actions_set_ext_community':
+            keypath = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/policy-definitions/policy-definition={name}/statements/statement={name1}/actions/openconfig-bgp-policy:bgp-actions/set-ext-community',
+            name=args[0], name1=args[1])
+            return api.delete(keypath)
+
 
     elif op == 'get':
 

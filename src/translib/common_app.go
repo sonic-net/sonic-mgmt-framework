@@ -295,7 +295,7 @@ func (app *CommonApp) processAction(dbs [db.MaxDB]*db.DB) (ActionResponse, error
 	err := errors.New("Not implemented")
 
 	resp.Payload, err = transformer.CallRpcMethod(app.pathInfo.Path, app.body, dbs)
-	log.Info("transformer.CallRpcMethod() returned", resp.Payload)
+	log.Info("transformer.CallRpcMethod() returned")
 
 	return resp, err
 }

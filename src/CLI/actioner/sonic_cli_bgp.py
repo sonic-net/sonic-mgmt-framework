@@ -173,7 +173,7 @@ def generate_show_bgp_routes(args):
                show_cli_output("show_ip_bgp_routes_rpc.j2", d)
          else:
             print response.error_message()
-            exit(1)
+            return 1
 
       else:
          keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/config', name=vrf, identifier=IDENTIFIER,name1=NAME1)
@@ -1599,18 +1599,18 @@ def preprocess_bgp_nbrs(iptype, nbrs):
                     d = datetime.now()
                     d = d - timedelta(seconds=int(last_estbd))
                     weeks = 0
-                    days = d.day  
+                    days = d.day
                     if days != 0:
-                       days = days - 1 
+                       days = days - 1
                        if days != 0:
-                          weeks = days // 7  
-                          days = days % 7  
+                          weeks = days // 7
+                          days = days % 7
                     if weeks != 0:
                         nbr['state']['last-established'] = '{}w{}d{:02}h'.format(int(weeks), int(days), int(d.hour))
                     elif days != 0:
                         nbr['state']['last-established'] = '{}d{:02}h{:02}m'.format(int(days), int(d.hour), int(d.minute))
                     else:
-                        nbr['state']['last-established'] = '{:02}:{:02}:{:02}'.format(int(d.hour), int(d.minute), int(d.second))                  
+                        nbr['state']['last-established'] = '{:02}:{:02}:{:02}'.format(int(d.hour), int(d.minute), int(d.second))
                 else:
                     nbr['state']['last-established'] = 'never'
             if unnumbered == True:
@@ -1640,7 +1640,7 @@ def preprocess_bgp_nbrs(iptype, nbrs):
     un_lnbrs = sorted(tup, key=getIntfId)
     tup = un_nbrs
     un_nbr = sorted(tup, key=getIntfId)
-     
+
     un_enbrs.extend(un_pnbrs)
     un_enbrs.extend(un_vnbrs)
     un_enbrs.extend(un_lnbrs)
@@ -1754,10 +1754,10 @@ def run(func, args):
                 print(api_response)
                 if api_response is None:
                     print("Failed")
-                    sys.exit(1)
+                    return 1
         else:
             print response.error_message()
-            sys.exit(1)
+            return 1
 
 if __name__ == '__main__':
 

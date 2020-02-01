@@ -45,7 +45,7 @@ module sonic-bgp-show {
         leaf status {
             type string;
             description
-                "Success / failure in BGP show execution request.";
+                "On succes, returns all BGP routes in JSON string format.";
         }
     }
   }

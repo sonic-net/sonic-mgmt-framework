@@ -122,6 +122,10 @@ var DbToYang_netinst_vlans_subtree_xfmr SubTreeXfmrDbToYang = func (inParams Xfm
         return err
     }
 
+    if strings.HasPrefix(niName, "Vrf") {
+        return nil
+    }
+
     tblName := "VLAN"
     dbspec := &db.TableSpec { Name: tblName }
 
