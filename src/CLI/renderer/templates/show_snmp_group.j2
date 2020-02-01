@@ -1,13 +1,45 @@
 {{ ' ' }}
-{{ 'Group Name'|center(25) }} {{ 'Model: Security'|center(20) }} {{ 'Read View' }} {{ 'Write View' }} {{ 'Notify View' }}
-{{'------------------------- -------------------- --------- ---------- -----------'}}
+{{ 'Group Name'|center(16) }} {{ 'Model: Security'|center(20) }} {{ 'Read View'|center(16) }} {{ 'Write View'|center(16) }} {{ 'Notify View'|center(16) }}
+{{'---------------- -------------------- ---------------- ---------------- ----------------'}}
 {% for i in json_output %}
   {% set i1 = json_output[loop.index-1] %}
-{{ '%-25s'|format(i1['name'])|truncate(25,true,"") -}}
+  {% for j in i1['name'] %}
+    {% set g_p1 = i1['name'][0:16] %}
+    {% set g_p2 = i1['name'][16:32] %}
+{{ '%-16s'|format(g_p1) -}}
 {{ ' %-3s:'|format(i1['model']) -}}
 {{ ' %-15s'|format(i1['security']) -}}
-{{ ' %-9s'|format(i1['read-view'])|truncate(9,true,"") -}}
-{{ ' %-10s'|format(i1['write-view'])|truncate(10,true,"") -}}
-{{ ' %-11s'|format(i1['notify-view'])|truncate(11,true,"") }}
+    {% set rv_p1 = i1['read-view'][0:16] %}
+    {% set rv_p2 = i1['read-view'][16:32] %}
+{{ ' %-16s'|format(rv_p1) -}}
+    {% set wv_p1 = i1['write-view'][0:16] %}
+    {% set wv_p2 = i1['write-view'][16:32] %}
+{{ ' %-16s'|format(wv_p1) -}}
+    {% set nv_p1 = i1['notify-view'][0:16] %}
+    {% set nv_p2 = i1['notify-view'][16:32] %}
+{{ ' %-16s'|format(nv_p1) }}
+    {% set tok_g = "" %}
+    {% if g_p2|length %}
+      {% set tok_g = g_p2 %}
+    {% endif %}
+    {% set tok_rv = "" %}
+    {% if rv_p2|length %}
+      {% set tok_rv = rv_p2 %}
+    {% endif %}
+    {% set tok_wv = "" %}
+    {% if wv_p2|length %}
+      {% set tok_wv = wv_p2 %}
+    {% endif %}
+    {% set tok_nv = "" %}
+    {% if nv_p2|length %}
+      {% set tok_nv = nv_p2 %}
+    {% endif %}
+    {% if tok_g|length or tok_rv|length or tok_wv|length or tok_nv|length %}
+{{ '%-37s %-16s %-16s %-16s'|format(tok_g, tok_rv, tok_wv, tok_nv) }}
+    {% endif %}
+    {% if loop.index > 0 %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
 {% endfor %}
 {{ ' ' }}

@@ -3,8 +3,8 @@
 {{'-------------------------------- -------------------------------- --------'}}
 {% for i in json_output %}
   {% set i1 = json_output[loop.index-1] %}
-{{ '%-32s'|format(i1['name'])|truncate(32,true,"") -}}
-{{ ' %-32s'|format(i1['oid'])|truncate(32,true,"") -}}
+{{ '%-32s'|format(i1['name']) -}}
+{{ ' %-32s'|format(i1['oid']) -}}
 {{ ' %-8s'|format(i1['type']) }}
 {% endfor %}
 {{ ' ' }}
