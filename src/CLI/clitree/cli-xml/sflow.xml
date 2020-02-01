@@ -85,11 +85,7 @@ limitations under the License.
       <PARAM name="name" help="Collector name" ptype="STRING_16"/>
       <PARAM name="ip" help="Collector IP address" ptype="IPV4_OR_IPV6_ADDR"/>
       <PARAM name="port" help="Collector port number" ptype="RANGE_0_65535" optional="true"/>
-<<<<<<< HEAD
-      <ACTION> if test "${port}" = ""; then python $SONIC_CLI_ROOT/sonic_cli_sflow.py put_sonic_sflow_sonic_sflow_sflow_collector_sflow_collector_list ${name} ${ip}; else python $SONIC_CLI_ROOT/sonic-cli-sflow.py put_sonic_sflow_sonic_sflow_sflow_collector_sflow_collector_list ${name} ${ip} ${port}; fi </ACTION>
-=======
-      <ACTION builtin="clish_pyobj">sonic_cli_sflow put_sonic_sflow_sonic_sflow_sflow_collector_sflow_collector_list ${name} ${ip} ${port} </ACTION>
->>>>>>> origin/broadcom_sonic_share
+      <ACTION builtin="clish_pyobj">sonic_cli_sflow put_sonic_sflow_sonic_sflow_sflow_collector_sflow_collector_list ${name} ${ip} ${port}</ACTION>
       <DOCGEN>
           <DESCRIPTION>Add an sFLow Collector</DESCRIPTION>
           <EXAMPLE summary="Add an sFlow collector using default port 6343">
