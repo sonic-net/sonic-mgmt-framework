@@ -220,25 +220,32 @@ limitations under the License.
    <VIEW
        name="configure-view"
        >
-    <!-- interface commands -->
-    <COMMAND
+     <COMMAND
         name="interface"
         help="Select an interface"
-        />
-
-    <COMMAND
-        name="interface Ethernet"
-        help="Select an interface"
-        view="configure-if-view"
-        viewid="iface=Ethernet${phy-if-name}"
         >
         <PARAM
-            name="phy-if-name"
-            help="Physical interface"
-            ptype="UINT"
-            >
+                name="if-switch"
+                help="Interface commands"
+                mode="switch"
+                ptype="STRING"
+        >
+        <PARAM
+                name="phy-if-name"
+                help="Physical interface"
+                ptype="PHY_INTERFACE"
+                view="configure-if-view"
+                viewid="iface=${phy-if-name}"
+        />
+        <PARAM
+                name="vlan-if-name"
+                help="Vlan identifier"
+                ptype="VLAN_INTERFACE"
+                view="configure-vlan-view"
+                viewid="vlan_name=${vlan-if-name}"
+        />
         </PARAM>
-        <ACTION builtin="clish_restcl">oper=PATCH url=/restconf/data/openconfig-interfaces:interfaces/interface=Ethernet${phy-if-name}/config body={"openconfig-interfaces:config": {"name": "Ethernet${phy-if-name}"}}</ACTION>
+	<ACTION builtin="clish_pyobj">sonic_cli_if if_config ${if-switch} ${phy-if-name}${vlan-if-name}</ACTION>
      </COMMAND>
 
      <COMMAND
@@ -257,22 +264,6 @@ limitations under the License.
          </PARAM>
          <ACTION builtin="clish_nop"></ACTION>
      </COMMAND>
-     <COMMAND
-         name="interface Vlan"
-         help="Vlan Interface Configuration"
-         mode="subcommand"
-         ptype="SUBCOMMAND"
-         view="configure-vlan-view"
-         viewid="vlan_name=Vlan${vlan-id}"
-         >
-         <PARAM
-             name="vlan-id"
-             help="Vlan identifier"
-             ptype="VLAN_ID"
-             >
-         </PARAM>
-        <ACTION builtin="clish_restcl">oper=PATCH url=/restconf/data/openconfig-interfaces:interfaces/interface=Vlan${vlan-id}/config body={"openconfig-interfaces:config": {"name": "Vlan${vlan-id}"}}</ACTION>
-    </COMMAND>
 
     <COMMAND
         name="interface PortChannel"
@@ -344,6 +335,7 @@ limitations under the License.
         </PARAM>
         <ACTION builtin="clish_restcl">oper=PATCH url=/restconf/data/openconfig-interfaces:interfaces/interface=Loopback${lo-id}/config body={"openconfig-interfaces:config": {"name": "Loopback${lo-id}"}}</ACTION>
     </COMMAND>
+
      <!-- no interface commands -->
      <COMMAND
          name="no interface"

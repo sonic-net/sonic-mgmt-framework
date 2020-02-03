@@ -69,6 +69,13 @@ def filter_address(d, isIPv4):
 def invoke_api(func, args=[]):
     api = cc.ApiClient()
 
+    # handle interfaces using the 'switch' mode
+    if func == 'if_config':
+        if args[0] == 'phy-if-name' or args[0] == 'vlan-if-name':
+            body = { "openconfig-interfaces:config": { "name": args[1] }}
+            path = cc.Path('/restconf/data/openconfig-interfaces:interfaces/interface={name}/config', name=args[1])
+            return api.patch(path, body)
+
     # Create interface
     if func == 'patch_openconfig_interfaces_interfaces_interface':
         path = cc.Path('/restconf/data/openconfig-interfaces:interfaces/interface={name}', name=args[0])
