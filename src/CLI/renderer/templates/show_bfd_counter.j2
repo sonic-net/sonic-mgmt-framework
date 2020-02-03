@@ -71,7 +71,7 @@
 {% if vars.vrf != ''%}
 {% set peerkey = '%s vrf %s'|format(peerkey, vars.vrf)%}
 {% endif %}
-{% if vars.interface != ''%}
+{% if vars.interface != 'null'%}
 {% set peerkey = '%s interface %s'|format(peerkey, vars.interface)%}
 {% endif %}
 {{'%4s%s'|format(' ', peerkey)}}

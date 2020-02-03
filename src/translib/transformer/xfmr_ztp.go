@@ -11,7 +11,7 @@ import (
     "encoding/json"
     "fmt"
 	//"github.com/golang/glog"
-    "translib/tlerr"
+    //"translib/tlerr"
 )
 /*App specific constants */
 const (
@@ -73,11 +73,6 @@ func ztpAction(action string) (string, error) {
 		// ztp.status returns an exit code and the stdout of the command
 		// We only care about the stdout (which is at [1] in the slice)
 		output, _ = result.Body[0].(string)
-	} else {
-        if (action == "run") {
-		    //rc, _ := result.Body[0].(string)
-		    output, _ = result.Body[1].(string)
-        }
     }
 	return output, nil
 }
@@ -333,12 +328,12 @@ var DbToYang_ztp_config_xfmr SubTreeXfmrDbToYang = func (inParams XfmrParams) (e
     }
     configObj := ztpObj.Config
     ygot.BuildEmptyTree(configObj)
-    var temp uint32
+    var temp bool
     if mess == "disabled" {
-	    temp = 0
+	    temp = false
     }
     if mess == "enabled" {
-	    temp = 1
+	    temp = true
     }
     configObj.AdminMode = &temp
     return err;
@@ -357,23 +352,10 @@ var YangToDb_ztp_config_xfmr SubTreeXfmrYangToDb = func(inParams XfmrParams) (ma
 		log.Info("Invalid Input")
 		return nil,err
     }
-    if * ztpObj.Config.AdminMode == 2 {
-        act = "run"
-    } else {
-        if * ztpObj.Config.AdminMode == 1 {
-            act = "enable"
-        }
+    b := * ztpObj.Config.AdminMode
+    if (b) {
+        act = "enable"
     }
-	if act == "run" {
-        var mess string
-        mess, err = ztpAction(act)
-        if mess != "" {
-            err = tlerr.New(mess)
-        }
-	} else {
-	    _, err = ztpAction(act)
-	}
+    _, err = ztpAction(act)
     return nil,err;
 }
-
-

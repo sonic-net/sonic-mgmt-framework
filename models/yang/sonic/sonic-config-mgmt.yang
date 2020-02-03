@@ -60,6 +60,14 @@ module sonic-config-mgmt {
   }
 
   rpc write-erase {
+      description
+          "Configuration Erase Features:
+             - op_write_erase : Erase configuration files except for the management interface configuration.
+             - op_write_erase_boot : Erase the configuration files including the management interface configuration.
+             - op_write_erase_install : Restore SONiC switch content to default values.
+             - op_no_write_erase : Cancel configuration erase operation.
+
+           The detailed result of the requested command is sent as a string.";
       input {
           leaf subcmd {
               type string;

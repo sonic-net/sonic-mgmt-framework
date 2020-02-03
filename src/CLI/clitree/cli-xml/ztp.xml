@@ -26,8 +26,5 @@
     <COMMAND name="ztp enable" help="Administratively enable ZTP">
       <ACTION builtin="clish_pyobj">sonic_cli_ztp patch_openconfig_ztp_ztp_config ${__full_line} </ACTION>
     </COMMAND>
-    <COMMAND name="ztp run" help="Restart ZTP">
-      <ACTION builtin="clish_pyobj">sonic_cli_ztp patch_openconfig_ztp_ztp_run ${__full_line} </ACTION>
-    </COMMAND>
   </VIEW>
 </CLISH_MODULE>

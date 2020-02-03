@@ -3045,5 +3045,11 @@ module openconfig-network-instance-annot {
             sonic-ext:field-transformer "vlan_nd_suppress_fld_xfmr";
         }
     }
+    
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-vxlan:vxlan-vni-instances {
+        deviate add {
+            sonic-ext:subtree-transformer "vxlan_vni_instance_subtree_xfmr";
+        }
+    }    
 }
 
