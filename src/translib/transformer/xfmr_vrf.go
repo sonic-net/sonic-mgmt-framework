@@ -422,6 +422,36 @@ var YangToDb_network_instance_table_key_xfmr KeyXfmrYangToDb = func(inParams Xfm
 
         log.Info("YangToDb_network_instance_table_key_xfmr: ", vrfTbl_key)
 
+        /*
+         * For SSH to work with a VRF, the VRF name needs to be installed in the
+         * SSH_SERVER_VRF config DB. 
+         * click has a cmd to configure <vrf_name> in this table. For now, add an entry
+         * for mgmt VRF in this table when mgmt VRF is configured. Data VRF won't be added
+         * to this table. This is because in the click cmd, MAX_SSH_VRF is 15.
+         * A clish CLI is required to configure data VRF in the SSH_SERVER_VRF
+         */
+        if ((inParams.oper == CREATE) ||
+             (inParams.oper == REPLACE) ||
+             (inParams.oper == UPDATE) ||
+             (inParams.oper == DELETE)) {
+                keyName := pathInfo.Var("name")
+
+                if keyName == "mgmt" {
+                        subOpMap := make(map[db.DBNum]map[string]map[string]db.Value)
+                        resMap := make(map[string]map[string]db.Value)
+                        sshVrfMap := make(map[string]db.Value)
+
+                        sshVrfDbValues  := db.Value{Field: map[string]string{}}
+                        (&sshVrfDbValues).Set("port", "22")
+                        sshVrfMap["mgmt"] = sshVrfDbValues
+
+                        log.Infof("ssh server vrf %v", sshVrfMap)
+                        resMap["SSH_SERVER_VRF"] = sshVrfMap
+                        subOpMap[db.ConfigDB] = resMap
+                        inParams.subOpDataMap[inParams.oper] = &subOpMap
+                }
+        }
+
         return vrfTbl_key, err
 }
 
