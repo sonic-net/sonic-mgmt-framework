@@ -373,7 +373,7 @@ def run(func, args):
 
         
     except Exception as e:
-        print("Exception when calling OpenconfigInterfacesApi->%s : %s\n" %(func, e))
+        print("%Error: Transaction Failure")
 
 if __name__ == '__main__':
 

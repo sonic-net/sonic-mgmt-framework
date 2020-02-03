@@ -4,6 +4,7 @@ openconfig-acl-annot.yang
 openconfig-interfaces.yang
 openconfig-if-ip.yang
 openconfig-if-ethernet.yang
+openconfig-if-ethernet-ext.yang
 openconfig-interfaces-annot.yang
 openconfig-ztp.yang
 openconfig-ztp-annot.yang
