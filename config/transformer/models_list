@@ -50,3 +50,7 @@ openconfig-mclag.yang
 openconfig-mclag-annot.yang
 sonic-bgp-clear.yang
 sonic-bgp-clear-annot.yang
+sonic-bgp-show.yang
+sonic-bgp-show-annot.yang
+sonic-ip-show.yang
+sonic-ip-show-annot.yang

@@ -14,6 +14,7 @@ module openconfig-vxlan {
   import openconfig-if-types-ext { prefix oc-if-types-ext; }
   // import openconfig-yang-types { prefix oc-yang; }
   import openconfig-extensions { prefix oc-ext; }
+  import openconfig-vlan-types { prefix oc-vlan-types; }
 
   // OpenConfig specific extensions for module metadata.
   oc-ext:regexp-posix;
@@ -164,7 +165,6 @@ module openconfig-vxlan {
     description
       "bdBindVniType";
   }  
-
 
   grouping vxlan-vni-static-ipv4-peer-config {
     description
@@ -647,4 +647,41 @@ module openconfig-vxlan {
   }
 
   uses vxlan-top;
+
+  grouping neighbour-suppress-config {
+    description
+      "Grouping for Neigbour Suppress configuration";
+
+    leaf arp-and-nd-suppress {
+      type enumeration {
+          enum enable;
+      }
+      description
+        "Enable Arp and ND Suppression";
+    }
+  }
+
+  grouping neighbour-suppress-top {
+      container neighbour-suppress {
+          container config {
+              description
+                  "Configuration data for neigh-suppress";
+              uses neighbour-suppress-config;
+          }
+          container state {
+              config false;
+              description
+                  "Operational state data ";
+              uses neighbour-suppress-config;
+          }
+      }
+  }
+
+  augment "/oc-ni:network-instances/oc-ni:network-instance" {
+      description
+          "Adds neighbour suppress configuration for routed VLAN interfaces";
+
+      uses neighbour-suppress-top;
+  }
+
 }

@@ -84,8 +84,6 @@ limitations under the License.
     <COMMAND
          name="no route-map"
          help="remove routing policy map"
-         view="configure-route-map-view"
-         viewid="name=${route-map-name};seq_num=${seq-nu}"
          >
          <PARAM name="route-map-name"
             help="Name of route map (Max size 63)"
@@ -95,6 +93,7 @@ limitations under the License.
             help="Configure the action to apply on route-map"
             ptype="SUBCOMMAND"
             mode="switch"
+            optional="true"
             >
 
             <PARAM name="permit"
@@ -121,10 +120,12 @@ limitations under the License.
 
         </PARAM>
     <ACTION>
-        if test "${action-switch}" = "permit"; then&#xA;
-            python $SONIC_CLI_ROOT/sonic-cli-routemap.py delete_openconfig_routing_policy_routing_policy_policy_definitions_policy_definition_statements_statement_actions_config_policy_result  ${route-map-name} ${seq-nu} ACCEPT_ROUTE&#xA;
+        if test -z "${action-switch}"; then&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-routemap.py delete_openconfig_routing_policy_routing_policy_policy_definitions_policy_definition ${route-map-name}&#xA;
+        elif test "${action-switch}" = "permit"; then&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-routemap.py delete_openconfig_routing_policy_routing_policy_policy_definitions_policy_definition_statements_statement ${route-map-name} ${seq-nu} ACCEPT_ROUTE&#xA;
         else&#xA;
-            python $SONIC_CLI_ROOT/sonic-cli-routemap.py delete_openconfig_routing_policy_routing_policy_policy_definitions_policy_definition_statements_statement_actions_config_policy_result  ${route-map-name} ${seq-nu} REJECT_ROUTE&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-routemap.py delete_openconfig_routing_policy_routing_policy_policy_definitions_policy_definition_statements_statement ${route-map-name} ${seq-nu} REJECT_ROUTE&#xA;
         fi&#xA;
     </ACTION>
     </COMMAND>
@@ -266,7 +267,7 @@ limitations under the License.
                     python $SONIC_CLI_ROOT/sonic-cli-routemap.py patch_openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_actions_bgp_actions_set_community ${name} ${seq_num} NO_ADVERTISE REMOVE&#xA;
                 fi&#xA;
                 if test "${comm-opt}" = "no-export"; then&#xA;
-                    python $SONIC_CLI_ROOT/sonic-cli-routemap.py patch_openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_actions_bgp_actions_set_community ${name} ${seq_num} NO_EXPORT REREMOVEE&#xA;
+                    python $SONIC_CLI_ROOT/sonic-cli-routemap.py patch_openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_actions_bgp_actions_set_community ${name} ${seq_num} NO_EXPORT REMOVE&#xA;
                 fi&#xA;
                 if test "${comm-opt}" = "no-peer"; then&#xA;
                     python $SONIC_CLI_ROOT/sonic-cli-routemap.py patch_openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_actions_bgp_actions_set_community ${name} ${seq_num} NOPEER REMOVE&#xA;

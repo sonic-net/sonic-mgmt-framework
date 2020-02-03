@@ -48,11 +48,13 @@ LACP mode {{intf['state']['lacp-mode']}} interval {{intf['state']['interval']}} 
 
 {% else %}
 
+{% if 'portchannel' in json_output and 'sonic-portchannel:LAG_MEMBER_TABLE' in json_output['portchannel'] and 'LAG_MEMBER_TABLE_LIST' in json_output['portchannel']['sonic-portchannel:LAG_MEMBER_TABLE'] %}
 {% for lag_mem in json_output['portchannel']['sonic-portchannel:LAG_MEMBER_TABLE']['LAG_MEMBER_TABLE_LIST'] %}
 {% if lag_mem['name'] == po_intf['lagname'] %}
 Members in this channel: {{ lag_mem['ifname'] }}
 {% endif %}
 {% endfor %}
+{% endif %}
 
 {% endif %}
 
@@ -92,7 +94,7 @@ Output statistics:
 {{counters['out-errors']}} error, {{counters['out-discards']}} discarded
 {% endif %}
 
-{{'\r\n\r\n'}}
+{{'\r\n'}}
 {% endfor %}
 {% endif %}
 

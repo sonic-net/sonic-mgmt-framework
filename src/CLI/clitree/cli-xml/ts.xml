@@ -16,33 +16,18 @@
     <VIEW name="enable-view">
     <COMMAND name="show tam int-ifa-ts" help="Show TAM IFA info"/>	    
     <COMMAND name="show tam int-ifa-ts supported" help="Show TAM IFA TS feature info" mode="subcommand" ptype="SUBCOMMAND">
-      <ACTION>python $SONIC_CLI_ROOT/sonic-cli-tam-int-ifa-ts.py get_tam_int_ifa_ts_supported</ACTION>
+      <ACTION builtin="clish_pyobj">sonic_cli_tam_int_ifa_ts get_tam_int_ifa_ts_supported</ACTION>
     </COMMAND>
     <COMMAND name="show tam int-ifa-ts flow" help="Show TAM IFA TS flow info" mode="subcommand" ptype="SUBCOMMAND">
       <PARAM name="name" help="Name of the flow" ptype="STRING_32" optional="true"> </PARAM>
-      <ACTION>
-        if test "${name}" = "all" ; then
-	  python $SONIC_CLI_ROOT/sonic-cli-tam-int-ifa-ts.py get_sonic_tam_int_ifa_ts_sonic_tam_int_ifa_ts_tam_int_ifa_ts_flow_table show_tam_int_ifa_ts_flow.j2; 
-        elif test -z "${name}"; then
-	  python $SONIC_CLI_ROOT/sonic-cli-tam-int-ifa-ts.py get_sonic_tam_int_ifa_ts_sonic_tam_int_ifa_ts_tam_int_ifa_ts_flow_table show_tam_int_ifa_ts_flow.j2; 
-        else
-	  python $SONIC_CLI_ROOT/sonic-cli-tam-int-ifa-ts.py get_list_sonic_tam_int_ifa_ts_sonic_tam_int_ifa_ts_tam_int_ifa_ts_flow_table_tam_int_ifa_ts_flow_table_list ${name} show_tam_int_ifa_ts_flow.j2; 
-        fi
-      </ACTION>
+      <ACTION builtin="clish_pyobj">sonic_cli_tam_int_ifa_ts get_sonic_tam_int_ifa_ts_sonic_tam_int_ifa_ts_tam_int_ifa_ts_flow_table show_tam_int_ifa_ts_flow.j2 ${name}</ACTION>
     </COMMAND>
     <COMMAND name="show tam int-ifa-ts status" help="Show TAM IFA TS Status" mode="subcommand" ptype="SUBCOMMAND">
-      <ACTION>python $SONIC_CLI_ROOT/sonic-cli-tam-int-ifa-ts.py get_tam_ifa_ts_status;</ACTION>
+      <ACTION builtin="clish_pyobj">sonic_cli_tam_int_ifa_ts get_tam_ifa_ts_status</ACTION>
     </COMMAND>
     <COMMAND name="show tam int-ifa-ts statistics" help="Show TAM IFA TS Statistics" mode="subcommand" ptype="SUBCOMMAND">
-      <PARAM name="name" help="Name of the flow" ptype="STRING_32"> </PARAM>
-      <ACTION> if test "${name}" = "all" ; then
-	 python $SONIC_CLI_ROOT/sonic-cli-tam-int-ifa-ts.py get_tam_int_ifa_ts_flow_stats;
-	 elif test -z "${name}"; then
-	 python $SONIC_CLI_ROOT/sonic-cli-tam-int-ifa-ts.py get_tam_int_ifa_ts_flow_stats;
-	 else
-	 python $SONIC_CLI_ROOT/sonic-cli-tam-int-ifa-ts.py get_tam_int_ifa_ts_flow_stats  ${name};
-	 fi
-      </ACTION>
+      <PARAM name="name" help="Name of the flow" ptype="STRING_32" optional="true"> </PARAM>
+      <ACTION builtin="clish_pyobj">sonic_cli_tam_int_ifa_ts get_tam_int_ifa_ts_flow_stats ${name}</ACTION>
     </COMMAND>	    
   </VIEW>
 
@@ -65,17 +50,10 @@
 	       name="flow-name"
 	       help="Name of the flow"
 	       ptype="STRING"
-		   >
+	       optional="true">
            </PARAM>
 
-	   <ACTION>
-		   if test "${flow-name}" = "all"; then
-		   python $SONIC_CLI_ROOT/sonic-cli-tam-int-ifa-ts.py delete_list_sonic_tam_int_ifa_ts_sonic_tam_int_ifa_ts_tam_int_ifa_ts_flow_table_tam_int_ifa_ts_flow_table_list;
-		   else
-		   python $SONIC_CLI_ROOT/sonic-cli-tam-int-ifa-ts.py delete_sonic_tam_int_ifa_ts_sonic_tam_int_ifa_ts_tam_int_ifa_ts_flow_table_tam_int_ifa_ts_flow_table_list ${flow-name};
-		   fi
-	   </ACTION>
-
+	   <ACTION builtin="clish_pyobj">sonic_cli_tam_int_ifa_ts delete_sonic_tam_int_ifa_ts_sonic_tam_int_ifa_ts_tam_int_ifa_ts_flow_table_tam_int_ifa_ts_flow_table_list ${flow-name}</ACTION>
          </COMMAND>
 
           <COMMAND name="feature"
@@ -104,12 +82,7 @@
                    >
                 </PARAM>
          </PARAM>
-         <ACTION> if test "${feature-options}" = "enable"; then
-		  python $SONIC_CLI_ROOT/sonic-cli-tam-int-ifa-ts.py patch_sonic_tam_int_ifa_ts_sonic_tam_int_ifa_ts_tam_int_ifa_ts_feature_table_tam_int_ifa_ts_feature_table_list_enable feature True;
-	          elif test "${feature-options}" = "disable"; then
-		  python $SONIC_CLI_ROOT/sonic-cli-tam-int-ifa-ts.py patch_sonic_tam_int_ifa_ts_sonic_tam_int_ifa_ts_tam_int_ifa_ts_feature_table_tam_int_ifa_ts_feature_table_list_enable feature False;
-	          fi 
-         </ACTION>
+	   <ACTION builtin="clish_pyobj">sonic_cli_tam_int_ifa_ts patch_sonic_tam_int_ifa_ts_sonic_tam_int_ifa_ts_tam_int_ifa_ts_feature_table_tam_int_ifa_ts_feature_table_list_enable ${__params}</ACTION>
          </COMMAND>
 
          <COMMAND
@@ -152,7 +125,7 @@
                    >
               </PARAM>
 
-	  <ACTION> python $SONIC_CLI_ROOT/sonic-cli-tam-int-ifa-ts.py patch_sonic_tam_int_ifa_ts_sonic_tam_int_ifa_ts_tam_int_ifa_ts_flow_table_tam_int_ifa_ts_flow_table_list  ${flow-name} ${acl-table-name} ${acl-rule-name} </ACTION>    
+	   <ACTION builtin="clish_pyobj">sonic_cli_tam_int_ifa_ts patch_sonic_tam_int_ifa_ts_sonic_tam_int_ifa_ts_tam_int_ifa_ts_flow_table_tam_int_ifa_ts_flow_table_list ${flow-name} ${acl-table-name} ${acl-rule-name}</ACTION>
          </COMMAND>
   </VIEW>
 

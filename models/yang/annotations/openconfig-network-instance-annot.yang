@@ -13,6 +13,7 @@ module openconfig-network-instance-annot {
     import openconfig-bgp-evpn-ext { prefix oc-bgp-evpn-ext; }
 	
     import ietf-yang-types { prefix yang; }
+    import openconfig-vxlan {prefix oc-vxlan; }
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance {
       deviate add {
@@ -3025,5 +3026,24 @@ module openconfig-network-instance-annot {
       deviate add {
       }
     }	
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-vxlan:neighbour-suppress {
+        deviate add {
+            sonic-ext:table-name "SUPPRESS_VLAN_NEIGH";
+            sonic-ext:key-transformer "vlan_nd_suppress_key_xfmr";
+        }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-vxlan:neighbour-suppress/oc-vxlan:config/oc-vxlan:arp-and-nd-suppress {
+        deviate add {
+            sonic-ext:field-transformer "vlan_nd_suppress_fld_xfmr";
+        }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-vxlan:neighbour-suppress/oc-vxlan:state/oc-vxlan:arp-and-nd-suppress {
+        deviate add {
+            sonic-ext:field-transformer "vlan_nd_suppress_fld_xfmr";
+        }
+    }
 }
 

@@ -126,7 +126,6 @@ func get_fallback(d *db.DB, lagName *string, fallback *string) error {
 /* Validate physical interface configured as member of PortChannel */
 func validateIntfAssociatedWithPortChannel(d *db.DB, ifName *string) error {
     var err error
-
     if len(*ifName) == 0 {
         return errors.New("Interface name is empty!")
     }
@@ -484,6 +483,13 @@ func deleteLagIntfAndMembers(inParams *XfmrParams, lagName *string) error {
         errStr := "PortChannel does not exist: " + *lagName
         log.Error(errStr)
         return errors.New(errStr)
+    }
+
+    /* Restrict deletion if iface configured as member-port of any Vlan */
+    err = validateIntfAssociatedWithVlan(inParams.d, lagName)
+    if err != nil {
+        errStr := "Interface configured as member-port of Vlan"
+        return tlerr.InvalidArgsError{Format: errStr}
     }
 
     /* Handle PORTCHANNEL_INTERFACE TABLE */

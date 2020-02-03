@@ -50,6 +50,7 @@ def invoke_api(func, args):
        return api.patch(path, body)
     elif func == 'patch_tacacs_server':
        indata = {}
+       body = {}
        # get server data
        api_response = get_sonic_tacacs_server_api(args)
        if api_response:
@@ -57,7 +58,6 @@ def invoke_api(func, args):
        else:
            # default server values
            indata['port'] = 49
-           indata['key'] = ''
            indata['timeout'] = 5
            indata['authtype'] = 'pap'
            indata['priority'] = 1
@@ -68,14 +68,22 @@ def invoke_api(func, args):
            val_name = (args[i].split(":", 1))[0]
            if val:
                indata[val_name] = val
-
        path = cc.Path('/restconf/data/openconfig-system:system/aaa/server-groups/server-group=TACACS/servers/server={address}/tacacs/config', address=args[0])
-       body = {
-         "openconfig-system:config": {
-           "port": int(indata['port']),
-           "secret-key": indata['key']
+       if "port" in indata:
+         body = {
+           "openconfig-system:config": {
+             "port": int(indata['port']),
+           }
          }
-       }
+       if "key" in indata:
+         if body:
+             body["openconfig-system:config"]["secret-key"] = indata['key']
+         else:
+           body = {
+             "openconfig-system:config": {
+               "secret-key": indata['key']
+             }
+           }
        api.patch(path, body)
        path = cc.Path('/restconf/data/openconfig-system:system/aaa/server-groups/server-group=TACACS/servers/server={address}/config', address=args[0])
        body = {
@@ -126,7 +134,8 @@ def get_sonic_tacacs_server_api(args):
                         tac_cfg = {}
                         tac_cfg = server_list[i]['tacacs']['config']
                         api_response_data['port'] = tac_cfg['port']
-                        api_response_data['key'] = tac_cfg['secret-key']
+                        if "secret-key" in tac_cfg:
+                            api_response_data['key'] = tac_cfg['secret-key']
                     api_response.append(api_response_data)
     return api_response
 

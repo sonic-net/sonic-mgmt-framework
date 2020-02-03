@@ -46,12 +46,27 @@ module sonic-vxlan {
                 max-elements 1;
 
                 leaf name {
+                    must "(starts-with(../name, 'vtep'))"
+                    {
+                        error-message "Error: Name should start with vtep";
+                        error-app-tag invalid-vtep-name;
+                    }
+                    must "(/cmn:operation/cmn:operation != 'UPDATE')"
+                    {
+                        error-message "Error: Update not allowed";
+                        error-app-tag update-disallowed;
+                    }
                     type string;
                 }
 
                 leaf src_ip {
                     mandatory true;
                     type inet:ipv4-address;
+                    must "(/cmn:operation/cmn:operation != 'UPDATE')"
+                    {
+                        error-message "Error: Update not allowed";
+                        error-app-tag update-disallowed;
+                    }
                 }
             }
         }
@@ -83,7 +98,7 @@ module sonic-vxlan {
                     mandatory true;
                     type uint32 {
                         range "1..16777215" {
-                            error-message "VNI ID out of range";
+                            error-message "Error: VNI ID out of range";
                             error-app-tag vnid-invalid;
                         }
                     }
@@ -102,12 +117,22 @@ module sonic-vxlan {
 
                 leaf name {
                     type string;
+                    must "(/cmn:operation/cmn:operation != 'UPDATE')"
+                    {
+                        error-message "Error: Update not allowed";
+                        error-app-tag update-disallowed;
+                    }
                 }
 
                 leaf source_vtep {
                     mandatory true;
                     type leafref {
                         path "../../../VXLAN_TUNNEL/VXLAN_TUNNEL_LIST/name";
+                    }
+                    must "(/cmn:operation/cmn:operation != 'UPDATE')"
+                    {
+                        error-message "Error: Update not allowed";
+                        error-app-tag update-disallowed;
                     }
                 }
             }
@@ -121,7 +146,9 @@ module sonic-vxlan {
                     type string;
                 }
                 leaf suppress {
-                    type string;
+                    type enumeration {
+                        enum on;
+                    }
                 }
 
             }

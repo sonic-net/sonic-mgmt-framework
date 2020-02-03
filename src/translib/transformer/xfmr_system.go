@@ -319,18 +319,16 @@ var YangToDb_sys_aaa_auth_xfmr SubTreeXfmrYangToDb = func(inParams XfmrParams) (
     usersObj := sysObj.Aaa.Authentication.Users
     userName := pathInfo.Var("username")
     log.Info("username:",userName)
-
-
     if len(userName) == 0 {
 	return nil, nil
     }
     var status bool
     var err_str string
-    if _ , _ok := inParams.txCache[userName];!_ok {
-	    inParams.txCache[userName] = userName
+    if _ , _ok := inParams.txCache.Load(userName);!_ok {
+	    inParams.txCache.Store(userName, userName)
     } else {
-	    if _,present := inParams.txCache["tx_err"]; present {
-	            return nil, fmt.Errorf("%s",inParams.txCache["tx_err"])
+	    if val,present := inParams.txCache.Load("tx_err"); present {
+	            return nil, fmt.Errorf("%s",val)
 	        }
 	    return nil,nil
     }
@@ -345,10 +343,10 @@ var YangToDb_sys_aaa_auth_xfmr SubTreeXfmrYangToDb = func(inParams XfmrParams) (
         }
     }
 	if (!status) {
-		if _,present := inParams.txCache["tx_err"]; !present {
+		if _,present := inParams.txCache.Load("tx_err"); !present {
 		    log.Info("Error in operation:",err_str)
-	            inParams.txCache["tx_err"] =err_str 
-	            return nil, fmt.Errorf("%s",err_str)
+	            inParams.txCache.Store("tx_err",err_str) 
+	            return nil, fmt.Errorf("%s", err_str)
 	        }
 	} else {
 		return nil, nil

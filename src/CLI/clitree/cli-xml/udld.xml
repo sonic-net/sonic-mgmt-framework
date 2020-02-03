@@ -26,12 +26,49 @@
         <COMMAND name = "show udld global"
             help = "Show UDLD global level information">
             <ACTION builtin="clish_pyobj">sonic_cli_udld get_sonic_udld_sonic_udld_udld_udld_list show_udld_global.j2</ACTION>
+            <DOCGEN>
+                <DESCRIPTION>
+                    Shows global level UDLD information
+                </DESCRIPTION>
+                <USAGE>
+                    After enabling UDLD at global level or modifying global level UDLD attributes, use this command to check global level UDLD information
+                </USAGE>
+                <EXAMPLE summary="Shows UDLD global level details">
+                    sonic-cli(config)# udld enable
+                    sonic-cli# show udld global
+
+                    UDLD Global Information
+                      Admin State        : UDLD Enabled
+                      Mode               : Normal
+                      UDLD Message Time  : 1 seconds
+                      UDLD Multiplier    : 3
+                </EXAMPLE>
+            </DOCGEN>
         </COMMAND>
 
         <!-- show udld neighbors -->
         <COMMAND name = "show udld neighbors"
             help = "Show UDLD neighbors information">
             <ACTION builtin="clish_pyobj">sonic_cli_udld get_list_sonic_udld_sonic_udld_udld_port_neigh_table_udld_port_neigh_table_list show_udld_neighbor.j2</ACTION>
+            <DOCGEN>
+                <DESCRIPTION>
+                    Shows UDLD neighbors information
+                </DESCRIPTION>
+                <USAGE>
+                    After enabling UDLD at global and interface level, use this command to get all UDLD neighbors information.
+                </USAGE>
+                <EXAMPLE summary="Shows UDLD neighbors details">
+                    sonic-cli(config)# udld enable
+                    sonic-cli(config)# interface Ethernet 0
+                    sonic-cli(conf-if-Ethernet0)# udld enable
+                    sonic-cli# show udld neighbors
+
+                    Port           Device Name     Device ID         Port ID         Neighbor State
+                    ---------------------------------------------------------------------------------
+                    Ethernet1      Sonic           3c2c.992d.8201    Ethernet0       Bidirectional
+                    Ethernet3      Sonic           3c2c.992d.8201    Ethernet3       Bidirectional
+                </EXAMPLE>
+            </DOCGEN>
         </COMMAND>
 
         <!-- show udld interface <ifname> -->
@@ -43,10 +80,62 @@
                 ptype = "STRING">
             </PARAM>
             <ACTION builtin="clish_pyobj">sonic_cli_udld get_sonic_udld_sonic_udld_udld_port_neigh_table_udld_port_neigh_table_list show_udld_interface.j2 ${interface-name}</ACTION>
+            <DOCGEN>
+                <DESCRIPTION>
+                    Shows interface level UDLD information and neighbors details on this interface
+                </DESCRIPTION>
+                <USAGE>
+                    After enabling UDLD at interface level, use this command to get interface level UDLD information and neighbors attached to this interface.
+                </USAGE>
+                <EXAMPLE summary="Shows interface level UDLD information and neighbors details on this interface">
+                    sonic-cli(config)# udld enable
+                    sonic-cli(config)# interface Ethernet 0
+                    sonic-cli(conf-if-Ethernet0)# udld enable
+                    sonic-cli# show udld interface Ethernet0
+
+                    UDLD information for Ethernet0
+                      UDLD Admin State:                  Enabled
+                      Mode:                              Normal
+                      Status:                            Bidirectional
+                      Local device id:                   3c2c.992d.8201
+                      Local port id :                    Ethernet0 
+                      Local device name:                 Sonic
+                      Message time:                      1
+                      Timeout interval:                  3
+                        Neighbor Entry 1
+                        ----------------------------------------------------------------------------------------
+                        Neighbor device id:         3c2c.992d.8235 
+                        Neighbor port id:           Ethernet0 
+                        Neighbor device name:       Sonic
+                        Neighbor message time:      1           
+                        Neighbor timeout interval:  3
+                </EXAMPLE>
+            </DOCGEN>
         </COMMAND>
 
         <COMMAND name = "show udld statistics" help = "Show UDLD statistics">
             <ACTION builtin="clish_pyobj">sonic_cli_udld get_list_sonic_udld_sonic_udld_udld_port_table_udld_port_table_list show_udld_stats.j2</ACTION>
+            <DOCGEN>
+                <DESCRIPTION>
+                    Shows UDLD statistics for all interfaces
+                </DESCRIPTION>
+                <USAGE>
+                    Use this command to get UDLD statistics for all interfaces
+                </USAGE>
+                <EXAMPLE summary="Shows UDLD statistics for all interfaces">
+                    sonic-cli# show udld statistics
+
+                    UDLD Interface statistics for Ethernet0
+                    Frames transmitted:         10
+                    Frames received:            9
+                    Frames with error:          0
+
+                    UDLD Interface statistics for Ethernet1
+                    Frames transmitted:         5
+                    Frames received:            8
+                    Frames with error:          0
+                </EXAMPLE>
+            </DOCGEN>
         </COMMAND>
         <!-- show udld counters interface <ifname> -->
         <COMMAND name = "show udld statistics interface"
@@ -57,6 +146,22 @@
                 ptype = "STRING">
             </PARAM>
             <ACTION builtin="clish_pyobj">sonic_cli_udld get_sonic_udld_sonic_udld_udld_port_table_udld_port_table_list show_udld_stats.j2 ${interface-name}</ACTION>
+            <DOCGEN>
+                <DESCRIPTION>
+                    Shows UDLD statistics for a specific interface
+                </DESCRIPTION>
+                <USAGE>
+                    Use this command to get UDLD statistics for a specific interface
+                </USAGE>
+                <EXAMPLE summary="Shows UDLD statistics for a specific interface">
+                    sonic-cli# show udld statistics interface Ethernet0
+
+                    UDLD Interface statistics for Ethernet0
+                    Frames transmitted:         10
+                    Frames received:            9
+                    Frames with error:          0
+                </EXAMPLE>
+            </DOCGEN>
         </COMMAND>
 
         <!--
@@ -113,18 +218,65 @@
         <COMMAND name = "udld enable"
             help = "Enable UDLD at global level">
             <ACTION builtin="clish_pyobj">sonic_cli_udld post_list_sonic_udld_sonic_udld_udld_udld_list</ACTION>
+            <DOCGEN>
+                <DESCRIPTION>
+                    Enable UDLD at global level
+                </DESCRIPTION>
+                <USAGE>
+                    Use this command to enable UDLD globally
+                </USAGE>
+                <EXAMPLE summary="Enable UDLD at global level">
+                    sonic-cli(config)# udld enable
+                </EXAMPLE>
+            </DOCGEN>
         </COMMAND>
         <COMMAND name = "no udld enable"
             help = "Disable UDLD at global level">
             <ACTION builtin="clish_pyobj">sonic_cli_udld delete_sonic_udld_sonic_udld_udld</ACTION>
+            <DOCGEN>
+                <DESCRIPTION>
+                    Disable UDLD at global level.
+                </DESCRIPTION>
+                <USAGE>
+                    Use this command to disable UDLD globally. Disabling UDLD globally will also disable UDLD at interface level.
+                </USAGE>
+                <EXAMPLE summary="Disable UDLD at global level">
+                    sonic-cli(config)# no udld enable
+                </EXAMPLE>
+            </DOCGEN>
         </COMMAND>
         <COMMAND name = "udld aggressive"
             help = "Enable aggressive UDLD mode at global level">
             <ACTION builtin="clish_pyobj">sonic_cli_udld patch_sonic_udld_sonic_udld_udld_udld_list_aggressive true</ACTION>
+            <DOCGEN>
+                <DESCRIPTION>
+                    Configure UDLD mode to aggressive.
+                </DESCRIPTION>
+                <USAGE>
+                    Use this command to change UDLD mode to aggressive. Default UDLD mode is normal.
+                </USAGE>
+                <EXAMPLE summary="Configure UDLD mode to aggressive">
+                    sonic-cli(config)# udld enable
+                    sonic-cli(config)# udld aggressive
+                </EXAMPLE>
+            </DOCGEN>
         </COMMAND>
         <COMMAND name = "no udld aggressive"
             help = "Disable aggressive UDLD mode at global level">
             <ACTION builtin="clish_pyobj">sonic_cli_udld patch_sonic_udld_sonic_udld_udld_udld_list_aggressive false</ACTION>
+            <DOCGEN>
+                <DESCRIPTION>
+                    Disable aggressive mode of UDLD. UDLD mode is restored back to default normal mode.
+                </DESCRIPTION>
+                <USAGE>
+                    Use this command to disable aggessive mode of UDLD. UDLD mode is restored back to default normal mode.
+                </USAGE>
+                <EXAMPLE summary="Disable aggressive mode of UDLD">
+                    sonic-cli(config)# udld enable
+                    sonic-cli(config)# udld aggressive
+                    sonic-cli(config)# no udld aggressive
+                </EXAMPLE>
+            </DOCGEN>
         </COMMAND>
         <COMMAND name = "udld message-time"
             help = "Configure UDLD message time value in seconds (1 - 30 sec)">
@@ -135,9 +287,34 @@
                 >
             </PARAM>
             <ACTION builtin="clish_pyobj">sonic_cli_udld patch_sonic_udld_sonic_udld_udld_udld_list_msg_time ${msg-time}</ACTION>
+            <DOCGEN>
+                <DESCRIPTION>
+                    Configure UDLD message time. It is the time interval at which periodic hellos are exchanged.
+                </DESCRIPTION>
+                <USAGE>
+                    Use this command to set UDLD message time. Default message time is 1 second.
+                </USAGE>
+                <EXAMPLE summary="Configure UDLD message time">
+                    sonic-cli(config)# udld enable
+                    sonic-cli(config)# udld message-time 3
+                </EXAMPLE>
+            </DOCGEN>
         </COMMAND>
         <COMMAND name = "no udld message-time" help = "Reset UDLD Message time">
             <ACTION builtin="clish_pyobj">sonic_cli_udld patch_sonic_udld_sonic_udld_udld_udld_list_msg_time 0</ACTION>
+            <DOCGEN>
+                <DESCRIPTION>
+                    Reset UDLD message time to default 1 second.
+                </DESCRIPTION>
+                <USAGE>
+                    Use this command to reset UDLD message time to default 1 second.
+                </USAGE>
+                <EXAMPLE summary="Reset UDLD message time to default 1 second">
+                    sonic-cli(config)# udld enable
+                    sonic-cli(config)# udld message-time 3
+                    sonic-cli(config)# no udld message-time
+                </EXAMPLE>
+            </DOCGEN>
         </COMMAND>
 
         <COMMAND name = "udld multiplier"
@@ -149,9 +326,34 @@
                 >
             </PARAM>
             <ACTION builtin="clish_pyobj">sonic_cli_udld patch_sonic_udld_sonic_udld_udld_udld_list_multiplier ${multiplier}</ACTION>
+            <DOCGEN>
+                <DESCRIPTION>
+                    Configure UDLD multiplier value. This multiplier value is used to determine the timeout interval (i.e. message-time x multiplier value) after which UDLD declares the state of the link.
+                </DESCRIPTION>
+                <USAGE>
+                    Use this command to set UDLD multiplier value. Default multiplier value is 3.
+                </USAGE>
+                <EXAMPLE summary="Configure UDLD multiplier value">
+                    sonic-cli(config)# udld enable
+                    sonic-cli(config)# udld multiplier 8
+                </EXAMPLE>
+            </DOCGEN>
         </COMMAND>
         <COMMAND name = "no udld multiplier" help = "Reset UDLD Multiplier">
             <ACTION builtin="clish_pyobj">sonic_cli_udld patch_sonic_udld_sonic_udld_udld_udld_list_multiplier 0</ACTION>
+            <DOCGEN>
+                <DESCRIPTION>
+                    Reset UDLD multiplier value to default 3.
+                </DESCRIPTION>
+                <USAGE>
+                    Use this command to reset UDLD multiplier value to default value 3.
+                </USAGE>
+                <EXAMPLE summary="Reset UDLD multiplier value to default 3">
+                    sonic-cli(config)# udld enable
+                    sonic-cli(config)# udld multiplier 8
+                    sonic-cli(config)# no udld multiplier
+                </EXAMPLE>
+            </DOCGEN>
         </COMMAND>
     </VIEW>
 
@@ -163,18 +365,70 @@
         <COMMAND name = "udld enable"
             help = "Enable UDLD at interface level">
             <ACTION builtin="clish_pyobj">sonic_cli_udld post_list_sonic_udld_sonic_udld_udld_port_udld_port_list ${iface}</ACTION>
+            <DOCGEN>
+                <DESCRIPTION>
+                    Enable UDLD at interface level.
+                </DESCRIPTION>
+                <USAGE>
+                    Use this command to enable UDLD at interface level
+                </USAGE>
+                <EXAMPLE summary="Enable UDLD at interface level">
+                    sonic-cli(config)# interface Ethernet 0
+                    sonic-cli(conf-if-Ethernet0)# udld enable
+                </EXAMPLE>
+            </DOCGEN>
         </COMMAND>
         <COMMAND name = "no udld enable"
             help = "Disable UDLD at interface level">
             <ACTION builtin="clish_pyobj">sonic_cli_udld delete_sonic_udld_sonic_udld_udld_port_udld_port_list ${iface}</ACTION>
+            <DOCGEN>
+                <DESCRIPTION>
+                    Disable UDLD at interface level.
+                </DESCRIPTION>
+                <USAGE>
+                    Use this command to disable UDLD at interface level.
+                </USAGE>
+                <EXAMPLE summary="Disable UDLD at interface level">
+                    sonic-cli(config)# interface Ethernet 0
+                    sonic-cli(conf-if-Ethernet0)# udld enable
+                    sonic-cli(conf-if-Ethernet0)# no udld enable
+                </EXAMPLE>
+            </DOCGEN>
         </COMMAND>
         <COMMAND name = "udld aggressive"
             help = "Enable aggressive mode UDLD at interface level">
             <ACTION builtin="clish_pyobj">sonic_cli_udld patch_sonic_udld_sonic_udld_udld_port_udld_port_list_aggressive true ${iface}</ACTION>
+            <DOCGEN>
+                <DESCRIPTION>
+                    Enable aggressive mode of UDLD at interface level.
+                </DESCRIPTION>
+                <USAGE>
+                    Use this command to change UDLD mode to aggressive at interface level. Default UDLD mode is normal.
+                </USAGE>
+                <EXAMPLE summary="Enable aggressive mode of UDLD at interface level">
+                    sonic-cli(config)# interface Ethernet 0
+                    sonic-cli(conf-if-Ethernet0)# udld enable
+                    sonic-cli(conf-if-Ethernet0)# udld aggressive
+                </EXAMPLE>
+            </DOCGEN>
         </COMMAND>
         <COMMAND name = "no udld aggressive"
             help = "Disable aggressive mode UDLD at interface level">
             <ACTION builtin="clish_pyobj">sonic_cli_udld patch_sonic_udld_sonic_udld_udld_port_udld_port_list_aggressive false ${iface}</ACTION>
+            <DOCGEN>
+                <DESCRIPTION>
+                    Disable aggressive mode of UDLD at interface level. UDLD mode is restored back to default normal mode.
+                </DESCRIPTION>
+                <USAGE>
+                    Use this command to disable aggessive mode of UDLD at interface level. UDLD mode is restored back to default normal mode.
+                </USAGE>
+                <EXAMPLE summary="Disable aggressive mode of UDLD at interface level">
+                    sonic-cli(config)# interface Ethernet 0
+                    sonic-cli(conf-if-Ethernet0)# udld enable
+                    sonic-cli(conf-if-Ethernet0)# udld aggressive
+                    sonic-cli(conf-if-Ethernet0)# no udld aggressive
+                </EXAMPLE>
+            </DOCGEN>
         </COMMAND>
     </VIEW>
 </CLISH_MODULE>

@@ -231,7 +231,6 @@ def invoke_api(func, args=[]):
 
     #Delete EVPN VNI cases
     elif func == 'delete_bgp_evpn_vni':
-        print('delete evpn vni '+args[0]+args[1]+args[2])
         keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={vrf}'
             +'/protocols/protocol=BGP,bgp/bgp/global/afi-safis/afi-safi={af_name}/l2vpn-evpn'
             +'/openconfig-bgp-evpn-ext:vnis/vni={vni_number}',

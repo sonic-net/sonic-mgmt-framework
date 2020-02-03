@@ -67,7 +67,17 @@ def invoke_api(func, args=[]):
     keypath = []
     body = None
     
-    if func == 'get_bgp_evpn_vni':
+    if func == 'get_bgp_evpn_summary':
+        keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={vrf}'
+            +'/protocols/protocol=BGP,bgp/bgp/global',
+                vrf=args[0])
+        response = api.get(keypath)
+        keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={vrf}'
+            +'/protocols/protocol=BGP,bgp/bgp/neighbors',
+                vrf=args[0])
+        response.content.update(api.get(keypath).content)
+        return response
+    elif func == 'get_bgp_evpn_vni':
         keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={vrf}'
             +'/protocols/protocol=BGP,bgp/bgp/global/afi-safis/afi-safi={af_name}/l2vpn-evpn'
             +'/openconfig-bgp-evpn-ext:vnis/vni={vni_number}/state',

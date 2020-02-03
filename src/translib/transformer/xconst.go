@@ -24,6 +24,8 @@ const (
 	YANG_CONTAINER = "container"
 	YANG_LEAF      = "leaf"
 	YANG_LEAF_LIST = "leaf-list"
+	YANG_CHOICE    = "choice"
+	YANG_CASE      = "case"
 
 	YANG_ANNOT_DB_NAME    = "db-name"
 	YANG_ANNOT_TABLE_NAME = "table-name"
@@ -65,4 +67,7 @@ const (
 	TBL_XFMR_RET_ARGS = 2
 	TBL_XFMR_RET_VAL_INDX = 0
 	TBL_XFMR_RET_ERR_INDX = 1
+	POST_XFMR_RET_ARGS = 2
+	POST_XFMR_RET_VAL_INDX = 0
+	POST_XFMR_RET_ERR_INDX = 1
 )

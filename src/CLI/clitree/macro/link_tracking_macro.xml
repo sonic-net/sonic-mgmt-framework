@@ -8,9 +8,7 @@
         <PARAM name="group-direction" help="Upstream interface" ptype="SUBCOMMAND" mode="switch">
             <PARAM name="upstream" help="Upstream interface" ptype="SUBCOMMAND" mode="subcommand" />
         </PARAM>
-        <ACTION>
-            python $SONIC_CLI_ROOT/sonic-cli-link-state-tracking.py set_link_state_tracking_group_upstream ${grp-name} ${iface} ${vlan_id} ${po_name}
-        </ACTION>
+        <ACTION builtin="clish_pyobj">sonic_cli_link_state_tracking set_link_state_tracking_group_upstream ${grp-name} ${iface} ${vlan_name} ${po_name}</ACTION>
     </COMMAND>
 
     <COMMAND name="no link" help="Interface link" />
@@ -20,9 +18,7 @@
         <PARAM name="group-direction" help="Upstream interface" ptype="SUBCOMMAND" mode="switch">
             <PARAM name="upstream" help="Upstream interface" ptype="SUBCOMMAND" mode="subcommand" />
         </PARAM>
-        <ACTION>
-            python $SONIC_CLI_ROOT/sonic-cli-link-state-tracking.py delete_link_state_tracking_group_upstream ${grp-name} ${iface} ${vlan_id} ${po_name}
-        </ACTION>
+        <ACTION builtin="clish_pyobj">sonic_cli_link_state_tracking delete_link_state_tracking_group_upstream ${grp-name} ${iface} ${vlan_name} ${po_name}</ACTION>
     </COMMAND>
 </MACRODEF>
 </ROOT>

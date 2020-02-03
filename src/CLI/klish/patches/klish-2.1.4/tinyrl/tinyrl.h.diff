@@ -1,0 +1,13 @@
+224a225,236
+> extern void tinyrl_complete_ignore_error(tinyrl_t * instance);
+> /**
+>  * Indicate whether the cursor is in middle or not
+>  */
+> extern bool_t
+>         tinyrl_is_cursor_in_middle(
+>                 /**
+>                  * The instance on which to operate
+>                  */
+>                 const tinyrl_t *instance
+>         );
+> 

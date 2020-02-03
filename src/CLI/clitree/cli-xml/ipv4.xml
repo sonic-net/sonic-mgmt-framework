@@ -32,7 +32,17 @@ limitations under the License.
     <ACTION builtin="clish_nop"/>
     </COMMAND>
 
-<!-- show ip route -->
+    <!-- show ip interfaces -->
+    <COMMAND
+        name="show ip interfaces"
+        help="IP Info of Interfaces"
+        >
+    <ACTION>
+       python $SONIC_CLI_ROOT/sonic_cli_if.py ip_interfaces_get show_ip_interfaces_sonic.j2 ${__full_line}
+    </ACTION>
+    </COMMAND>
+
+    <!-- show ip route -->
     <COMMAND
         help="IP route information"
         name="show ip route">
@@ -54,7 +64,7 @@ limitations under the License.
 		            ptype="STRING">
                    <PARAM
 	                    help="Destination prefix"
-		                  name="A.B.C.D/M"
+		                  name="prefix"
 		                  optional="true"
 		                  ptype="IP_ADDR_MASK">
                    </PARAM>
@@ -63,12 +73,16 @@ limitations under the License.
            <PARAM
                help="Destination prefix"
 	           optional="true"
-               name="A.B.C.D/M"
+               name="prefix"
                ptype="IP_ADDR_MASK">
            </PARAM>
         </PARAM>
         <ACTION>
-	       python $SONIC_CLI_ROOT/sonic-cli-ip-route.py get_network_instance_afts_ipv4_unicast show_ip_route.j2 ${__full_line}&#xA;
+            if test -n "${prefix}"; then&#xA;
+               python $SONIC_CLI_ROOT/sonic-cli-ip-route-rpc.py show_ip_route show_ip_route_rpc.j2 prefix ${prefix} ${__full_line}&#xA;
+            else&#xA;
+               python $SONIC_CLI_ROOT/sonic-cli-ip-route-rpc.py show_ip_route show_ip_route_rpc.j2 ${__full_line}&#xA;
+            fi&#xA;
         </ACTION>
     </COMMAND>
 </VIEW>
@@ -96,7 +110,7 @@ limitations under the License.
             name="addr"
             help="IP address with mask"
             ptype="IP_ADDR_MASK" />
-        <ACTION>python $SONIC_CLI_ROOT/sonic_cli_if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config ${iface} ${addr} </ACTION>
+        <ACTION builtin="clish_pyobj">sonic_cli_if patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config ${iface} ${addr}</ACTION>
     </COMMAND>
 
     <COMMAND
@@ -107,9 +121,7 @@ limitations under the License.
 	    name="addr"
             help="IP address"
 	    ptype="IP_ADDR" />
-    <ACTION>
-        python $SONIC_CLI_ROOT/sonic_cli_if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config_prefix_length ${iface} ${addr}
-    </ACTION>
+        <ACTION builtin="clish_restcl">oper=DELETE url=/restconf/data/openconfig-interfaces:interfaces/interface=${iface}/subinterfaces/subinterface=0/openconfig-if-ip:ipv4/addresses/address=${addr}/config/prefix-length</ACTION>
     </COMMAND>
 
     <COMMAND
@@ -119,15 +131,13 @@ limitations under the License.
             name="donor-interface"
             help="Donor Interface Name"
             ptype="STRING" />
-	<ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_unnumbered_interface_ref_config_interface ${iface} ${donor-interface}
-    </ACTION>
+        <ACTION builtin="clish_restcl">oper=PATCH url=/restconf/data/openconfig-interfaces:interfaces/interface=${iface}/subinterfaces/subinterface=0/openconfig-if-ip:ipv4/unnumbered/interface-ref/config/interface body={"openconfig-if-ip:interface": "${donor-interface}"}</ACTION>
     </COMMAND>
 
     <COMMAND
         name="no ip unnumbered"
 	    help="Configure IPv4 unnumbered interface" >
-    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_unnumbered_interface_ref_config_interface ${iface}
-    </ACTION>
+        <ACTION builtin="clish_restcl">oper=DELETE url=/restconf/data/openconfig-interfaces:interfaces/interface=${iface}/subinterfaces/subinterface=0/openconfig-if-ip:ipv4/unnumbered/interface-ref/config/interface</ACTION>
     </COMMAND>
 </VIEW>
 
@@ -158,19 +168,13 @@ limitations under the License.
             ptype="SUBCOMMAND"
             mode="subcommand"
             optional="true" >
-            <PARAM 
+            <PARAM
                 name="gw_addr"
                 help="Gateway IP address"
                 ptype="IP_ADDR"
                 />
         </PARAM>
-        <ACTION>
-            if test "${gw_addr}" = ""; then&#xA;
-            python $SONIC_CLI_ROOT/sonic_cli_if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config ${iface} ${addr}&#xA;
-            else&#xA;
-            python $SONIC_CLI_ROOT/sonic_cli_if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config ${iface} ${addr} ${gw_addr}&#xA;
-            fi&#xA;
-        </ACTION>
+           <ACTION builtin="clish_pyobj">sonic_cli_if patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config ${iface} ${addr} ${gw_addr}</ACTION>
     </COMMAND>
 
     <COMMAND
@@ -181,9 +185,7 @@ limitations under the License.
 	    name="addr"
             help="IP address"
 	    ptype="IP_ADDR" />
-    <ACTION>
-        python $SONIC_CLI_ROOT/sonic_cli_if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config_prefix_length ${iface} ${addr}
-    </ACTION>
+        <ACTION builtin="clish_restcl">oper=DELETE url=/restconf/data/openconfig-interfaces:interfaces/interface=${iface}/subinterfaces/subinterface=0/openconfig-if-ip:ipv4/addresses/address=${addr}/config/prefix-length</ACTION>
     </COMMAND>
 </VIEW>
 
@@ -209,7 +211,7 @@ limitations under the License.
               name="addr"
               help="IP address with mask"
               ptype="IP_ADDR_MASK" />
-          <ACTION>python $SONIC_CLI_ROOT/sonic_cli_if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config ${vlan_id} ${addr} </ACTION>
+        <ACTION builtin="clish_pyobj">sonic_cli_if patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config ${vlan_name} ${addr}</ACTION>
       </COMMAND>
       <COMMAND
          name="no ip address"
@@ -219,9 +221,7 @@ limitations under the License.
              name="addr"
              help="IP address"
              ptype="IP_ADDR" />
-         <ACTION>
-             python $SONIC_CLI_ROOT/sonic_cli_if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config_prefix_length ${vlan_id} ${addr}
-         </ACTION>
+        <ACTION builtin="clish_restcl">oper=DELETE url=/restconf/data/openconfig-interfaces:interfaces/interface=${vlan_name}/subinterfaces/subinterface=0/openconfig-if-ip:ipv4/addresses/address=${addr}/config/prefix-length</ACTION>
       </COMMAND>
 </VIEW>
 
@@ -247,7 +247,7 @@ limitations under the License.
               name="addr"
               help="IP address with mask"
               ptype="IP_ADDR_MASK" />
-          <ACTION>python $SONIC_CLI_ROOT/sonic_cli_if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config ${po_name} ${addr} </ACTION>
+           <ACTION builtin="clish_pyobj">sonic_cli_if patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config ${po_name} ${addr}</ACTION>
       </COMMAND>
       <COMMAND
          name="no ip address"
@@ -257,9 +257,7 @@ limitations under the License.
              name="addr"
              help="IP address"
              ptype="IP_ADDR" />
-         <ACTION>
-             python $SONIC_CLI_ROOT/sonic_cli_if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config_prefix_length ${po_name} ${addr}
-         </ACTION>
+        <ACTION builtin="clish_restcl">oper=DELETE url=/restconf/data/openconfig-interfaces:interfaces/interface=${po_name}/subinterfaces/subinterface=0/openconfig-if-ip:ipv4/addresses/address=${addr}/config/prefix-length</ACTION>
       </COMMAND>
 
       <COMMAND
@@ -269,15 +267,13 @@ limitations under the License.
              name="donor-interface"
              help="Donor Interface Name"
              ptype="STRING" />
-         <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_unnumbered_interface_ref_config_interface ${po_name} ${donor-interface}
-         </ACTION>
+        <ACTION builtin="clish_restcl">oper=PATCH url=/restconf/data/openconfig-interfaces:interfaces/interface=${po_name}/subinterfaces/subinterface=0/openconfig-if-ip:ipv4/unnumbered/interface-ref/config/interface body={"openconfig-if-ip:interface": ${donor-interface}}</ACTION>
      </COMMAND>
 
      <COMMAND
          name="no ip unnumbered"
          help="Configure IPv4 unnumbered interface" >
-         <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_unnumbered_interface_ref_config_interface ${po_name}
-         </ACTION>
+        <ACTION builtin="clish_restcl">oper=DELETE url=/restconf/data/openconfig-interfaces:interfaces/interface=${po_name}/subinterfaces/subinterface=0/openconfig-if-ip:ipv4/unnumbered/interface-ref/config/interface</ACTION>
      </COMMAND>
 </VIEW>
 
@@ -303,7 +299,7 @@ limitations under the License.
               name="addr"
               help="IP address with mask (/32 is supported)"
               ptype="IP_ADDR_MASK" />
-          <ACTION>python $SONIC_CLI_ROOT/sonic_cli_if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config ${lo_name} ${addr} </ACTION>
+           <ACTION builtin="clish_pyobj">sonic_cli_if patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config ${lo_name} ${addr}</ACTION>
       </COMMAND>
       <COMMAND
          name="no ip address"
@@ -313,9 +309,7 @@ limitations under the License.
              name="addr"
              help="IP address"
              ptype="IP_ADDR" />
-         <ACTION>
-             python $SONIC_CLI_ROOT/sonic_cli_if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config_prefix_length ${lo_name} ${addr}
-         </ACTION>
+            <ACTION builtin="clish_restcl">oper=DELETE url=/restconf/data/openconfig-interfaces:interfaces/interface=${lo_name}/subinterfaces/subinterface=0/openconfig-if-ip:ipv4/addresses/address=${addr}/config/prefix-length</ACTION>
       </COMMAND>
 </VIEW>
 </CLISH_MODULE>

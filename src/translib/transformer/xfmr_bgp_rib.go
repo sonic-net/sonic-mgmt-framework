@@ -443,6 +443,11 @@ func hdl_get_bgp_local_rib (bgpRib_obj *ocbinds.OpenconfigNetworkInstance_Networ
         return oper_err
     }
 
+    if len(bgpRibOutputJson) == 0 {
+        log.Errorf ("%s Empty !", *dbg_log);
+        return nil
+    }
+
     log.Infof("==> Local-RIB data filling to YGOT started!")
     if outError, ok := bgpRibOutputJson["warning"] ; ok {
         log.Errorf ("%s failed !!, Error: %s", *dbg_log, outError)
@@ -931,6 +936,11 @@ func hdl_get_bgp_local_rib_prefix (bgpRib_obj *ocbinds.OpenconfigNetworkInstance
     if (cmd_err != nil) {
         log.Errorf ("%s failed !! Error:%s", *dbg_log, cmd_err);
         return oper_err
+    }
+
+    if len(bgpRibOutputJson) == 0 {
+        log.Errorf ("%s Empty !", *dbg_log);
+        return nil
     }
 
     if outError, ok := bgpRibOutputJson["warning"] ; ok {
@@ -1889,6 +1899,11 @@ func hdl_get_bgp_nbrs_adj_rib_in_pre (bgpRib_obj *ocbinds.OpenconfigNetworkInsta
         return oper_err
     }
 
+    if len(bgpRibOutputJson) == 0 {
+        log.Errorf ("%s Empty !", *dbg_log);
+        return nil
+    }
+
     if outError, ok := bgpRibOutputJson["warning"] ; ok {
         log.Errorf ("%s failed !!, %s", outError)
         return oper_err
@@ -1950,6 +1965,11 @@ func hdl_get_bgp_nbrs_adj_rib_in_post (bgpRib_obj *ocbinds.OpenconfigNetworkInst
     if (cmd_err != nil) {
         log.Errorf ("%s failed !! Error:%s", *dbg_log, cmd_err);
         return oper_err
+    }
+
+    if len(bgpRibOutputJson) == 0 {
+        log.Errorf ("%s Empty !", *dbg_log);
+        return nil
     }
 
     if outError, ok := bgpRibOutputJson["warning"] ; ok {
@@ -2019,6 +2039,11 @@ func hdl_get_bgp_nbrs_adj_rib_out_post (bgpRib_obj *ocbinds.OpenconfigNetworkIns
         log.Errorf ("%s failed !! Error:%s", *dbg_log, cmd_err);
         return oper_err
     }
+ 
+    if len(bgpRibOutputJson) == 0 {
+        log.Errorf ("%s Empty !", *dbg_log);
+        return nil
+    }
 
     log.Infof("NBRS-RIB ==> Got FRR response ")
     if outError, ok := bgpRibOutputJson["warning"] ; ok {
@@ -2079,6 +2104,11 @@ func hdl_get_all_bgp_nbrs_adj_rib (bgpRib_obj *ocbinds.OpenconfigNetworkInstance
     if (cmd_err != nil) {
         log.Errorf ("%s failed !! Error:%s", *dbg_log, cmd_err);
         return oper_err
+    }
+
+    if len(bgpRibOutputJson) == 0 {
+        log.Errorf ("%s Empty !", *dbg_log);
+        return nil
     }
 
     if outError, ok := bgpRibOutputJson["warning"] ; ok {
@@ -2380,6 +2410,17 @@ var DbToYang_bgp_routes_get_xfmr SubTreeXfmrDbToYang = func(inParams XfmrParams)
         case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv6-unicast/openconfig-rib-bgp-ext:loc-rib-prefix/routes/route":
             if (rib_key.afiSafiName == "IPV6_UNICAST" && rib_key.prefix != "") {
                 err = hdl_get_bgp_local_rib_prefix (bgpRib_obj, &rib_key, ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV6_UNICAST, &dbg_log) ; if err != nil {return oper_err}
+            }
+        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/openconfig-bgp-evpn-ext:l2vpn-evpn": fallthrough
+        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/openconfig-bgp-evpn-ext:l2vpn-evpn/loc-rib": fallthrough
+        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/openconfig-bgp-evpn-ext:l2vpn-evpn/loc-rib/routes": fallthrough
+        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/openconfig-bgp-evpn-ext:l2vpn-evpn/loc-rib/routes/route":
+            if (rib_key.afiSafiName == "") || (rib_key.afiSafiName == "L2VPN_EVPN") {
+                err = hdl_get_bgp_l2vpn_evpn_local_rib (bgpRib_obj, &rib_key, ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_L2VPN_EVPN, &dbg_log)
+                if err != nil {
+                    log.Errorf("%s L2VPN_EVPN failed !! Error: BGP RIB container missing", cmn_log)
+                    return oper_err
+                }
             }
     }
 
