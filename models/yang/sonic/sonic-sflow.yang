@@ -2,17 +2,21 @@ module sonic-sflow {
         namespace "http://github.com/Azure/sonic-sflow";
         prefix sflow;
 
-	import ietf-inet-types {
-		prefix inet;
-	}
+        import ietf-inet-types {
+                prefix inet;
+        }
 
-	import sonic-common {
-		prefix scommon;
-	}
+        import sonic-common {
+                prefix scommon;
+        }
+        import sonic-port {
+                prefix prt;
+        }
 
-	import sonic-extension {
-		prefix sonic-ext;
-	}
+        import sonic-extension {
+                prefix sonic-ext;
+        }
+
 
         revision 2019-09-09 {
                 description
@@ -32,8 +36,11 @@ module sonic-sflow {
                     }
 
                     leaf collector_ip {
+                        mandatory true;
                         type inet:ip-address;
+                        sonic-ext:custom-validation ValidateCollectorIp;
                     }
+
 
                     leaf collector_port {
                         type inet:port-number;
@@ -86,8 +93,8 @@ module sonic-sflow {
                     }
 
                     leaf agent_id {
-                       sonic-ext:custom-validation ValidateSflowAgentId;
-                       type string;
+                        sonic-ext:custom-validation ValidateSflowAgentId;
+                        type string;
                     }
                 }
            }
