@@ -85,11 +85,7 @@ limitations under the License.
       <PARAM name="name" help="Collector name" ptype="STRING_16"/>
       <PARAM name="ip" help="Collector IP address" ptype="IPV4_OR_IPV6_ADDR"/>
       <PARAM name="port" help="Collector port number" ptype="RANGE_0_65535" optional="true"/>
-<<<<<<< HEAD
       <ACTION builtin="clish_pyobj">sonic_cli_sflow put_sonic_sflow_sonic_sflow_sflow_collector_sflow_collector_list ${name} ${ip} ${port}</ACTION>
-=======
-      <ACTION builtin="clish_pyobj">sonic_cli_sflow put_sonic_sflow_sonic_sflow_sflow_collector_sflow_collector_list ${name} ${ip} ${port} </ACTION>
->>>>>>> origin/broadcom_sonic_share
       <DOCGEN>
           <DESCRIPTION>Add an sFLow Collector</DESCRIPTION>
           <EXAMPLE summary="Add an sFlow collector using default port 6343">
@@ -113,11 +109,7 @@ limitations under the License.
       </DOCGEN>
     </COMMAND>
     <COMMAND name="sflow agent-id" help="Collector agent interface" ptype="SUBCOMMAND" mode="subcommand">
-<<<<<<< HEAD
       <PARAM name="interface" help="Interface name" ptype="STRING"/>	      
-=======
-      <PARAM name="interface" help="Interface name" ptype="STRING"/>
->>>>>>> origin/broadcom_sonic_share
       <ACTION builtin="clish_pyobj">sonic_cli_sflow patch_sonic_sflow_sonic_sflow_sflow_sflow_list_agent_id ${interface} </ACTION> 
       <DOCGEN>
           <DESCRIPTION>Configure sFlow agent interface</DESCRIPTION>
@@ -140,11 +132,7 @@ limitations under the License.
     </COMMAND>
     <COMMAND name="no sflow" help="sFlow Configurations"/>
     <COMMAND name="no sflow enable" help="Disable sFlow">
-<<<<<<< HEAD
         <ACTION builtin="clish_pyobj">sonic_cli_sflow patch_sonic_sflow_sonic_sflow_sflow_sflow_list_admin_state down </ACTION>
-=======
-      <ACTION builtin="clish_pyobj">sonic_cli_sflow patch_sonic_sflow_sonic_sflow_sflow_sflow_list_admin_state down </ACTION>
->>>>>>> origin/broadcom_sonic_share
       <DOCGEN>
           <DESCRIPTION>Disable sFlow</DESCRIPTION>
           <EXAMPLE>
@@ -165,11 +153,7 @@ limitations under the License.
       </DOCGEN>
     </COMMAND>
     <COMMAND name="no sflow agent-id" help="Set default agent-id" ptype="SUBCOMMAND" mode="subcommand">
-<<<<<<< HEAD
         <ACTION builtin="clish_pyobj">sonic_cli_sflow delete_sonic_sflow_sonic_sflow_sflow_sflow_list_agent_id </ACTION>
-=======
-      <ACTION builtin="clish_pyobj">sonic_cli_sflow delete_sonic_sflow_sonic_sflow_sflow_sflow_list_agent_id </ACTION>
->>>>>>> origin/broadcom_sonic_share
       <DOCGEN>
           <DESCRIPTION>Reset sFlow agent to default interface</DESCRIPTION>
           <EXAMPLE>
@@ -179,11 +163,7 @@ limitations under the License.
       </DOCGEN>
     </COMMAND>
     <COMMAND name="no sflow polling-interval" help="Set default polling interval" ptype="SUBCOMMAND" mode="subcommand">
-<<<<<<< HEAD
         <ACTION builtin="clish_pyobj">sonic_cli_sflow delete_sonic_sflow_sonic_sflow_sflow_sflow_list_polling_interval </ACTION>
-=======
-      <ACTION builtin="clish_pyobj">sonic_cli_sflow delete_sonic_sflow_sonic_sflow_sflow_sflow_list_polling_interval </ACTION>
->>>>>>> origin/broadcom_sonic_share
       <DOCGEN>
           <DESCRIPTION>Reset sFlow polling-interval to default</DESCRIPTION>
           <EXAMPLE>
