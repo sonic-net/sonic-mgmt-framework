@@ -116,7 +116,13 @@ module openconfig-interfaces-annot {
         }
     }
 
-     deviation /oc-intf:interfaces/oc-intf:interface/oc-lag:aggregation/oc-vlan:switched-vlan {
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-eth:ethernet/oc-eth:state/oc-eth:counters {
+        deviate add {
+            sonic-ext:db-name "COUNTERS_DB";
+            sonic-ext:subtree-transformer "intf_get_ether_counters_xfmr";
+        }
+    }
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-lag:aggregation/oc-vlan:switched-vlan {
         deviate add {
             sonic-ext:subtree-transformer "sw_vlans_xfmr";
         }
@@ -263,8 +269,7 @@ module openconfig-interfaces-annot {
 
     deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv4/oc-intf-ext:sag-ipv4/oc-intf-ext:config/oc-intf-ext:static-anycast-gateway {
       deviate add {
-        //sonic-ext:field-name "gwip";
-		sonic-ext:subtree-transformer "sag_ipv4_intf_xfmr";
+		sonic-ext:subtree-transformer "intf_sag_ip_xfmr";
 	  }
     }
 
@@ -293,8 +298,7 @@ module openconfig-interfaces-annot {
 
     deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv6/oc-intf-ext:sag-ipv6/oc-intf-ext:config/oc-intf-ext:static-anycast-gateway {
       deviate add {
-        //sonic-ext:field-name "gwip";
-		sonic-ext:subtree-transformer "sag_ipv6_intf_xfmr";
+		sonic-ext:subtree-transformer "intf_sag_ip_xfmr";
       }
     }
 

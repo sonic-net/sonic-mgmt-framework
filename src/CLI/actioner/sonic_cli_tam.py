@@ -35,11 +35,13 @@ def invoke_api(func, args):
        path = cc.Path('/restconf/data/sonic-tam:sonic-tam/TAM_DEVICE_TABLE')
        return api.get(path)
     elif func == 'get_sonic_tam_sonic_tam_tam_collector_table':
-       path = cc.Path('/restconf/data/sonic-tam:sonic-tam/TAM_COLLECTOR_TABLE')
-       return api.get(path)
-    elif func == 'get_sonic_tam_sonic_tam_tam_collector_table_tam_collector_table_list':
-       path = cc.Path('/restconf/data/sonic-tam:sonic-tam/TAM_COLLECTOR_TABLE/TAM_COLLECTOR_TABLE_LIST={name}', name=args[0])
-       return api.get(path)
+       if ((len(args) == 2) and args[1] != "all"):
+           path = cc.Path('/restconf/data/sonic-tam:sonic-tam/TAM_COLLECTOR_TABLE/TAM_COLLECTOR_TABLE_LIST={name}', name=args[1])
+           return api.get(path)
+       else:
+           path = cc.Path('/restconf/data/sonic-tam:sonic-tam/TAM_COLLECTOR_TABLE')
+           return api.get(path)
+
     elif func == 'patch_sonic_tam_sonic_tam_tam_device_table_tam_device_table_list_deviceid':
        path = cc.Path('/restconf/data/sonic-tam:sonic-tam/TAM_DEVICE_TABLE/TAM_DEVICE_TABLE_LIST={name}/deviceid', name=args[0])
        body = { "sonic-tam:deviceid": int(args[1]) }
@@ -79,8 +81,6 @@ def run(func, args):
                 show_cli_output(args[0], api_response)
             elif func == 'get_sonic_tam_sonic_tam_tam_collector_table':
                 show_cli_output(args[0], api_response)
-            elif func == 'get_sonic_tam_sonic_tam_tam_collector_table_tam_collector_table_list':
-                show_cli_output(args[1], api_response)
             else:
                 return
     else:

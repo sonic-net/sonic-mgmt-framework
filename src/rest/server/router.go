@@ -384,11 +384,9 @@ func (mb *muxBuilder) finish(auth UserAuth) {
 	router.Methods("GET").Path("/ui").
 		Handler(http.RedirectHandler("/ui/index.html", 301))
 
-	
 	//Allow POST for user/pass auth and or GET for cert auth.
-	router.Methods("POST","GET").Path("/authenticate").Handler(withMiddleware(http.HandlerFunc(Authenticate), "jwtAuthHandler", auth))
-	router.Methods("POST","GET").Path("/refresh").Handler(withMiddleware(http.HandlerFunc(Refresh), "jwtRefreshHandler", auth))
-	
+	router.Methods("POST","GET").Path("/authenticate").Handler(http.HandlerFunc(Authenticate))
+	router.Methods("POST","GET").Path("/refresh").Handler(http.HandlerFunc(Refresh))	
 
 	// To download yang models
 	ydirHandler := http.FileServer(http.Dir(translib.GetYangPath()))

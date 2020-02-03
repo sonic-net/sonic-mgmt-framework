@@ -1,0 +1,11 @@
+100c100,101
+< 	clish_ptype_preprocess_e preprocess);
+---
+> 	clish_ptype_preprocess_e preprocess,
+> 	const char *ext_pattern, const char *ext_help);
+103c104
+< void clish_shell_help(clish_shell_t * instance, const char *line);
+---
+> void clish_shell_help(clish_shell_t * instance, const char *line, clish_context_t *context);
+190a192
+> void clish_shell__set_timeout(clish_shell_t *instance, int timeout);

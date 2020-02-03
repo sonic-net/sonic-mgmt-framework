@@ -32,13 +32,25 @@ limitations under the License.
             optional="true"
             >
         </PARAM>
-        <ACTION>
-            if test "${session-name}" = ""; then&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-mirror.py --show "show_mirror_session" --renderer show_mirror.j2&#xA;
-            else&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-mirror.py --show "show_mirror_session" --session ${session-name} --renderer show_mirror.j2&#xA;
-            fi&#xA;
-       </ACTION>
+            <ACTION builtin="clish_pyobj">sonic_cli_mirror show_mirror_session --session=${session-name} --renderer=show_mirror.j2</ACTION>
+            <DOCGEN>
+                <DESCRIPTION>
+                    Display configured mirror sessions
+                </DESCRIPTION>
+                <EXAMPLE>
+                    sonic# show mirror-session
+                    ERSPAN Sessions
+                    ---------------------------------------------------------------------------------------------------------------
+                    Name      Status    SRC-IP          DST-IP          GRE    DSCP  TTL   Queue   Policer   SRC-Port        Direction
+                    ---------------------------------------------------------------------------------------------------------------
+                    Mirror2   active    11.1.1.1        10.1.1.1        0x88ee 10    10    10                Ethernet4       rx
+                    SPAN Sessions
+                    ---------------------------------------------------------------
+                    Name      Status    DST-Port        SRC-Port        Direction
+                    ---------------------------------------------------------------
+                    Mirror1   active    Ethernet0       Ethernet4       rx
+                </EXAMPLE>
+            </DOCGEN>
    </COMMAND>
 
    </VIEW>
@@ -70,7 +82,17 @@ limitations under the License.
             ptype="STRING"
             >
         </PARAM>
-        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-mirror.py --config "delete_mirror_session" --session ${session-name}&#xA;</ACTION>
+      <ACTION builtin="clish_pyobj">sonic_cli_mirror delete_mirror_session --session=${session-name}</ACTION>
+      <DOCGEN>
+        <DESCRIPTION>
+            Delete input mirror session
+        </DESCRIPTION>
+        <EXAMPLE>
+            sonic(config)# no mirror-session Mirror1
+            Success
+            sonic(config)#
+        </EXAMPLE>
+      </DOCGEN>
      </COMMAND>
   </VIEW>
   <VIEW name="configure-mirror-view"
@@ -87,9 +109,9 @@ limitations under the License.
          >
                  <PARAM
                     name="phy-if-id"
-                    help="Physical interface or ERSPAN"
+                    help="Physical interface or erspan"
                     ptype="STRING"
-                optional="true"
+                optional="false"
                     >
                  </PARAM>
             <PARAM
@@ -212,45 +234,22 @@ limitations under the License.
                     >
                  </PARAM>
              </PARAM>
-                <ACTION>
-                 if test "${dst_ip}" != ""; then&#xA;
-                    if test "${src-phy-if-id}" = ""; then&#xA;
-                        if test "${ip_gre}" = ""; then&#xA;
-                            if test "${queue_val}" = ""; then&#xA;
-                                python $SONIC_CLI_ROOT/sonic-cli-mirror.py --config "create_mirror_session" --session ${session_name} --dst_ip ${dst_ip} --src_ip ${src_ip} --dscp ${ip_dscp} --ttl ${ip_ttl}&#xA;
-                            else&#xA;
-                                python $SONIC_CLI_ROOT/sonic-cli-mirror.py --config "create_mirror_session" --session ${session_name} --dst_ip ${dst_ip} --src_ip ${src_ip} --dscp ${ip_dscp} --ttl ${ip_ttl} --queue ${queue_val}&#xA;
-                            fi&#xA;
-                        else&#xA;
-                            if test "${queue_val}" = ""; then&#xA;
-                                python $SONIC_CLI_ROOT/sonic-cli-mirror.py -config "create_mirror_session" --session ${session_name} --dst_ip ${dst_ip} --src_ip ${src_ip} --dscp ${ip_dscp} --ttl ${ip_ttl} --gre ${ip_gre}&#xA;
-                            else&#xA;
-                                python $SONIC_CLI_ROOT/sonic-cli-mirror.py -config "create_mirror_session" --session ${session_name} --dst_ip ${dst_ip} --src_ip ${src_ip} --dscp ${ip_dscp} --ttl ${ip_ttl} --gre ${ip_gre} --queue ${queue_val}&#xA;
-                            fi&#xA;
-                        fi&#xA;
-                    else&#xA;
-                        if test "${ip_gre}" = ""; then&#xA;
-                            if test "${queue_val}" = ""; then&#xA;
-                                python $SONIC_CLI_ROOT/sonic-cli-mirror.py -config "create_mirror_session" --session ${session_name} --dst_ip ${dst_ip} --src_ip ${src_ip} --dscp ${ip_dscp} --ttl ${ip_ttl} --source ${src-phy-if-id} --direction ${sess-direction}&#xA;
-                            else&#xA;
-                                python $SONIC_CLI_ROOT/sonic-cli-mirror.py -config "create_mirror_session" --session ${session_name} --dst_ip ${dst_ip} --src_ip ${src_ip} --dscp ${ip_dscp} --ttl ${ip_ttl} --queue ${queue_val} --source ${src-phy-if-id} --direction ${sess-direction}&#xA;
-                            fi&#xA;
-                        else&#xA;
-                            if test "${queue_val}" = ""; then&#xA;
-                                python $SONIC_CLI_ROOT/sonic-cli-mirror.py -config "create_mirror_session" --session ${session_name} --dst_ip ${dst_ip} --src_ip ${src_ip} --dscp ${ip_dscp} --ttl ${ip_ttl} --gre ${ip_gre} --source ${src-phy-if-id} --direction ${sess-direction}&#xA;
-                            else&#xA;
-                                python $SONIC_CLI_ROOT/sonic-cli-mirror.py -config "create_mirror_session" --session ${session_name} --dst_ip ${dst_ip} --src_ip ${src_ip} --dscp ${ip_dscp} --ttl ${ip_ttl} --gre ${ip_gre} --queue ${queue_val} --source ${src-phy-if-id} --direction ${sess-direction}&#xA;
-                            fi&#xA;
-                        fi&#xA;
-                    fi&#xA;
-                elif test "${phy-if-id}" != ""; then&#xA;
-                 if test "${src-phy-if-id}" = ""; then&#xA;
-                    python $SONIC_CLI_ROOT/sonic-cli-mirror.py -config "create_mirror_session" --session ${session_name} --destination ${phy-if-id}&#xA;
-                 else&#xA;
-                    python $SONIC_CLI_ROOT/sonic-cli-mirror.py -config "create_mirror_session" --session ${session_name} --destination ${phy-if-id} --source ${src-phy-if-id} --direction ${sess-direction}&#xA;
-                 fi&#xA;
-                fi&#xA;
-                </ACTION>
+ <ACTION builtin="clish_pyobj">sonic_cli_mirror create_mirror_session --session=${session_name} --destination=${phy-if-id} --source=${src-phy-if-id} --direction=${sess-direction} --dst_ip=${dst_ip} --src_ip=${src_ip} --dscp=${ip_dscp} --ttl=${ip_ttl} --queue=${queue_val} --gre=${ip_gre} </ACTION>
+      <DOCGEN>
+        <DESCRIPTION>
+            Configure ERSPAN/SPAN mirror session
+        </DESCRIPTION>
+        <EXAMPLE>
+            sonic(config)# mirror-session Mirror1
+            sonic(config-mirror-Mirror1)# destination Ethernet0 source Ethernet4 direction rx
+            Success
+            sonic(config-mirror-Mirror1)# exit
+            sonic(config)# mirror-session Mirror2
+            sonic(config-mirror-Mirror2)# destination erspan dst-ip 10.1.1.1 src-ip 11.1.1.1 dscp 10 ttl 10 gre 0x88ee queue 10 source Ethernet4 direction rx
+            Success
+            sonic(config-mirror-Mirror2)#
+        </EXAMPLE>
+      </DOCGEN>
 
         </COMMAND>
   </VIEW>

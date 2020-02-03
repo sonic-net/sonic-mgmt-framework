@@ -1,0 +1,351 @@
+6a7
+> #include <stdbool.h>
+10a12
+> #include "clish/pargv.h"
+15c17,18
+< 	const clish_command_t **ret_cmd, clish_pargv_t **pargv)
+---
+> 	const clish_command_t **ret_cmd, clish_pargv_t **pargv,
+> 	clish_context_t *orig_context)
+23c26
+< 	*ret_cmd = cmd = clish_shell_resolve_command(this, line);
+---
+> 	*ret_cmd = cmd = clish_shell_resolve_command(this, line, orig_context);
+48a52,115
+> static bool_t is_valid_regexp_select_iteration(const clish_param_t *param,
+>         unsigned idx, unsigned need_index, unsigned is_switch, const char* arg)
+> {
+> 	clish_ptype_t *ptype = clish_param__get_ptype(param);
+> 	bool_t res = BOOL_FALSE;
+> 
+> 	/* 
+> 	 * This is the case where user enter interface vlan ? to get help
+> 	 * option for the CLISH_PTYPE_METHOD_REGEXP_SELECT ptype.
+> 	 */
+> 	if (((idx + 1 == need_index) && 
+> 		CLISH_PTYPE_METHOD_REGEXP_SELECT == clish_ptype__get_method(ptype))) {
+> 		res = BOOL_TRUE;
+> 	} else if ((idx + 1 == need_index) && is_switch) {
+> 		/* 
+> 		 * When current PARAM is switch, check if we have a sub PARAM with method
+> 		 * CLISH_PTYPE_METHOD_REGEXP_SELECT inside the switch.If so, check if the current
+> 		 * matches the regexp_select pattern.If it matches we return true from this
+> 		 * function, indicating the caller to include the REGEXP_SELECT PARAM
+> 		 * to the available_param for help.Otherwise return false.
+> 		 * For CLI like "management route 1.1.1.0/24", we have a switch with a PARAM
+> 		 * with method REGEXP_SELECT.The switch also includes another PARAM
+> 		 * for nexthop IP.Now if user executes "management route 1.1.1.0/24 1.1.1.1 ?",
+> 		 * the last entered value "1.1.1.1" won't match with the regexp_select pattern
+> 		 * and hence we will return false from this function.The caller will hence
+> 		 * exclude the regexp_select PARAM from available_param
+> 		 */
+> 		unsigned i, rec_paramc = clish_param__get_param_count(param);
+> 		clish_param_t *cparam = NULL;
+> 		for (i = 0; i < rec_paramc; i++) {
+> 			cparam = clish_param__get_param(param, i);
+> 			if (!cparam)
+> 				break;
+> 
+> 			if (CLISH_PARAM_SUBCOMMAND == clish_param__get_mode(cparam) ||
+> 				CLISH_PARAM_COMMON == clish_param__get_mode(cparam)) {
+> 				const clish_ptype_t *ptype =
+> 						clish_param__get_ptype(cparam);
+> 				if (ptype && (CLISH_PTYPE_METHOD_REGEXP_SELECT ==
+> 					clish_ptype__get_method(ptype))) {
+> 					const char *name = NULL;
+> 					int j = 0, cnt =0;
+> 					cnt = clish_ptype_regexp_select__get_argv_count(ptype);
+> 					for (;j < cnt; j++) {
+> 						name = clish_ptype_regexp_select__get_name(ptype, j);
+> 						if ((arg) && (name && ((name == lub_string_nocasestr(name, arg))
+> 			
+> 									))) {
+> 							res = BOOL_TRUE;
+> 							lub_string_free((char *)name);
+> 							break;
+> 						}
+> 						if(name)
+> 							lub_string_free((char *)name);
+> 					}
+> 				}
+> 			}
+> 		}
+> 	}
+> 
+> 	return res;
+> }
+> 
+> /*--------------------------------------------------------- */
+82c149
+< 	clish_pargv_status_e retval;
+---
+> 	clish_pargv_status_t retval;
+84a152
+> 	int recursive_start = 0;
+97a166,167
+> 		clish_ptype_t *ptype = NULL;
+> 		char *cmd_name = NULL;
+115a186,187
+> 		ptype = clish_param__get_ptype(param);
+> 		cmd_name = (char*)clish_command__get_name(cmd);
+117c189,194
+< 		if (last && (*idx == need_index) &&
+---
+> 		/* In order to show the help string for interface, we need to process  
+> 		 * *idx + 1 = need_index, this is true for some of the show command which uses 
+> 		 * CLISH_PTYPE_REGEXP_SELECT ptypes example 'do show ip ospf 4 interface vlan'.
+> 		 */
+> 		if (last && ((*idx == need_index)||
+> 			is_valid_regexp_select_iteration(param, *idx, need_index, is_switch, arg)) &&
+120a198
+> 				bool keyword_match = false;
+127,128c205,210
+< 					if (CLISH_PARAM_SUBCOMMAND ==
+< 						clish_param__get_mode(cparam)) {
+---
+> 					ptype = clish_param__get_ptype(cparam);
+> 
+> 					if (CLISH_PARAM_SUBCOMMAND == clish_param__get_mode(cparam) || 
+> 						((CLISH_PARAM_COMMON == clish_param__get_mode(cparam)) &&
+> 						(CLISH_PTYPE_METHOD_REGEXP_SELECT ==
+> 						 clish_ptype__get_method(ptype)))) {
+131,133c213,277
+< 						if (!arg || (arg && 
+< 							(pname == lub_string_nocasestr(pname,
+< 							arg))))
+---
+> 					    clish_ptype_t *ptype = 
+> 								clish_param__get_ptype(cparam);
+> 						if ((CLISH_PTYPE_METHOD_REGEXP_SELECT != clish_ptype__get_method(ptype)) &&
+> 						(!arg || (arg && (pname == lub_string_nocasestr(pname, arg))))) {
+> 							clish_pargv_insert(last, cparam, arg);
+> 							if(arg) {
+> 								/*arg non NULL means partial keyword entered */
+> 								keyword_match = true;
+> 							}
+> 						} else if (CLISH_PTYPE_METHOD_REGEXP_SELECT ==
+> 							clish_ptype__get_method(ptype)) {
+> 							const char *name = NULL;
+> 							int j = 0, cnt =0;
+> 							cnt = clish_ptype_regexp_select__get_argv_count(ptype);
+> 							for (;j < cnt; j++) {
+> 								name = clish_ptype_regexp_select__get_name(ptype, j);
+> 								if ((!arg) || (name && (name == lub_string_nocasestr(name, arg)))) {
+> 									if (*idx + 1 == need_index || *idx == need_index) {
+> 										clish_pargv_insert(last, cparam, arg);
+> 										if(arg) {
+> 											/*arg non NULL means partial keyword entered */
+> 											keyword_match = true;
+> 										}
+> 									}
+> 									if (strncmp(cmd_name, IFACE_CMD, strlen(IFACE_CMD))) {
+>                                                                         	/* Handling show and other non interface
+>                                                                          	 * related config commands such as
+>                                                                          	 * spanning-tree interface. */
+>                                                                                 if (*idx + 1 == need_index)
+>                                                                                         clish_ptype__set_usename(ptype, USE_VALUE);
+>                                                                                 else if (cnt > 1)
+>                                                                                         clish_ptype__set_usename(ptype, USE_RANGE);
+>                                                                                 else
+>                                                                                         clish_ptype__set_usename(ptype, USE_NAME);
+> 									} else {
+>                                                                                 /* Interface specific commands handling */
+>                                                                                 if (*idx + 1 == need_index)
+>                                                                                         clish_ptype__set_usename(ptype, USE_VALUE);
+>                                                                                 else
+>                                                                                         clish_ptype__set_usename(ptype, USE_NAME);
+>                                                                         }
+> 									break;
+> 								}
+> 
+> 								if (name) {
+> 								   	lub_string_free((char*)name);
+> 									name = NULL;
+> 								}
+> 							}
+> 							if (name) lub_string_free((char*)name);
+> 						}
+> 					} else {
+> 						if((*idx == need_index) && !keyword_match) {
+> 							/* The following clish_pargv_insert inserts a non-keyword PARAM
+> 							   which is part of a switch to the help list.Suppose there is a switch
+> 							   between non-keyword  "<ip-addr>" and regexp_select PARAM "vlan".
+> 							   On execution of "management route 1.1.1.0/24 vlan?" or
+> 							   "management route 1.1.1.0/24 vlan ?", we should not be
+> 							   inserting the non-keyword.*idx will be need_index-1 for
+> 							   "management route 1.1.1.0/24 vlan ?".So the check
+> 							   (*idx == need_index)" will take care of preventing the non-keyword
+> 							   from getting added for "vlan ?".For the case vlan?, the keyword_match
+> 							   flag will track if any keyword is added already.if added already
+> 							   skip adding the non-keyword.This solution expects that the keywords
+> 							   are added before the non-keywords in the switch */
+136,138c280
+< 					} else {
+< 						clish_pargv_insert(last,
+< 							cparam, arg);
+---
+> 						}
+142,143c284,287
+< 				if (CLISH_PARAM_SUBCOMMAND ==
+< 					clish_param__get_mode(param)) {
+---
+> 				if (CLISH_PARAM_SUBCOMMAND == clish_param__get_mode(param) ||
+> 						((CLISH_PARAM_COMMON == clish_param__get_mode(param)) &&
+> 						(CLISH_PTYPE_METHOD_REGEXP_SELECT ==
+> 						 clish_ptype__get_method(ptype)))) {
+145,147c289,293
+< 					    clish_param__get_value(param);
+< 					if (!arg || (arg &&
+< 						(pname == lub_string_nocasestr(pname, arg))))
+---
+> 						clish_param__get_value(param);
+> 					clish_ptype_t *ptype =
+> 						clish_param__get_ptype(param);
+> 					if ((CLISH_PTYPE_METHOD_REGEXP_SELECT != clish_ptype__get_method(ptype)) && 
+> 					(!arg || (arg && (pname == lub_string_nocasestr(pname, arg)))))
+148a295,316
+> 					else if (CLISH_PTYPE_METHOD_REGEXP_SELECT ==
+> 						clish_ptype__get_method(ptype)) {
+> 						const char *name;
+> 						int j = 0, cnt =0;
+> 						cnt = clish_ptype_regexp_select__get_argv_count(ptype);
+> 						for (;j < cnt; j++) {
+> 							name = clish_ptype_regexp_select__get_name(ptype, j);
+> 							if ((!arg) || (name && ((name == lub_string_nocasestr(name, arg))))) {
+> 								clish_pargv_insert(last, param, arg);
+> 								break;
+> 							}
+> 							if(name != NULL) {
+> 								lub_string_free((char*)name);
+> 								name = NULL;
+> 							}
+> 						}
+>                         			/* handle resource leak */
+>                         			if(name != NULL) {
+>                             				lub_string_free((char*)name);
+>                             				name = NULL;
+>                         			}
+> 					}
+173c341
+< 			if (clish_pargv_find_arg(pargv, clish_param__get_name(param))) {
+---
+> 			if (clish_pargv_find_arg(pargv, clish_param__get_name(param))) { 
+187a356,405
+> 					} else {
+> 						/*  For CLISH_PTYPE_REGEXP_SELECT method, we try to match the
+> 						 *  input arg against a PARAM. If it is not matching we try
+> 						 *  concatenating the next arg to this arg and try matching
+> 						 *  the concatenated string with the PARAM.
+> 						 */
+> 						if(!validated)
+> 						{
+> 							clish_ptype_method_e method =
+> 								clish_ptype__get_method(clish_param__get_ptype(cparam));
+> 							if(method == CLISH_PTYPE_METHOD_REGEXP_SELECT)
+> 							{
+> 								char  *arg2 = NULL, *arg_backup = (char*)arg;
+> 								
+> 								arg2 = lub_string_dup(arg);
+> 								if((*idx + 1) < argc)
+> 								{
+> 									(*idx)++;
+> 									arg = lub_argv__get_arg(argv, *idx);
+> 									lub_string_cat(&arg2, arg);
+> 									arg = arg2;
+> 									index++;
+> 									validated = arg ?
+> 									clish_param_validate(cparam, arg) : NULL;
+> 									if(!validated)
+> 									{
+> 										/*Not matching even after concatinating next arg
+> 										So revert to old arg itself to try matching to 
+> 										next param*/
+> 										(*idx)--;
+> 										index--;
+> 										arg = arg_backup;
+> 										lub_string_free(arg2);
+> 										arg2 = NULL;
+> 									}
+> 									else
+> 									{
+> 										rec_paramv = clish_param__get_paramv(cparam);
+> 										rec_paramc = clish_param__get_param_count(cparam);
+> 										lub_string_free(arg2);
+> 										break;
+> 									}
+> 								}
+> 								/* Handle resource leak */
+>  								if(arg2 != NULL) {
+>  									lub_string_free(arg2);
+>  									arg2 = NULL;
+> 								}
+> 							}
+> 						}
+192a411,443
+> 				/*  For CLISH_PTYPE_REGEXP_SELECT method, we try to match the
+> 				 *  input arg against a PARAM. If it is not matching we try
+> 				 *  concatenating the next arg to this arg and try matching
+> 				 *  the concatenated string with the PARAM.
+> 				 */
+> 				if(!validated)
+> 				{
+> 					clish_ptype_method_e method = clish_ptype__get_method(clish_param__get_ptype(param));
+> 					if(method == CLISH_PTYPE_METHOD_REGEXP_SELECT)
+> 					{
+> 						char  *arg2 = NULL;
+> 						
+> 						arg2 = lub_string_dup(arg);
+> 						if((*idx + 1) < argc)
+> 						{
+> 							(*idx)++;
+> 							arg = lub_argv__get_arg(argv, *idx);
+> 							lub_string_cat(&arg2, arg);
+> 							arg = arg2;
+> 							index++;
+> 							validated = arg ?
+> 							clish_param_validate(param, arg) : NULL;
+> 							if(!validated)
+> 							{
+> 								/*Not matching even after concatinating next arg
+> 								So revert to old arg itself to try matching to 
+> 								next param*/
+> 								(*idx)--;
+> 								index--;
+> 							}
+> 						}
+> 					}
+> 				}
+203,204c454,458
+< 					clish_pargv_insert(pargv, param,
+< 						validated);
+---
+> 					if (clish_pargv_insert(pargv, param,
+> 						validated) < 0) {
+> 						lub_string_free(validated);
+> 						return CLISH_BAD_PARAM;
+> 					}
+246a501
+> 
+250c505,507
+< 					else
+---
+> 					else {
+> 						clish_pargv_insert(pargv, param,
+> 								   clish_param__get_name(param));
+251a509
+> 					}
+275c533
+< 			(*idx <= argc) && (index >= paramc)) {
+---
+> 			(*idx <= argc) && (index >= paramc) && (need_index != 0)) {
+296d553
+< 			char *enc = NULL;
+301,304c558
+< 			/* Escape quote and backslash */
+< 			enc = lub_string_encode(arg, lub_string_esc_quoted);
+< 			lub_string_cat(&args, enc);
+< 			lub_string_free(enc);
+---
+> 			lub_string_cat(&args, arg);
+320a575
+> 

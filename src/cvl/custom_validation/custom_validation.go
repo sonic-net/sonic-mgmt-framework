@@ -26,6 +26,8 @@ import (
 	log "github.com/golang/glog"
 	"net"
 	"reflect"
+	"os"
+	"bufio"
 	)
 
 //Custom validation code for sonic-acl.yang//
@@ -258,6 +260,38 @@ func (t *CustomValidation) ValidatePtp(
 	vc *CustValidationCtxt) CVLErrorInfo {
 		
 	log.Info("ValidatePtp operation: ", vc.CurCfg.VOp)
+
+	/* validate software build version */
+	file, err := os.Open("/etc/sonic/sonic_version.yml")
+	if err != nil {
+		errStr := "Error opening sonic_version.yml"
+		return CVLErrorInfo{
+			ErrCode: CVL_SEMANTIC_ERROR,
+			TableName: "PTP_CLOCK",
+			CVLErrDetails : errStr,
+			ConstraintErrMsg : errStr,
+		}
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		if strings.Contains(scanner.Text(), "build_version") {
+			log.Info("ValidatePtp : ", scanner.Text())
+			if !strings.Contains(scanner.Text(), "Enterprise_Advanced") &&
+			   !strings.Contains(scanner.Text(), "Cloud_Advanced") {
+				errStr := "This object is not supported in this build"
+				return CVLErrorInfo{
+					ErrCode: CVL_SEMANTIC_ERROR,
+					TableName: "PTP_CLOCK",
+					CVLErrDetails : errStr,
+					ConstraintErrMsg : errStr,
+				}
+			}
+		}
+	}
+
+	/* validate platform */
 	ls := redis.NewScript(`return redis.call('HGETALL', "DEVICE_METADATA|localhost")`)
 
 	redisEntries, err := ls.Run(vc.RClient, []string{"platform"}).Result()
@@ -277,6 +311,7 @@ func (t *CustomValidation) ValidatePtp(
 		platform = s.Index(1).Interface().(string)
 	}
 	log.Info("ValidatePtp platform : ", platform)
+
 	/* SONIC-16692. For some reason, with the addition of docker_routing_config_mode = split
 	in DEVICE_METADATA|localhost, redis returns the hwsku. So adding hwsku in list of strings
 	*/

@@ -1,0 +1,19 @@
+5a6
+> #include "clish/ptype.h"
+18a20
+>       lub_argv_t *ext_help;
+26a29,35
+> typedef struct clish_ptype_regexp_select_s clish_ptype_regexp_select_t;
+> struct clish_ptype_regexp_select_s {
+>       regex_t regexp;
+>       lub_argv_t *items;
+>       lub_argv_t *ext_help;
+> };
+> 
+30a40,43
+> 
+>       char *ext_pattern;
+>       char *ext_help;
+>       help_type_t usename;
+38a52
+>               clish_ptype_regexp_select_t regexp_select;

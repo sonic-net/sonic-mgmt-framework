@@ -198,6 +198,7 @@ func (app *CommonApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
 
     for {
 	    // Keep a copy of the ygotRoot and let Transformer use this copy of ygotRoot
+	    origYgotRoot, _ := ygot.DeepCopy((*app.ygotRoot).(ygot.GoStruct))
 	    xfmrYgotRoot, _ := ygot.DeepCopy((*app.ygotRoot).(ygot.GoStruct))
             isEmptyPayload  := false
 	    payload, err, isEmptyPayload = transformer.GetAndXlateFromDB(app.pathInfo.Path, &xfmrYgotRoot, dbs, txCache)
@@ -260,7 +261,7 @@ func (app *CommonApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
 
 				    }
 				    resYgot = xfmrYgotRoot
-			    } else {
+			    } else if !areEqual(xfmrYgotRoot, origYgotRoot) {
 				    // Merge the ygotRoots filled by transformer and app.ygotRoot used to Unmarshal the payload (required as Unmarshal does replace operation on ygotRoot)
 				    var mrgErr error
 				    resYgot, mrgErr = ygot.MergeStructs(xfmrYgotRoot.(*ocbinds.Device),(*app.ygotRoot).(*ocbinds.Device))

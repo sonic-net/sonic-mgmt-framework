@@ -27,9 +27,11 @@ const (
         DEFAULT_NETWORK_INSTANCE_CONFIG_TYPE        = "L3VRF"
 )
 
+
 var nwInstTypeMap = map[ocbinds.E_OpenconfigNetworkInstanceTypes_NETWORK_INSTANCE_TYPE] string {
         ocbinds.OpenconfigNetworkInstanceTypes_NETWORK_INSTANCE_TYPE_DEFAULT_INSTANCE: "DEFAULT_INSTANCE",
         ocbinds.OpenconfigNetworkInstanceTypes_NETWORK_INSTANCE_TYPE_L3VRF: "L3VRF",
+        ocbinds.OpenconfigNetworkInstanceTypes_NETWORK_INSTANCE_TYPE_L2L3: "L2L3",
 }
 
 /* Top level network instance table name based on key name and type */
@@ -38,6 +40,7 @@ var NwInstTblNameMapWithNameAndType = map[NwInstMapKey]string {
         {NwInstName: "Vrf",  NwInstType: "L3VRF"}: "VRF",
         {NwInstName: "default", NwInstType: "L3VRF"}: "VRF",
         {NwInstName: "default", NwInstType: "DEFAULT_INSTANCE"}: "VRF",
+        {NwInstName: "Vlan", NwInstType: "L2L3"}: "VLAN",
 }
 
 /* Top level network instance table name based on key name */
@@ -128,17 +131,22 @@ func getNwInstType (nwInstObj *ocbinds.OpenconfigNetworkInstance_NetworkInstance
         var err error
 
         /* If config not set or config.type not set, return L3VRF */
-        if ((nwInstObj.NetworkInstance[keyName].Config == nil) ||
-            (nwInstObj.NetworkInstance[keyName].Config.Type == ocbinds.OpenconfigNetworkInstanceTypes_NETWORK_INSTANCE_TYPE_UNSET)) {
-                return DEFAULT_NETWORK_INSTANCE_CONFIG_TYPE, err
-        } else {
-                instType, ok :=nwInstTypeMap[nwInstObj.NetworkInstance[keyName].Config.Type]
-                if ok {
-                        return instType, err
+        if (nwInstObj != nil) {
+            if ntinstKeyVal, ok := nwInstObj.NetworkInstance[keyName]; ok == true && ntinstKeyVal != nil {
+                if ((ntinstKeyVal.Config == nil) ||
+                    (ntinstKeyVal.Config.Type == ocbinds.OpenconfigNetworkInstanceTypes_NETWORK_INSTANCE_TYPE_UNSET)) {
+                        return DEFAULT_NETWORK_INSTANCE_CONFIG_TYPE, errors.New("Network instance type not set")
                 } else {
-                        return instType, errors.New("Unknow network instance type")
+                    instType, ok :=nwInstTypeMap[ntinstKeyVal.Config.Type]
+                    if ok {
+                        return instType, err
+                    } else {
+                        return instType, errors.New("Unknown network instance type")
+                    }
                 }
+            }
         }
+        return DEFAULT_NETWORK_INSTANCE_CONFIG_TYPE, errors.New("Network instance type not set")
 }
 
 /* Check if this is mgmt vrf configuration. Note this is used for create, update only */
@@ -157,8 +165,10 @@ func isMgmtVrf(inParams XfmrParams) (bool, error) {
         /* get the name at the top network-instance table level, this is the key */
         keyName := pathInfo.Var("name")
         oc_nwInstType, ierr := getNwInstType(nwInstObj, keyName)
-        if (ierr != nil) {
-                return false, errors.New("Network instance type not set")
+        if (ierr != nil && ierr.Error() == "Network instance type not set") {
+            oc_nwInstType = DEFAULT_NETWORK_INSTANCE_CONFIG_TYPE
+        } else {
+            return false, errors.New("Network instance type invalid")
         }
 
         if ((strings.Compare(keyName, "mgmt") == 0) &&
@@ -294,27 +304,21 @@ var network_instance_table_name_xfmr TableXfmrFunc = func (inParams XfmrParams) 
         /* get internal network instance name in order to fetch the DB table name */
         intNwInstName, ierr := getInternalNwInstName(keyName)
         if intNwInstName == "" || ierr != nil {
-                log.Info("network_instance_table_name_xfmr, invalid network instance name ", keyName)
-
-                /* If keyName not expected, make it hit the sonic VRF yang to return error msg */ 
-                tblList = append(tblList, "VRF");
-                tblList = append(tblList, "VLAN")
-                return tblList, err
+            log.Info("network_instance_table_name_xfmr, invalid network instance name ", keyName)
+            errStr := "Invalid name " + keyName
+            err = tlerr.InvalidArgsError{Format: errStr}
+            return tblList, err
         }
 
         /*
          * For CREATE or PATCH at top level (Network_instances), check the config type if user provides one 
          * For other cases of UPATE, CREATE, or GET/DELETE, get the table name from the key only
          */ 
+        oc_nwInstType, ierr := getNwInstType(nwInstObj, keyName)
         if (((inParams.oper == CREATE) ||
              (inParams.oper == REPLACE) ||
              (inParams.oper == UPDATE)) &&
-             (inParams.requestUri == "/openconfig-network-instance:network-instances")) {
-                oc_nwInstType, ierr := getNwInstType(nwInstObj, keyName)
-                if (ierr != nil ) {
-                        log.Info("network_instance_table_name_xfmr, network instance type not correct ", oc_nwInstType)
-                        return tblList, errors.New("network instance type incorrect")
-                }
+             (ierr == nil)) {
 
                 log.Info("network_instance_table_name_xfmr, name ", keyName)
                 log.Info("network_instance_table_name_xfmr, type ", oc_nwInstType)
@@ -326,7 +330,7 @@ var network_instance_table_name_xfmr TableXfmrFunc = func (inParams XfmrParams) 
                 }
 
                 tblList = append(tblList, tblName)
-        } else {
+        } else if ierr.Error() == "Network instance type not set" {
                 tblList = append(tblList, NwInstTblNameMapWithName[intNwInstName])
         }
 
@@ -417,6 +421,36 @@ var YangToDb_network_instance_table_key_xfmr KeyXfmrYangToDb = func(inParams Xfm
         vrfTbl_key = getVrfTblKeyByName(pathInfo.Var("name"))
 
         log.Info("YangToDb_network_instance_table_key_xfmr: ", vrfTbl_key)
+
+        /*
+         * For SSH to work with a VRF, the VRF name needs to be installed in the
+         * SSH_SERVER_VRF config DB. 
+         * click has a cmd to configure <vrf_name> in this table. For now, add an entry
+         * for mgmt VRF in this table when mgmt VRF is configured. Data VRF won't be added
+         * to this table. This is because in the click cmd, MAX_SSH_VRF is 15.
+         * A clish CLI is required to configure data VRF in the SSH_SERVER_VRF
+         */
+        if ((inParams.oper == CREATE) ||
+             (inParams.oper == REPLACE) ||
+             (inParams.oper == UPDATE) ||
+             (inParams.oper == DELETE)) {
+                keyName := pathInfo.Var("name")
+
+                if keyName == "mgmt" {
+                        subOpMap := make(map[db.DBNum]map[string]map[string]db.Value)
+                        resMap := make(map[string]map[string]db.Value)
+                        sshVrfMap := make(map[string]db.Value)
+
+                        sshVrfDbValues  := db.Value{Field: map[string]string{}}
+                        (&sshVrfDbValues).Set("port", "22")
+                        sshVrfMap["mgmt"] = sshVrfDbValues
+
+                        log.Infof("ssh server vrf %v", sshVrfMap)
+                        resMap["SSH_SERVER_VRF"] = sshVrfMap
+                        subOpMap[db.ConfigDB] = resMap
+                        inParams.subOpDataMap[inParams.oper] = &subOpMap
+                }
+        }
 
         return vrfTbl_key, err
 }
@@ -515,7 +549,10 @@ var DbToYang_network_instance_type_field_xfmr KeyXfmrDbToYang = func(inParams Xf
                 res_map["type"] = "L3VRF"
         } else if ((inParams.key == "default") && (isVrfDbTbl(inParams) == true)) {
                 res_map["type"] = "DEFAULT_INSTANCE"
+        } else if strings.HasPrefix(inParams.key, "Vlan") {
+                res_map["type"] = "L2L3"
         }
+
 
         return  res_map, err
 }
