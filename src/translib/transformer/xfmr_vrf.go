@@ -441,7 +441,7 @@ var YangToDb_network_instance_table_key_xfmr KeyXfmrYangToDb = func(inParams Xfm
                         (&sshVrfDbValues).Set("port", "22")
                         sshVrfMap["mgmt"] = sshVrfDbValues
 
-                        log.Infof("bingbing ssh server vrf %v", sshVrfMap)
+                        log.Infof("ssh server vrf %v", sshVrfMap)
                         resMap["SSH_SERVER_VRF"] = sshVrfMap
                         subOpMap[db.ConfigDB] = resMap
                         inParams.subOpDataMap[inParams.oper] = &subOpMap
