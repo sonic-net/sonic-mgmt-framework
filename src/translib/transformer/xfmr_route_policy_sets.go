@@ -577,10 +577,6 @@ var YangToDb_community_member_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrPar
         res_map["community_member@"] = ""
         return res_map, errors.New("Invalid Inputs")
     }
-    if inParams.oper == DELETE {
-        res_map["community_member@"] = ""
-        return res_map, nil
-    }
 
     pathInfo := NewPathInfo(inParams.uri)
     if len(pathInfo.Vars) <  1 {
@@ -812,10 +808,6 @@ var YangToDb_ext_community_member_fld_xfmr FieldXfmrYangToDb = func(inParams Xfm
     if inParams.param == nil {
         res_map["community_member@"] = ""
         return res_map, errors.New("Invalid Inputs")
-    }
-    if inParams.oper == DELETE {
-        res_map["community_member@"] = ""
-        return res_map, nil
     }
 
     pathInfo := NewPathInfo(inParams.uri)
