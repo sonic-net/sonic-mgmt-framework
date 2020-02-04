@@ -1,0 +1,115 @@
+Global Values
+{{'\r\n'}}
+
+{% if 'openconfig-nat:config' in json_output['globals'] %}
+{% if 'enable' in json_output['globals']['openconfig-nat:config'] and json_output['globals']['openconfig-nat:config']['enable'] == True %}
+Admin Mode     : enabled
+{% else %}
+Admin Mode     : disabled
+{% endif %}
+{% if 'timeout' in json_output['globals']['openconfig-nat:config'] %}
+Global Timeout : {{ json_output['globals']['openconfig-nat:config']['timeout'] }} secs
+{% endif %}
+{% if 'tcp-timeout' in json_output['globals']['openconfig-nat:config'] %}
+TCP Timeout    : {{ json_output['globals']['openconfig-nat:config']['tcp-timeout'] }} secs
+{% endif %}
+{% if 'udp-timeout' in json_output['globals']['openconfig-nat:config'] %}
+UDP Timeout    : {{ json_output['globals']['openconfig-nat:config']['udp-timeout'] }} secs
+{% endif %}
+{% endif %}
+
+{{'\r\n'}}
+Static Entries
+{{'\r\n'}}
+
+{{'----------------------------------------------------------------------------------------------------------------------------'}}
+{{'%-15s'|format("Nat Type")}}{{'%-20s'|format("IP Protocol")}}{{'%-30s'|format("Global IP")}}{{'%-20s'|format("Global L4 Port")}}{{'%-30s'|format("Local IP")}}{{'%-20s'|format("Local L4 Port")}}{{'%-20s'|format("Twice-Nat Id")}}
+{{'----------------------------------------------------------------------------------------------------------------------------'}}
+{% for dict in json_output['static'] %}
+{{'%-15s'|format(dict['nat_type'])}}{{'%-20s'|format(dict['ip_protocol'])}}{{'%-30s'|format(dict['global_ip'])}}{{'%-20s'|format(dict['global_l4_port'])}}{{'%-30s'|format(dict['local_ip'])}}{{'%-20s'|format(dict['local_l4_port'])}}{{'%-20s'|format(dict['twice_nat_id'])}}
+{% endfor %}
+
+{{'\r\n'}}
+Pool Entries
+{{'\r\n'}}
+
+{% set vars = {'port_range': "----"} %}
+{% set vars = {'ip_range': "----"} %}
+
+{{'%-20s'|format("Pool Name")}}{{'%-30s'|format("Global IP Range")}}{{'%-20s'|format("Global L4 Port Range")}}
+{{'----------------------------------------------------------------------------------------------------------------------------'}}
+{% if 'openconfig-nat:nat-pool' in json_output['pools'] and 'nat-pool-entry' in json_output['pools']['openconfig-nat:nat-pool'] %}
+{% for dict in json_output['pools']['openconfig-nat:nat-pool']['nat-pool-entry'] %}
+
+{% if 'state' in dict  and 'IP-ADDRESS' in dict['state']%}
+{% if vars.update({'ip_range': dict['state']['IP-ADDRESS']}) %}{% endif %}
+{% elif 'state' in dict  and 'IP-ADDRESS-RANGE' in dict['state']%}
+{% if vars.update({'ip_range': dict['state']['IP-ADDRESS-RANGE']}) %}{% endif %}
+{% else %}
+{% if vars.update({'ip_range':"----"}) %}{% endif %}
+{% endif %}
+
+
+{% if 'state' in dict  and 'nat-port' in dict['state']%}
+{% if vars.update({'port_range': dict['state']['nat-port']}) %}{% endif %}
+{% else %}
+{% if vars.update({'port_range':"----"}) %}{% endif %}
+{% endif %}
+
+
+{{'%-20s'|format(dict['pool-name'])}}{{'%-30s'|format(vars.ip_range)}}{{'%-20s'|format(vars.port_range)}}
+
+{% endfor %}
+{% endif %}
+
+{{'\r\n'}}
+NAT Bindings
+{{'\r\n'}}
+
+{% set vars = {'access_list': "----"} %}
+{% set vars = {'type': "----"} %}
+{% set vars = {'twice_nat_id': "----"} %}
+{{'%-20s'|format("Binding Name")}}{{'%-30s'|format("Pool Name")}}{{'%-20s'|format("Access-List")}}{{'%-15s'|format("Nat Type")}}{{'%-15s'|format("Twice-Nat Id")}}
+{{'----------------------------------------------------------------------------------------------------------------------------'}}
+{% if 'openconfig-nat:nat-acl-pool-binding' in json_output['bindings'] and 'nat-acl-pool-binding-entry' in json_output['bindings']['openconfig-nat:nat-acl-pool-binding'] %}
+{% for dict in json_output['bindings']['openconfig-nat:nat-acl-pool-binding']['nat-acl-pool-binding-entry'] %}
+{% if 'access-list' in dict['config'] %}
+{% if vars.update({'access_list': dict['config']['access-list']}) %}{% endif %}
+{% else %}
+{% if vars.update({'access_list':"----"}) %}{% endif %}
+{% endif %}
+
+{% if 'type' in dict['config'] %}
+{% if dict['config']['type'] == 'openconfig-nat:SNAT' %}
+{% if vars.update({'type': 'snat'}) %}{% endif %}
+{% else %}
+{% if vars.update({'type': 'dnat'}) %}{% endif %}
+{% endif %}
+{% else %}
+{% if vars.update({'type':"----"}) %}{% endif %}
+{% endif %}
+
+{% if 'twice-nat-id' in dict['config'] %}
+{% if vars.update({'twice_nat_id': dict['config']['twice-nat-id']}) %}{% endif %}
+{% else %}
+{% if vars.update({'twice_nat_id':"----"}) %}{% endif %}
+{% endif %}
+
+{{'%-20s'|format(dict['name'])}}{{'%-30s'|format(dict['config']['nat-pool'])}}{{'%-20s'|format(vars.access_list)}}{{'%-15s'|format(vars.type)}}{{'%-15s'|format(vars.twice_nat_id)}}
+
+{% endfor %}
+{% endif %}
+
+{{'\r\n'}}
+NAT Zones
+{{'\r\n'}}
+
+{{'%-20s'|format("Port")}}{{'%-20s'|format("Zone")}}
+{{'-------------------------------------------------'}}
+{% for k,v in json_output['zones'].items() %}
+{{'%-20s'|format(k)}}{{'%-20s'|format(v)}}
+{% endfor %}
+
+
+
+
