@@ -162,34 +162,6 @@ func TestAuth_BadPass(t *testing.T) {
 	testAuthSet(t, *ladmName, "Hello,world!", 401)
 }
 
-func TestAuthLocalUserNoRBAC_Get(t *testing.T) {
-	ensureAuthTestEnabled(t, "local")
-	RbacDisable = true
-	testAuthGet(t, *lusrName, *lusrPass, 200)
-	RbacDisable = false
-}
-
-func TestAuthLocalUserNoRBAC_Set(t *testing.T) {
-	ensureAuthTestEnabled(t, "local")
-	RbacDisable = true
-	testAuthSet(t, *lusrName, *lusrPass, 200)
-	RbacDisable = false
-}
-
-func TestAuthLocalAdminNoRBAC_Get(t *testing.T) {
-	ensureAuthTestEnabled(t, "local")
-	RbacDisable = true
-	testAuthGet(t, *ladmName, *ladmPass, 200)
-	RbacDisable = false
-}
-
-func TestAuthLocalAdminNoRBAC_Set(t *testing.T) {
-	ensureAuthTestEnabled(t, "local")
-	RbacDisable = true
-	testAuthSet(t, *ladmName, *ladmPass, 200)
-	RbacDisable = false
-}
-
 func ensureAuthTestEnabled(t *testing.T, authtype string) {
 	if _, ok := authTest[authtype]; !ok {
 		t.Skipf("%s auth tests not enabled.. Rerun with -authtest flag", authtype)

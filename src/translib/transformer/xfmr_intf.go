@@ -1584,21 +1584,35 @@ var DbToYang_intf_ip_addr_xfmr SubTreeXfmrDbToYang = func (inParams XfmrParams) 
 }
 
 func validIPv4(ipAddress string) bool {
-    /* dont allow ip addresses that start with "0." or "255."*/
+    /* Dont allow ip addresses that start with "0." or "255."*/
     if (strings.HasPrefix(ipAddress, "0.") || strings.HasPrefix(ipAddress, "255.")) {
-        log.Info("validIP: ip is reserved ", ipAddress)
+        log.Info("validIP: IP is reserved ", ipAddress)
         return false
     }
 
-    /* 'net' package would know if ipAddress is v4 vs v6 */
-    return (validIPv6(ipAddress))
+    ip := net.ParseIP(ipAddress)
+    ipAddress = strings.Trim(ipAddress, " ")
+
+    re, _ := regexp.Compile(`^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$`)
+    if re.MatchString(ipAddress) {
+        return validIP(ip)
+    }
+    return false
 }
 
-func validIPv6(ip6Address string) bool {
-    ip := net.ParseIP(ip6Address)
+func validIPv6(ipAddress string) bool {
+    ip := net.ParseIP(ipAddress)
+    ipAddress = strings.Trim(ipAddress, " ")
 
+    re, _ := regexp.Compile(`(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))`)
+    if re.MatchString(ipAddress) {
+        return validIP(ip)
+    }
+    return false
+}
+
+func validIP(ip net.IP) bool {
     if (ip.IsLinkLocalUnicast() || ip.IsUnspecified() ||  ip.IsLoopback() ||  ip.IsMulticast()) {
-        log.Info("validIP: ip is invalid ", ip6Address)
         return false
     }
     return true
