@@ -25,6 +25,9 @@ from scripts.render_cli import show_cli_output
 import urllib3
 urllib3.disable_warnings()
 
+#For interface to VRF mapping
+vrfDict = {}
+
 def get_keypath(func,args):
     keypath = None
     instance = None
@@ -51,7 +54,7 @@ def get_keypath(func,args):
 
     return keypath, body
 
-def fdb_call(macAddr, vlanName):
+def get_egress_port(macAddr, vlanName):
     aa = cc.ApiClient()
 
     vlanId = vlanName[len("Vlan"):]
@@ -73,6 +76,39 @@ def fdb_call(macAddr, vlanName):
     except:
         return "-"
 
+def get_vrf_name():
+    aa = cc.ApiClient()
+
+    tIntf     = ("/restconf/data/sonic-interface:sonic-interface/INTERFACE/", "sonic-interface:INTERFACE", "INTERFACE_LIST")
+    tVlanIntf = ("/restconf/data/sonic-interface:sonic-vlan-interface/VLAN_INTERFACE/", "sonic-vlan-interface:VLAN_INTERFACE", "VLAN_INTERFACE_LIST")
+    tPortChannelIntf = ("/restconf/data/sonic-interface:sonic-portchannel-interface/PORTCHANNEL_INTERFACE/", "sonic-portchannel-interface:PORTCHANNEL_INTERFACE", "PORTCHANNEL_INTERFACE_LIST" )
+    tMgmtIntf = ("/restconf/data/sonic-interface:sonic-mgmt-interface/MGMT_INTERFACE/", "sonic-mgmt-interface:MGMT_INTERFACE", "MGMT_INTERFACE_LIST")
+
+    requests = [tIntf, tVlanIntf, tPortChannelIntf, tMgmtIntf]
+
+    for request in requests:
+        keypath = cc.Path(request[0])
+
+        try:
+            response = aa.get(keypath)
+            response = response.content
+
+            intfsContainer = response.get(request[1])
+            if intfsContainer is None:
+                continue
+
+            intfsList = intfsContainer.get(request[2])
+            if intfsList is None:
+                continue
+
+            for intf in intfsList:
+                portName = intf.get('portname')
+                vrfName = intf.get('vrf_name')
+                if len(portName) > 0 and len(vrfName) > 0:
+                    vrfDict[portName] = vrfName
+        except Exception as e:
+            print "Exception in getting interfaces: ", str(e)
+
 def process_single_nbr(response, args):
     nbr_list = []
     ext_intf_name = "-"
@@ -90,7 +126,7 @@ def process_single_nbr(response, args):
         return
 
     if args[1].startswith('Vlan'):
-      ext_intf_name = fdb_call(macAddr, args[1])
+      ext_intf_name = get_egress_port(macAddr, args[1])
 
     nbr_table_entry = {'ipAddr':ipAddr,
                        'macAddr':macAddr,
@@ -120,7 +156,7 @@ def process_nbrs_intf(response, args):
             return[]
 
         if args[1].startswith('Vlan'):
-            ext_intf_name = fdb_call(macAddr, args[1])
+            ext_intf_name = get_egress_port(macAddr, args[1])
 
         nbr_table_entry = {'ipAddr':ipAddr,
                             'macAddr':macAddr,
@@ -140,6 +176,9 @@ def process_sonic_nbrs(response, args):
     nbrs = response['sonic-neighbor:NEIGH_TABLE']['NEIGH_TABLE_LIST']
     if nbrs is None:
         return
+
+    if len(args) == 4 and args[2] == "vrf":
+	get_vrf_name()
 
     for nbr in nbrs:
         ext_intf_name = "-"
@@ -163,8 +202,11 @@ def process_sonic_nbrs(response, args):
         if macAddr is None:
             return []
 
+	    if len(args) == 4 and args[2] == "vrf":
+	        vrfName = vrfDict.get(ifName)
+
         if ifName.startswith('Vlan'):
-            ext_intf_name = fdb_call(macAddr, ifName)
+            ext_intf_name = get_egress_port(macAddr, ifName)
 
         nbr_table_entry = {'ipAddr':ipAddr,
                            'macAddr':macAddr,
@@ -173,6 +215,8 @@ def process_sonic_nbrs(response, args):
                         }
         if (len(args) == 4):
             if (args[2] == "mac" and args[3] == macAddr):
+                nbr_list.append(nbr_table_entry)
+            if (args[2] == "vrf" and args[3] == vrfName):
                 nbr_list.append(nbr_table_entry)
         elif (len(args) == 3 and args[2] != "summary"):
             if args[2] == ipAddr:
@@ -184,6 +228,7 @@ def process_sonic_nbrs(response, args):
 
 def run(func, args):
     aa = cc.ApiClient()
+    print args
 
     # create a body block
     keypath, body = get_keypath(func, args)
@@ -191,7 +236,7 @@ def run(func, args):
 
     try:
         if (func == 'rpc_sonic_clear_neighbors'):
-            api_response = aa.post(keypath,body)
+            api_response = aa.post(keypath, body)
         else:
             api_response = aa.get(keypath)
     except:
@@ -221,11 +266,13 @@ def run(func, args):
             return
         else:
             return
-
-        show_cli_output(args[0],nbr_list)
+	if (len(args) == 3 and args[2] == "summary"):
+            show_cli_output(args[0], len(nbr_list))
+	else:
+            show_cli_output(args[0], nbr_list)
         return
-    except:
-        print "Error: Unexpected response from the server"
+    except Exception as e:
+        print "Error: ",  e
 
 if __name__ == '__main__':
     pipestr().write(sys.argv)

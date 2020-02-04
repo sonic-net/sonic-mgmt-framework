@@ -243,6 +243,20 @@ limitations under the License.
         </ACTION>
     </COMMAND>
 
+<!-- show ip arp vrf <vrf name> -->
+    <COMMAND
+        help="ARP entries belong to given VRF"
+        name="show ip arp vrf">
+        <PARAM
+            name="vrf-name"
+            help="VRF name"
+            ptype="STRING_15">
+        </PARAM>
+        <ACTION>
+            python $SONIC_CLI_ROOT/sonic-cli-neighbors.py get_sonic_neigh_sonic_neigh_neigh_table arp_show.j2 IPv4 vrf ${vrf-name}&#xA;
+        </ACTION>
+   </COMMAND>
+
 <!-- clear ip arp -->
     <COMMAND
         help="clear IP commands"
