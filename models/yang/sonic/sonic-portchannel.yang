@@ -59,7 +59,12 @@ module sonic-portchannel {
                 }
 
                 leaf min_links {
-                    type uint8;
+                    type uint8 {
+                        range "1..255" {
+                            error-message "Invalid Min-links value, valid range 1 to 255";
+                            error-app-tag min-links-invalid;
+                        }
+                    }
                 }
 
                 leaf fallback {
