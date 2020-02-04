@@ -32,7 +32,7 @@ def prompt(msg):
         print ("Invalid input, expected [y/N]")
         x = raw_input(prompt_msg)
     if x.lower() == "n":
-        exit(1) 
+        exit(0)
 
 def invoke(func, args):
     body = None
@@ -58,6 +58,9 @@ def run(func, args):
         status = api_response.content["sonic-interface:output"]
         if status["status"] != 0:
             print status["status-detail"]
+    # prompt() returns SystemExit exception when exit() is called
+    except SystemExit:
+        return
     except:
         print "%Error: Transaction Failure"
     return

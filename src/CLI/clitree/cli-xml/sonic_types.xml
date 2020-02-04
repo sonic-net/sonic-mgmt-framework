@@ -107,6 +107,27 @@ limitations under the License.
         />
     <!--=======================================================-->
     <PTYPE
+        name="NAT_TIMEOUT"
+        method="integer"
+        pattern="300..432000"
+        help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="NAT_TCP_TIMEOUT"
+        method="integer"
+        pattern="300..432000"
+        help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="NAT_UDP_TIMEOUT"
+        method="integer"
+        pattern="120..600"
+        help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
         name="ON_OFF"
         method="select"
         pattern="on(true) off(false)"
