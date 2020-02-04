@@ -1,0 +1,4 @@
+307c307
+< 		clish_shell__set_idle_timeout(shell, timeout);
+---
+> 		clish_shell__set_timeout(shell, timeout);

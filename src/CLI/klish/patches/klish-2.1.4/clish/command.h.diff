@@ -1,0 +1,6 @@
+78a79,83
+> char *clish_command__get_test(const clish_command_t *instance);
+> void clish_command__set_hidden(clish_command_t * instance, bool_t hidden);
+> bool_t clish_command__get_hidden(const clish_command_t * instance);
+> void clish_command__set_enabled(clish_command_t * instance, bool_t enabled);
+> bool_t clish_command__get_enabled(const clish_command_t * instance);

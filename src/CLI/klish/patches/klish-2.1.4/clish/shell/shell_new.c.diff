@@ -1,0 +1,15 @@
+24a25
+> 	char lock_file[PATH_MAX];
+51a53,58
+> 	/* Create lock file */
+> 	snprintf(lock_file, sizeof(lock_file),
+> 		"%s.%u", CLISH_LOCK_PATH, getpid());
+> 	lock_file[sizeof(lock_file) - 1] = '\0';
+> 	this->lockfile = lub_string_dup(lock_file);
+> 
+67d73
+< 	this->lockfile = lub_string_dup(CLISH_LOCK_PATH);
+89c95
+< 		CLISH_PTYPE_PRE_NONE);
+---
+> 		CLISH_PTYPE_PRE_NONE, NULL, NULL);

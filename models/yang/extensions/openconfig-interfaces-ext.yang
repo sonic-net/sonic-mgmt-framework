@@ -18,6 +18,7 @@ module openconfig-interfaces-ext {
     import openconfig-if-tunnel {prefix oc-tun; }
     import openconfig-if-aggregate {prefix oc-lag; }
     import ietf-inet-types { prefix ietf-inet; }
+    import openconfig-yang-types { prefix oc-yang; }
 
     augment "/oc-intf:interfaces/oc-intf:interface/oc-lag:aggregation/oc-lag:config" {
         leaf fallback {
@@ -60,6 +61,17 @@ module openconfig-interfaces-ext {
         leaf gw-addr {
             type oc-inet:ipv6-address;
             description "IPv6 Gateway address";
+        }
+    }
+
+    augment "/oc-intf:interfaces/oc-intf:interface/oc-eth:ethernet/oc-eth:state/oc-eth:counters" {
+        leaf out-oversize-frames {
+            type oc-yang:counter64;
+            description
+                "The total number of frames transmitted that were
+                longer than 1518 octets (excluding framing bits,
+                but including FCS octets) and were otherwise
+                well formed.";
         }
     }
 
@@ -193,9 +205,6 @@ module openconfig-interfaces-ext {
         deviate not-supported;
     }
     deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv6/oc-ip-ext:autoconf {
-        deviate not-supported;
-    }
-    deviation /oc-intf:interfaces/oc-intf:interface/oc-eth:ethernet/oc-eth:state/oc-eth:counters {
         deviate not-supported;
     }
 

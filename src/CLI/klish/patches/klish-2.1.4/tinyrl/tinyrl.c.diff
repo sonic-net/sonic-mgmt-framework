@@ -1,0 +1,61 @@
+1435a1436,1480
+> static void
+> tinyrl_do_complete_ignore_error(tinyrl_t * this, bool_t with_extensions)
+> {
+>         char **matches = NULL;
+>         unsigned int start, end;
+> 
+>         /* find the start and end of the current word */
+>         start = end = this->point;
+>         while (start && !isspace(this->line[start - 1]))
+>                 start--;
+> 
+>         if (this->attempted_completion_function) {
+>                 this->completion_over = BOOL_FALSE;
+>                 this->completion_error_over = BOOL_FALSE;
+>                 /* try and complete the current line buffer */
+>                 matches = this->attempted_completion_function(this,
+>                                 this->line, start, end);
+>         }
+>         if (!matches && (BOOL_FALSE == this->completion_over)) {
+>                 /* insert default completion call here... */
+>         }
+>         if (!matches)
+>                 return;
+> 
+>         /* Check if user entered value is a substring of match returned.
+>            If true, replace the line with the matched value */
+>         if ((end - start > 0) && (0 == strncasecmp(matches[0], &this->line[start],
+>                 (end - start)))) {
+>                 /*
+>                  * delete the original text not including
+>                  * the current insertion point character
+>                  */
+>                 if (this->end != end)
+>                         end--;
+>                 tinyrl_delete_text(this, start, end);
+>                 tinyrl_insert_text(this, matches[0]);
+>         }
+> 
+>         tinyrl_delete_matches(matches);
+>         /* redisplay the line */
+>         tinyrl_redisplay(this);
+>         return;
+> }
+> 
+> /*-------------------------------------------------------- */
+1447a1493,1498
+> void tinyrl_complete_ignore_error(tinyrl_t * this)
+> {
+>         return tinyrl_do_complete_ignore_error(this, BOOL_FALSE);
+> }
+> 
+> /*-------------------------------------------------------- */
+1656a1708,1714
+> 
+> /*-------------------------------------------------------- */
+> bool_t tinyrl_is_cursor_in_middle(const tinyrl_t *this)
+> {
+>         return (this->point < this->end) ? BOOL_TRUE : BOOL_FALSE;
+> }
+> 
