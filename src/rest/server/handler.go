@@ -38,10 +38,12 @@ import (
 func Process(w http.ResponseWriter, r *http.Request) {
 	rc, r := GetContext(r)
 	reqID := rc.ID
+	auth_enable := !RbacDisable && rc.ClientAuth.Any()
+	glog.Infof("RBAC Enabled: %t", auth_enable)
 	args := translibArgs{
 		reqID: reqID,
 		method: r.Method,
-		AuthEnabled: rc.ClientAuth.Any(),
+		AuthEnabled: auth_enable,
 		User: translib.UserRoles{Name: rc.Auth.User, Roles: rc.Auth.Roles},
 	}
 
