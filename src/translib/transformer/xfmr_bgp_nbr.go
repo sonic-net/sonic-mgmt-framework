@@ -102,6 +102,7 @@ var bgp_nbr_tbl_xfmr TableXfmrFunc = func (inParams XfmrParams)  ([]string, erro
                     }
 
                     key = nkey.Get(0) + "|" + nkey.Get(1)
+                    log.Info("bgp_nbr_tbl_xfmr: Static Neighbor key - ", key)
                     if _, ok := (*inParams.dbDataMap)[db.ConfigDB]["BGP_NEIGHBOR"][key]; !ok {
                         (*inParams.dbDataMap)[db.ConfigDB]["BGP_NEIGHBOR"][key] = db.Value{Field: make(map[string]string)}
                     }
@@ -109,7 +110,7 @@ var bgp_nbr_tbl_xfmr TableXfmrFunc = func (inParams XfmrParams)  ([]string, erro
             }
 
             var ok bool
-            cmd := "show ip bgp vrf" + " " + vrf + " " + "summary json"
+            cmd := "show ip bgp vrf" + " " + vrf + " " + "ipv4 summary json"
             bgpNeighOutputJson, cmd_err := exec_vtysh_cmd (cmd)
             if (cmd_err != nil) {
                 log.Errorf ("Failed !! Error:%s", cmd_err);
@@ -146,7 +147,50 @@ var bgp_nbr_tbl_xfmr TableXfmrFunc = func (inParams XfmrParams)  ([]string, erro
                 }
 
                 key = vrf + "|" + peer
-                log.Info("bgp_nbr_tbl_xfmr: key - ", key)
+                log.Info("bgp_nbr_tbl_xfmr: Dynamic ipv4 neighbor key - ", key)
+                if _, ok := (*inParams.dbDataMap)[db.ConfigDB]["BGP_NEIGHBOR"][key]; !ok {
+                    (*inParams.dbDataMap)[db.ConfigDB]["BGP_NEIGHBOR"][key] = db.Value{Field: make(map[string]string)}
+                }
+            }
+
+            cmd = "show ip bgp vrf" + " " + vrf + " " + "ipv6 summary json"
+            bgpNeighOutputJson, cmd_err = exec_vtysh_cmd (cmd)
+            if (cmd_err != nil) {
+                log.Errorf ("Failed !! Error:%s", cmd_err);
+                return tblList, err
+            }
+
+            if outError, ok := bgpNeighOutputJson["warning"] ; ok {
+                log.Errorf ("%s failed !!, %s", outError)
+                return tblList, err
+            }
+
+            ipv6Unicast, ok := bgpNeighOutputJson["ipv6Unicast"].(map[string]interface{})
+            if !ok {return tblList, err}
+
+            if vrfName, ok := ipv6Unicast["vrfName"] ; (!ok || vrfName != vrf) {
+                log.Errorf ("Failed !! GET-req vrf:%s not same as JSON-VRFname:%s", vrf, vrfName)
+                return tblList, err
+            }
+            peers, ok = ipv6Unicast["peers"].(map[string]interface{})
+            if !ok {return tblList,err}
+
+            if _, ok := (*inParams.dbDataMap)[db.ConfigDB]["BGP_NEIGHBOR"]; !ok {
+                (*inParams.dbDataMap)[db.ConfigDB]["BGP_NEIGHBOR"] = make(map[string]db.Value)
+            }
+
+            for peer, _peerData := range peers {
+                peerData := _peerData.(map[string]interface {})
+                if value, ok := peerData["dynamicPeer"].(bool) ; ok {
+                  if (value == false) {
+                      continue
+                  }
+                } else {
+                  continue;
+                }
+
+                key = vrf + "|" + peer
+                log.Info("bgp_nbr_tbl_xfmr: Dynamic Ipv6 neighbor key - ", key)
                 if _, ok := (*inParams.dbDataMap)[db.ConfigDB]["BGP_NEIGHBOR"][key]; !ok {
                     (*inParams.dbDataMap)[db.ConfigDB]["BGP_NEIGHBOR"][key] = db.Value{Field: make(map[string]string)}
                 }
