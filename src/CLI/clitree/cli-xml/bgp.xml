@@ -618,7 +618,7 @@ python $SONIC_CLI_ROOT/sonic_cli_bgp.py patch_openconfig_network_instance_networ
              fi&#xA;
     </ACTION>
   </COMMAND>
-  <COMMAND name="update-source" help="Source of routing updates" view="configure-router-bgp-nbr-view" viewid="nbr-addr=${ip};vrf-name=${vrf-name}">
+  <COMMAND name="update-source" help="Source of routing updates">
     <PARAM name="source_param" help="update-source param"  mode="switch" ptype="SUBCOMMAND">
       <PARAM name="ip" help="IP source" ptype="IPV4V6_ADDR"/>
       <PARAM name="interface" help="Interface name" mode="subcommand" ptype="SUBCOMMAND">
@@ -811,7 +811,7 @@ python $SONIC_CLI_ROOT/sonic_cli_bgp.py delete_openconfig_network_instance_netwo
              fi&#xA;
     </ACTION>
   </COMMAND>
-  <COMMAND name="no update-source" help="Source of routing updates" view="configure-router-bgp-nbr-view" viewid="nbr-addr=${ip};vrf-name=${vrf-name}">
+  <COMMAND name="no update-source" help="Source of routing updates">
     <PARAM name="source_param" help="update-source param"  mode="switch" ptype="SUBCOMMAND">
       <PARAM name="ip" help="IP source" ptype="IPV4V6_ADDR" optional="true"/>
       <PARAM name="interface" help="Interface name" mode="subcommand" ptype="SUBCOMMAND">
@@ -964,7 +964,7 @@ python $SONIC_CLI_ROOT/sonic_cli_bgp.py patch_openconfig_network_instance_networ
     </ACTION>
   </COMMAND>
 
-  <COMMAND name="update-source" help="Source of routing updates" view="configure-router-bgp-template-view" viewid="template-name=${template-name};vrf-name=${vrf-name}">
+  <COMMAND name="update-source" help="Source of routing updates">
     <PARAM name="source_param" help="update-source param"  mode="switch" ptype="SUBCOMMAND">
       <PARAM name="ip" help="IP source" ptype="IPV4V6_ADDR"/>
       <PARAM name="interface" help="Interface name" mode="subcommand" ptype="SUBCOMMAND">
@@ -1151,7 +1151,7 @@ python $SONIC_CLI_ROOT/sonic_cli_bgp.py delete_openconfig_network_instance_netwo
              fi&#xA;
     </ACTION>
   </COMMAND>
-  <COMMAND name="no update-source" help="Source of routing updates" view="configure-router-bgp-template-view" viewid="template-name=${template-name};vrf-name=${vrf-name}">
+  <COMMAND name="no update-source" help="Source of routing updates">
     <PARAM name="source_param" help="update-source param"  mode="switch" ptype="SUBCOMMAND">
       <PARAM name="ip" help="IP source" ptype="IPV4V6_ADDR" optional="true"/>
       <PARAM name="interface" help="Interface name" mode="subcommand" ptype="SUBCOMMAND">
