@@ -17,7 +17,7 @@
 #                                                                              #
 ################################################################################
 
-.PHONY: all clean cleanall codegen rest-server rest-clean yamlGen cli clitree ham
+.PHONY: all clean cleanall codegen rest-server rest-clean yamlGen cli clitree ham clidocgen clidocgen-clean
 
 TOPDIR := $(abspath .)
 BUILD_DIR := $(TOPDIR)/build
@@ -87,6 +87,12 @@ clish:
 clitree:
 	 TGT_DIR=$(BUILD_DIR)/cli $(MAKE) -C src/CLI/clitree
 
+clidocgen:
+	 TGT_DIR=$(BUILD_DIR)/cli $(MAKE) -C src/CLI/clitree doc_gen
+
+clidocgen-clean:
+	TGT_DIR=$(BUILD_DIR)/cli $(MAKE) -C src/CLI/clitree doc_gen_clean
+
 cvl: $(go-deps) $(go-patch) $(go-redis-patch)
 	$(MAKE) -C src/cvl
 
@@ -155,6 +161,9 @@ install:
 	$(INSTALL) -d $(DESTDIR)/usr/lib/sonic_host_service/host_modules
 	$(INSTALL) -D $(TOPDIR)/scripts/sonic_host_server.py $(DESTDIR)/usr/lib/sonic_host_service
 	$(INSTALL) -D $(TOPDIR)/scripts/host_modules/*.py $(DESTDIR)/usr/lib/sonic_host_service/host_modules
+ifneq ($(ENABLE_ZTP),y)
+	$(RM) -f $(DESTDIR)/usr/lib/sonic_host_service/host_modules/ztp_handler.py
+endif
 	$(INSTALL) -d $(DESTDIR)/etc/dbus-1/system.d
 	$(INSTALL) -D $(TOPDIR)/scripts/org.sonic.hostservice.conf $(DESTDIR)/etc/dbus-1/system.d
 	$(INSTALL) -d $(DESTDIR)/lib/systemd/system

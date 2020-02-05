@@ -17,6 +17,9 @@
             {% endif %}
             {% if "local-address" in peer %}
                 {% if vars.update({'localAddress':peer['local-address']}) %}{% endif %}
+                {% if vars.localAddress == 'null'%}
+                    {% if vars.update({'localAddress':"unknown"}) %}{% endif %}
+                {% endif %}
             {% endif %}
             {% if "remote-address" in peer %}
                 {% if vars.update({'peerAddress':peer['remote-address']}) %}{% endif %}

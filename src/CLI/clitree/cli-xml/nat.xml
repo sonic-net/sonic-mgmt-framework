@@ -84,7 +84,7 @@ limitations under the License.
          <PARAM
              name="timeout-value"
              help="NAT Timeout"
-             ptype="UINT"
+             ptype="NAT_TIMEOUT"
              >
          </PARAM>
          <ACTION>python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_nat_nat_instances_instance_config_timeout ${timeout-value}</ACTION>
@@ -107,7 +107,7 @@ limitations under the License.
          <PARAM
              name="tcp-timeout-value"
              help="TCP NAT Timeout"
-             ptype="UINT"
+             ptype="NAT_TCP_TIMEOUT"
              >
          </PARAM>
          <ACTION>python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_nat_nat_instances_instance_config_tcp_timeout ${tcp-timeout-value}</ACTION>
@@ -129,7 +129,7 @@ limitations under the License.
          <PARAM
              name="udp-timeout-value"
              help="UDP NAT Timeout"
-             ptype="UINT"
+             ptype="NAT_UDP_TIMEOUT"
              >
          </PARAM>
          <ACTION>python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_nat_nat_instances_instance_config_udp_timeout ${udp-timeout-value}</ACTION>

@@ -322,8 +322,6 @@ func fill_bfd_shop_data (bfd_obj *ocbinds.OpenconfigBfd_Bfd_BfdState, session_da
 
     }
 
-    log.Info(bfdshop_obj)
-
     /*if value, ok := session_data["remote-status"].(ocbinds.E_OpenconfigBfd_BfdSessionState) ; ok {
         bfdshop_obj.RemoteSessionState = value
     }*/
@@ -409,18 +407,24 @@ func fill_bfd_shop_data (bfd_obj *ocbinds.OpenconfigBfd_Bfd_BfdState, session_da
 
     if value, ok := session_data[""].(bool) ; ok {
         bfdshop_obj.RemoteControlPlaneIndependent = &value
-    }
-
-    if value, ok := session_data[""].(ocbinds.E_OpenconfigBfdExt_BfdSessionType) ; ok {
-        bfdshop_obj.SessionType = value
     }*/
 
-    if value, ok := session_data["remote-detect-multiplier"].(uint32) ; ok {
-        bfdshop_obj.RemoteMultiplier = &value
+    if value, ok := session_data["peer_type"].(string) ; ok {
+        if value == "configured" {
+            bfdshop_obj.SessionType = ocbinds.OpenconfigBfdExt_BfdSessionType_CONFIGURED
+        } else {
+            bfdshop_obj.SessionType = ocbinds.OpenconfigBfdExt_BfdSessionType_DYNAMIC
+        }
     }
 
-    if value, ok := session_data["detect-multiplier"].(uint32) ; ok {
-        bfdshop_obj.LocalMultiplier = &value
+    if value, ok := session_data["remote-detect-multiplier"].(float64) ; ok {
+        value32 := uint32(value)
+        bfdshop_obj.RemoteMultiplier = &value32
+    }
+
+    if value, ok := session_data["detect-multiplier"].(float64) ; ok {
+        value32 := uint32(value)
+        bfdshop_obj.LocalMultiplier = &value32
     }
 
     if value, ok := session_data["transmit-interval"].(float64) ; ok {
@@ -664,15 +668,25 @@ func fill_bfd_mhop_data (bfd_obj *ocbinds.OpenconfigBfd_Bfd_BfdState, session_da
 
     if value, ok := session_data[""].(ocbinds.E_OpenconfigBfdExt_BfdSessionType) ; ok {
         bfdmhop_obj.SessionType = value
-    }
-
-    if value, ok := session_data[""].(uint32) ; ok {
-        bfdmhop_obj.RemoteMultiplier = &value
-    }
-
-    if value, ok := session_data[""].(uint32) ; ok {
-        bfdmhop_obj.LocalMultiplier = &value
     }*/
+
+    if value, ok := session_data["remote-detect-multiplier"].(float64) ; ok {
+        value32 := uint32(value)
+        bfdmhop_obj.RemoteMultiplier = &value32
+    }
+
+    if value, ok := session_data["detect-multiplier"].(float64) ; ok {
+        value32 := uint32(value)
+        bfdmhop_obj.LocalMultiplier = &value32
+    }
+
+    if value, ok := session_data["peer_type"].(string) ; ok {
+        if value == "configured" {
+            bfdmhop_obj.SessionType = ocbinds.OpenconfigBfdExt_BfdSessionType_CONFIGURED
+        } else {
+            bfdmhop_obj.SessionType = ocbinds.OpenconfigBfdExt_BfdSessionType_DYNAMIC
+        }
+    }
 
     if value, ok := session_data["transmit-interval"].(float64) ; ok {
         value32 := uint32(value)

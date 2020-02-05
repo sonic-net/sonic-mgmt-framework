@@ -1479,10 +1479,14 @@ var DbToYang_sw_vlans_xfmr SubTreeXfmrDbToYang = func (inParams XfmrParams) (err
     log.Infof("Ethernet-Switched Vlan Get observed for Interface: %s", ifName)
     intfType, _, err := getIntfTypeByName(ifName)
     if intfType != IntfTypeEthernet && intfType != IntfTypePortChannel || err != nil {
-        intfTypeStr := strconv.Itoa(int(intfType))
-        errStr := "TableXfmrFunc - Invalid interface type" + intfTypeStr
-        log.Error(errStr);
-        return errors.New(errStr);
+    	if intfType == IntfTypeVxlan {
+    		return nil
+    	} else {
+	        intfTypeStr := strconv.Itoa(int(intfType))
+    	    errStr := "TableXfmrFunc - Invalid interface type" + intfTypeStr
+        	log.Error(errStr);
+	        return errors.New(errStr);
+    	}
     }
 
     targetUriPath, err := getYangPathFromUri(inParams.uri)

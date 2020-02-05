@@ -52,17 +52,20 @@ BFD Peer:
             {% endif %}
             {% if "last-up-time" in peer %}
                 {% set time = peer['last-up-time']|int %}
-                {% if vars.update({'uptime':'%d hours, %d mins, %d secs'|format(time/3600, (time%3600)/60, time%60 )}) %}{% endif %}
+                {% if vars.update({'uptime':'%d day(s), %d hour(s), %d min(s), %d sec(s)'|format(time/86400, time/3600, (time%3600)/60, time%60 )}) %}{% endif %}
             {% endif %}
             {% if "last-failure-time" in peer %}
                 {% set time = peer['last-failure-time']|int %}
-                {% if vars.update({'downtime':'%d hours, %d mins, %d secs'|format(time/3600, (time%3600)/60, time%60 )}) %}{% endif %}
+                {% if vars.update({'downtime':'%d day(s), %d hour(s), %d min(s), %d sec(s)'|format(time/86400, time/3600, (time%3600)/60, time%60 )}) %}{% endif %}
             {% endif %}
             {% if "local-diagnostic-code" in peer %}
                 {% if vars.update({'localDiag':peer['local-diagnostic-code']}) %}{% endif %}
             {% endif %}
             {% if "remote-diagnostic-code" in peer %}
                 {% if vars.update({'remoteDiag':peer['remote-diagnostic-code']}) %}{% endif %}
+            {% endif %}
+            {% if "session-type" in peer %}
+                {% if vars.update({'type':peer['session-type']}) %}{% endif %}
             {% endif %}        
             {% if "negotiated-transmission-interval" in peer %}
                 {% if vars.update({'localTx':peer['negotiated-transmission-interval']}) %}{% endif %}
@@ -81,6 +84,12 @@ BFD Peer:
             {% endif %}
             {% if "remote-echo-receive-interval" in peer %}
                 {% if vars.update({'remoteEchoTx':peer['remote-echo-receive-interval']}) %}{% endif %}
+            {% endif %}
+            {% if "local-multiplier" in peer %}
+                {% if vars.update({'localMult':peer['local-multiplier']}) %}{% endif %}
+            {% endif %}
+            {% if "remote-multiplier" in peer %}
+                {% if vars.update({'remoteMult':peer['remote-multiplier']}) %}{% endif %}
             {% endif %}
 {% set peerkey = 'peer %s'|format(vars.peerAddress)%}
 {% if 'openconfig-bfd-ext:multi-hop-state' in json_output %}
@@ -106,17 +115,17 @@ BFD Peer:
 {% endif %}
 {{'%8sDiagnostics: %s'|format(' ', vars.localDiag)}}
 {{'%8sRemote diagnostics: %s'|format(' ', vars.remoteDiag)}}
-{{'%8sPeer Type: %s'|format(' ', vars.type)}}
+{{'%8sPeer Type: %s'|format(' ', vars.type.lower())}}
 {{'%8sLocal timers:'|format(' ')}}
 {{'%12sDetect-multiplier: %s'|format(' ', vars.localMult)}}
-{{'%12sReceive interval: %s'|format(' ', vars.localRx)}}
-{{'%12sTransmission interval: %s'|format(' ', vars.localTx)}}
-{{'%12sEcho transmission interval: %s'|format(' ', vars.localEchoTx)}}
+{{'%12sReceive interval: %sms'|format(' ', vars.localRx)}}
+{{'%12sTransmission interval: %sms'|format(' ', vars.localTx)}}
+{{'%12sEcho transmission interval: %sms'|format(' ', vars.localEchoTx)}}
 {{'%8sRemote timers:'|format(' ')}}
 {{'%12sDetect-multiplier: %s'|format(' ', vars.remoteMult)}}
-{{'%12sReceive interval: %s'|format(' ', vars.remoteRx)}}
-{{'%12sTransmission interval: %s'|format(' ', vars.remoteTx)}}
-{{'%12sEcho transmission interval: %s'|format(' ', vars.remoteEchoTx)}}
+{{'%12sReceive interval: %sms'|format(' ', vars.remoteRx)}}
+{{'%12sTransmission interval: %sms'|format(' ', vars.remoteTx)}}
+{{'%12sEcho transmission interval: %sms'|format(' ', vars.remoteEchoTx)}}
         {% endfor %}
     {% endif %}
 {% endif %}
