@@ -1,3 +1,4 @@
 usr/lib/*
+etc/sonic/cfg_mgmt.json
 etc/dbus-1/system.d/org.sonic.hostservice.conf
 lib/systemd/system/sonic-hostservice.service

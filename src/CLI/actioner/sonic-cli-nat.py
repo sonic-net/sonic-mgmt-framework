@@ -508,6 +508,30 @@ def get_nat_static_configs(func,args):
 
     return resp
 
+def get_nat_configs(func, args):
+    api_response = {}
+
+    # Get Global data
+    response = invoke_api('get_openconfig_nat_nat_instances_instance_config', args)
+    api_response['globals'] = get_response_dict(response)
+
+    # Get Static configs
+    api_response['static'] = get_nat_static_configs(func,args)
+
+    # Get Pools
+    response = invoke_api('get_openconfig_nat_nat_instances_instance_nat_pool', args)
+    api_response['pools'] = get_response_dict(response)
+
+    # Get Bindings
+    response = invoke_api('get_openconfig_nat_nat_instances_instance_nat_acl_pool_binding', args)
+    api_response['bindings'] = get_response_dict(response)
+
+    # Get Zones
+    api_response['zones'] = get_nat_zones(func,args)
+
+    return api_response
+    
+
 def run(func, args):
     global config
 
@@ -524,6 +548,8 @@ def run(func, args):
            api_response = get_nat_translations_count(func,args)
        elif func == 'get_nat_static_configs':
            api_response = get_nat_static_configs(func,args)
+       elif func == 'get_nat_configs':
+           api_response = get_nat_configs(func,args)
        else:
            response = invoke_api(func, args)
            api_response = get_response_dict(response)
