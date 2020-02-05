@@ -76,7 +76,7 @@ def get_egress_port(macAddr, vlanName):
     except:
         return "-"
 
-def get_vrf_name():
+def build_vrf_list():
     aa = cc.ApiClient()
 
     tIntf     = ("/restconf/data/sonic-interface:sonic-interface/INTERFACE/", "sonic-interface:INTERFACE", "INTERFACE_LIST")
@@ -107,7 +107,7 @@ def get_vrf_name():
                 if len(portName) > 0 and len(vrfName) > 0:
                     vrfDict[portName] = vrfName
         except Exception as e:
-            print "Exception in getting interfaces: ", str(e)
+            print "Error in getting interfaces: ", e
 
 def process_single_nbr(response, args):
     nbr_list = []
@@ -169,6 +169,7 @@ def process_nbrs_intf(response, args):
 
 def process_sonic_nbrs(response, args):
     nbr_list = []
+    vrfName = ""
 
     if response['sonic-neighbor:NEIGH_TABLE'] is None:
         return
@@ -178,32 +179,32 @@ def process_sonic_nbrs(response, args):
         return
 
     if len(args) == 4 and args[2] == "vrf":
-	get_vrf_name()
+	    build_vrf_list()
 
     for nbr in nbrs:
         ext_intf_name = "-"
 
-        family = nbr['family']
+        family = nbr.get('family')
         if family is None:
             return []
 
         if family != args[1]:
             continue
 
-        ifName = nbr['ifname']
+        ifName = nbr.get('ifname')
         if ifName is None:
             return []
 
-        ipAddr = nbr['ip']
+        ipAddr = nbr.get('ip')
         if ipAddr is None:
             return []
 
-        macAddr = nbr['neigh']
+        macAddr = nbr.get('neigh')
         if macAddr is None:
             return []
 
-	    if len(args) == 4 and args[2] == "vrf":
-	        vrfName = vrfDict.get(ifName)
+        if len(args) == 4 and args[2] == "vrf":
+            vrfName = vrfDict.get(ifName)
 
         if ifName.startswith('Vlan'):
             ext_intf_name = get_egress_port(macAddr, ifName)
@@ -228,7 +229,6 @@ def process_sonic_nbrs(response, args):
 
 def run(func, args):
     aa = cc.ApiClient()
-    print args
 
     # create a body block
     keypath, body = get_keypath(func, args)
