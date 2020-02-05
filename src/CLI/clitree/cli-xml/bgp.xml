@@ -964,10 +964,10 @@ python $SONIC_CLI_ROOT/sonic_cli_bgp.py patch_openconfig_network_instance_networ
     </ACTION>
   </COMMAND>
 
-  <COMMAND name="update-source" help="Source of routing updates">
+  <COMMAND name="update-source" help="Source of routing updates" view="configure-router-bgp-template-view" viewid="template-name=${template-name};vrf-name=${vrf-name}">
     <PARAM name="source_param" help="update-source param"  mode="switch" ptype="SUBCOMMAND">
-      <PARAM name="ip" help="IP source" ptype="IPV4V6_ADDR" view="configure-router-bgp-template-view"/>
-      <PARAM name="interface" help="Interface name" mode="subcommand" ptype="SUBCOMMAND" view="configure-router-bgp-template-view">
+      <PARAM name="ip" help="IP source" ptype="IPV4V6_ADDR"/>
+      <PARAM name="interface" help="Interface name" mode="subcommand" ptype="SUBCOMMAND">
         <PARAM name="iftype" help="interface type" mode="switch" ptype="SUBCOMMAND">
           <PARAM name="Ethernet" help="Select an interface" mode="subcommand" ptype="SUBCOMMAND">
             <PARAM name="phy-if-name" help="Physical interface" ptype="UINT"/>
