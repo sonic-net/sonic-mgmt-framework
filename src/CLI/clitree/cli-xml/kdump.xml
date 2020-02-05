@@ -22,6 +22,13 @@
         help=""
         />
 
+    <PTYPE
+        name="RANGE_5_100"
+        method="integer"
+        pattern="5..100"
+        help=""
+        />
+
   <!--MODE : config terminal -->
     <VIEW name="configure-view">
         <COMMAND name="kdump" help="kdump command">
@@ -95,6 +102,22 @@
         <COMMAND
             name="show kdump num_dumps"
             help="Show maximimum number of kernel core dump files which will are stored locally">
+            <ACTION
+                builtin="clish_pyobj">sonic_cli_kdump ${__full_line}
+            </ACTION>
+        </COMMAND>
+       <COMMAND
+            name="show kdump files"
+            help="Show kdump kernel core dump files">
+            <ACTION
+                builtin="clish_pyobj">sonic_cli_kdump ${__full_line}
+            </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="show kdump log"
+            help="Show kdump kernel core dump file kernel log">
+            <PARAM name="record" help="kdump dump file record number" ptype="RANGE_1_9" optional="false"/>
+            <PARAM name="lines" help="number of lines retrieved from kernel log file" ptype="RANGE_5_100" optional="true"/>
             <ACTION
                 builtin="clish_pyobj">sonic_cli_kdump ${__full_line}
             </ACTION>

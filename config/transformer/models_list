@@ -4,6 +4,7 @@ openconfig-acl-annot.yang
 openconfig-interfaces.yang
 openconfig-if-ip.yang
 openconfig-if-ethernet.yang
+openconfig-if-ethernet-ext.yang
 openconfig-interfaces-annot.yang
 openconfig-ztp.yang
 openconfig-ztp-annot.yang
@@ -49,6 +50,8 @@ openconfig-mclag.yang
 openconfig-mclag-annot.yang
 sonic-bgp-clear.yang
 sonic-bgp-clear-annot.yang
+openconfig-vxlan.yang
+openconfig-vxlan-annot.yang
 sonic-bgp-show.yang
 sonic-bgp-show-annot.yang
 sonic-ip-show.yang

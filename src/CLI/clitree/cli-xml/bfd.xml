@@ -50,15 +50,15 @@ limitations under the License.
         <ACTION>
         if test "${multihop}" != ""; then&#xA;
             if test "${address}" != "peer_ipv6"; then&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-bfd.py get_openconfig_bfd_ext_bfd_sessions_multi_hop show_bfd_peer.j2 ${peer_ipv4} ${interfacename} ${vrfname} ${local_ipv4}&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-bfd.py get_openconfig_bfd_ext_bfd_sessions_multi_hop show_bfd_peer.j2 ${peer_ipv4} ${interfacename} ${vrfname} ${local_ipv4} ${__full_line}&#xA;
             else&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-bfd.py get_openconfig_bfd_ext_bfd_sessions_multi_hop show_bfd_peer.j2 ${peer_ipv6} ${interfacename} ${vrfname} ${local_ipv6}&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-bfd.py get_openconfig_bfd_ext_bfd_sessions_multi_hop show_bfd_peer.j2 ${peer_ipv6} ${interfacename} ${vrfname} ${local_ipv6} ${__full_line}&#xA;
             fi&#xA;
         else&#xA;
             if test "${address}" != "peer_ipv6"; then&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-bfd.py get_openconfig_bfd_ext_bfd_sessions_single_hop show_bfd_peer.j2 ${peer_ipv4} ${interfacename} ${vrfname} ${local_ipv4}&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-bfd.py get_openconfig_bfd_ext_bfd_sessions_single_hop show_bfd_peer.j2 ${peer_ipv4} ${interfacename} ${vrfname} ${local_ipv4} ${__full_line}&#xA;
             else&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-bfd.py get_openconfig_bfd_ext_bfd_sessions_single_hop show_bfd_peer.j2 ${peer_ipv6} ${interfacename} ${vrfname} ${local_ipv6}&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-bfd.py get_openconfig_bfd_ext_bfd_sessions_single_hop show_bfd_peer.j2 ${peer_ipv6} ${interfacename} ${vrfname} ${local_ipv6} ${__full_line}&#xA;
             fi&#xA;
         fi&#xA;
 	</ACTION>
@@ -85,18 +85,18 @@ limitations under the License.
         <ACTION>
         if test "${multihop}" != ""; then&#xA;
             if test "${address}" != "peer_ipv6"; then&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-bfd.py get_openconfig_bfd_ext_bfd_sessions_multi_hop show_bfd_counter.j2 ${peer_ipv4} ${interfacename} ${vrfname} ${local_ipv4}&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-bfd.py get_openconfig_bfd_ext_bfd_sessions_multi_hop show_bfd_counter.j2 ${peer_ipv4} ${interfacename} ${vrfname} ${local_ipv4} ${__full_line}&#xA;
             else&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-bfd.py get_openconfig_bfd_ext_bfd_sessions_multi_hop show_bfd_counter.j2 ${peer_ipv6} ${interfacename} ${vrfname} ${local_ipv6}&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-bfd.py get_openconfig_bfd_ext_bfd_sessions_multi_hop show_bfd_counter.j2 ${peer_ipv6} ${interfacename} ${vrfname} ${local_ipv6} ${__full_line}&#xA;
             fi&#xA;
         else&#xA;
             if test "${address}" != "peer_ipv6"; then&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-bfd.py get_openconfig_bfd_ext_bfd_sessions_single_hop show_bfd_counter.j2 ${peer_ipv4} ${interfacename} ${vrfname} ${local_ipv4}&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-bfd.py get_openconfig_bfd_ext_bfd_sessions_single_hop show_bfd_counter.j2 ${peer_ipv4} ${interfacename} ${vrfname} ${local_ipv4} ${__full_line}&#xA;
             else&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-bfd.py get_openconfig_bfd_ext_bfd_sessions_single_hop show_bfd_counter.j2 ${peer_ipv6} ${interfacename} ${vrfname} ${local_ipv6}&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-bfd.py get_openconfig_bfd_ext_bfd_sessions_single_hop show_bfd_counter.j2 ${peer_ipv6} ${interfacename} ${vrfname} ${local_ipv6} ${__full_line}&#xA;
             fi&#xA;
         fi&#xA;
-	</ACTION> 
+	</ACTION>
     </COMMAND>
     
     <COMMAND name = "show bfd peers" help = "BFD peers status" >
@@ -106,16 +106,16 @@ limitations under the License.
             <PARAM name = "brief" help = "Show BFD peer information in tabular form" optional = "true" ptype="SUBCOMMAND" mode="subcommand" ></PARAM>
         <ACTION>
 	if test "${brief}" != ""; then&#xA;
-	    python $SONIC_CLI_ROOT/sonic-cli-bfd.py get_bfd_peers show_bfd_peers_brief.j2 ${vrf-name}&#xA;
+	    python $SONIC_CLI_ROOT/sonic-cli-bfd.py get_bfd_peers show_bfd_peers_brief.j2 ${vrf-name} ${__full_line}&#xA;
         else&#xA;
-	    python $SONIC_CLI_ROOT/sonic-cli-bfd.py get_bfd_peers show_bfd_peers.j2 ${vrf-name}&#xA;
+	    python $SONIC_CLI_ROOT/sonic-cli-bfd.py get_bfd_peers show_bfd_peers.j2 ${vrf-name} ${__full_line}&#xA;
         fi&#xA;
 	</ACTION>
     </COMMAND>
 
     <COMMAND name = "show bfd peers counters" help = "Show BFD peer counters information" >
         <ACTION>
-            python $SONIC_CLI_ROOT/sonic-cli-bfd.py get_bfd_peers show_bfd_counters.j2 ${vrf-name}&#xA; 
+            python $SONIC_CLI_ROOT/sonic-cli-bfd.py get_bfd_peers show_bfd_counters.j2 ${vrf-name} ${__full_line}&#xA; 
 	</ACTION>
     </COMMAND>
 

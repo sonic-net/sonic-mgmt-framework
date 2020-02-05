@@ -24,13 +24,23 @@
 {% set vars = {'out_uni':""} %}
 {% set vars = {'out_errors':""} %}
 {% set vars = {'out_discards':""} %}
+{% set vars = {'in_oversize':""} %}
+{% set vars = {'out_oversize':""} %}
+{% set vars = {'in_frames_128_255':""} %}
 {% if json_output -%}
 {% for key_json in json_output %}
 {% set interface_list = json_output[key_json]["interface"] %}
 {% for interface in interface_list %}
     {% for key in interface %}
       {% if "ethernet" in key %}
-        {% if vars.update({'speed':interface[key]["state"]["port-speed"]|replace("openconfig-if-ethernet:SPEED_", "")}) %}{% endif %}
+        {% if "state" in interface[key] %}
+          {% if vars.update({'speed':interface[key]["state"]["port-speed"]|replace("openconfig-if-ethernet:SPEED_", "")}) %}{% endif %}
+          {% if "counters" in interface[key]["state"] %}
+          {% if vars.update({'in_oversize':interface[key]["state"]["counters"]["in-oversize-frames"]}) %}{% endif %}
+            {% if vars.update({'out_oversize':interface[key]["state"]["counters"]["openconfig-interfaces-ext:out-oversize-frames"]}) %}{% endif %}
+            {% if vars.update({'in_frames_128_255':interface[key]["state"]["counters"]["openconfig-if-ethernet-ext:in-distribution"]["in-frames-128-255-octets"]}) %}{% endif %}
+          {% endif %}
+        {% endif %}
       {% endif %}
       {% if "state" in key %}
         {% if vars.update({'name':interface[key]["name"]}) %}{% endif %}
@@ -110,11 +120,12 @@ LineSpeed {{ vars.speed }}, Auto-negotiation off
 Input statistics:
         {{vars.in_pkts}} packets, {{vars.in_octets}} octets
         {{vars.in_multi}} Multicasts, {{vars.in_broad}} Broadcasts, {{vars.in_uni}} Unicasts
-        {{vars.in_errors}} error, {{vars.in_discards}} discarded
+        {{vars.in_errors}} error, {{vars.in_discards}} discarded, {{vars.in_oversize}} Oversize
+        {{vars.in_frames_128_255}} Packets (128 to 255 Octects)
 Output statistics:
         {{vars.out_pkts}} packets, {{vars.out_octets}} octets
         {{vars.out_multi}} Multicasts, {{vars.out_broad}} Broadcasts, {{vars.out_uni}} Unicasts
-        {{vars.out_errors}} error, {{vars.out_discards}} discarded
+        {{vars.out_errors}} error, {{vars.out_discards}} discarded, {{vars.out_oversize}} Oversize
 
 {% endif %}
 {% endfor %}

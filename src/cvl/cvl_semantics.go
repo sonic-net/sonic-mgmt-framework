@@ -835,6 +835,11 @@ func (c *CVL) addYangDataForMustExp(op CVLOperation, tableName string, oneEntry 
 			}
 		}
 
+		if (cvg.cv.tmpDbCache[redisTblName] == nil) {
+			//No entry present in DB
+			continue
+		}
+
 		//fetch using pipeline
 		cvg.cv.fetchTableDataToTmpCache(redisTblName, cvg.cv.tmpDbCache[redisTblName].(map[string]interface{}))
 		data, err := jsonquery.ParseJsonMap(&cvg.cv.tmpDbCache)

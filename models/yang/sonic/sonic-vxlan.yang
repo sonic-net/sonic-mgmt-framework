@@ -60,7 +60,6 @@ module sonic-vxlan {
                 }
 
                 leaf src_ip {
-                    mandatory true;
                     type inet:ipv4-address;
                     must "(/cmn:operation/cmn:operation != 'UPDATE')"
                     {
