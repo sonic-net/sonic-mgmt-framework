@@ -22,6 +22,7 @@ import sys
 
 from pyang import plugin
 from pyang import statements
+from pyang import util
 import pdb
 import yaml
 from collections import OrderedDict
@@ -784,7 +785,7 @@ def getType(node):
         else:
             # this is a prefixed name, check the imported modules
             err = []
-            pmodule = statements.prefix_to_module(t.i_module,prefix,t.pos,err)
+            pmodule = util.prefix_to_module(t.i_module,prefix,t.pos,err)
             if pmodule is None:
                 return
             typedef = statements.search_typedef(pmodule, name)
