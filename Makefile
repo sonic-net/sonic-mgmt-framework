@@ -40,8 +40,6 @@ MAIN_TARGET = sonic-mgmt-framework_1.0-01_amd64.deb
 
 GO_DEPS_LIST = github.com/gorilla/mux \
                github.com/Workiva/go-datastructures/queue \
-               github.com/openconfig/goyang \
-               github.com/openconfig/ygot/ygot \
                github.com/go-redis/redis \
                github.com/golang/glog \
                github.com/pkg/profile \
@@ -52,6 +50,10 @@ GO_DEPS_LIST = github.com/gorilla/mux \
                github.com/facette/natsort \
                github.com/philopon/go-toposort
 
+# GO_DEPS_LIST_2 includes "download only" dependencies.
+# They are patched, compiled and installed explicitly later.
+GO_DEPS_LIST_2 = github.com/openconfig/goyang \
+                 github.com/openconfig/ygot/ygot
 
 REST_BIN = $(BUILD_DIR)/rest_server/main
 CERTGEN_BIN = $(BUILD_DIR)/rest_server/generate_cert
@@ -62,7 +64,7 @@ all: build-deps go-deps go-pkg-version go-patch translib rest-server cli
 build-deps:
 	mkdir -p $(BUILD_DIR)
 
-go-deps: $(GO_DEPS_LIST)
+go-deps: $(GO_DEPS_LIST) $(GO_DEPS_LIST_2) 
 
 go-pkg-version: go-deps
 	cd $(BUILD_GOPATH)/src/github.com/go-redis/redis; git checkout d19aba07b47683ef19378c4a4d43959672b7cec8 2>/dev/null ; true; \
@@ -84,6 +86,9 @@ $(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/philopon/go-top
 
 $(GO_DEPS_LIST):
 	$(GO) get -v $@
+
+$(GO_DEPS_LIST_2):
+	$(GO) get -v -d $@
 
 cli: rest-server
 	$(MAKE) -C src/CLI
