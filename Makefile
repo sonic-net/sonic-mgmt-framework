@@ -53,6 +53,7 @@ GO_DEPS_LIST = github.com/gorilla/mux \
 # GO_DEPS_LIST_2 includes "download only" dependencies.
 # They are patched, compiled and installed explicitly later.
 GO_DEPS_LIST_2 = github.com/openconfig/goyang \
+                 github.com/openconfig/gnmi/proto/gnmi_ext \
                  github.com/openconfig/ygot/ygot
 
 REST_BIN = $(BUILD_DIR)/rest_server/main
@@ -82,7 +83,9 @@ $(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/antchfx/xmlquer
 cd $(BUILD_GOPATH)/src/github.com/facette/natsort; git checkout 2cd4dd1e2dcba4d85d6d3ead4adf4cfd2b70caf2 2>/dev/null ; true; \
 $(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/facette/natsort; \
 cd $(BUILD_GOPATH)/src/github.com/philopon/go-toposort; git checkout 9be86dbd762f98b5b9a4eca110a3f40ef31d0375 2>/dev/null ; true; \
-$(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/philopon/go-toposort
+$(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/philopon/go-toposort; \
+cd $(BUILD_GOPATH)/src/github.com/openconfig/gnmi/proto/gnmi_ext; git checkout e7106f7f5493a9fa152d28ab314f2cc734244ed8 2>/dev/null ; true; \
+$(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/openconfig/gnmi/proto/gnmi_ext
 
 $(GO_DEPS_LIST):
 	$(GO) get -v $@
