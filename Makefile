@@ -81,8 +81,10 @@ build-deps:
 go-deps: $(GO_DEPS_LIST)
 
 $(GO_DEPS_LIST):
-       mkdir -p $(BUILD_GOPATH)/src/$(word 1,$(subst @, , $@))
-       git clone $(word 2,$(subst @, , $@)) $(BUILD_GOPATH)/src/$(word 1,$(subst @, , $@)) && git -C $(BUILD_GOPATH)/src/$(word 1,$(subst @, , $@)) checkout $(word 3,$(subst @, , $@))
+	rm -rf $(BUILD_GOPATH)/src
+	mkdir -p $(BUILD_GOPATH)/src/$(word 1,$(subst @, , $@))
+	git clone $(word 2,$(subst @, , $@)) $(BUILD_GOPATH)/src/$(word 1,$(subst @, , $@)) && git -C $(BUILD_GOPATH)/src/$(word 1,$(subst @, , $@)) checkout $(word 3,$(subst @, , $@))
+
 
 cli: rest-server
 	$(MAKE) -C src/CLI
