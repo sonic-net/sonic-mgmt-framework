@@ -51,7 +51,7 @@ GO_DEPS_LIST = golang.org/x/crypto@https\://go.googlesource.com/crypto@0ec3e9974
                github.com/golang/glog@https\://github.com/golang/glog@23def4e6c14b4da8ac2ed8007337bc5eb5007998 \
                github.com/go-redis/redis@https\://github.com/go-redis/redis@1c4dd844c436c4f293fd9f17c522027a5dc96e56 \
                github.com/openconfig/gnmi@https\://github.com/openconfig/gnmi@e7106f7f5493a9fa152d28ab314f2cc734244ed8 \
-               github.com/openconfig/ygot@https\://github.com/openconfig/ygot@dde7fecc7215b5633a784016419a649dcbf7d7ae \
+               github.com/openconfig/ygot@https\://github.com/openconfig/ygot@724a6b18a9224343ef04fe49199dfb6020ce132a \
                github.com/openconfig/goyang@https\://github.com/openconfig/goyang@a00bece872fc729c37e32bc697c8f3e7eb019172 \
                github.com/pkg/profile@https\://github.com/pkg/profile@acd64d450fd45fb2afa41f833f3788c8a7797219 \
                github.com/go-playground/locales@https\://github.com/go-playground/locales@9f105231d3a5f6877a2bf8321dfa15ea6f844b1b \
@@ -77,11 +77,11 @@ all: build-deps go-deps go-patch translib rest-server cli
 
 build-deps:
 	mkdir -p $(BUILD_DIR)
+	rm -rf $(BUILD_GOPATH)/src
 
 go-deps: $(GO_DEPS_LIST)
 
 $(GO_DEPS_LIST):
-	rm -rf $(BUILD_GOPATH)/src
 	mkdir -p $(BUILD_GOPATH)/src/$(word 1,$(subst @, , $@))
 	git clone $(word 2,$(subst @, , $@)) $(BUILD_GOPATH)/src/$(word 1,$(subst @, , $@)) && git -C $(BUILD_GOPATH)/src/$(word 1,$(subst @, , $@)) checkout $(word 3,$(subst @, , $@))
 
@@ -114,16 +114,13 @@ yamlGen:
 	$(MAKE) -C models/yang/sonic
 
 go-patch: go-deps
-	cd $(BUILD_GOPATH)/src/github.com/openconfig/ygot/; git reset --hard HEAD; git clean -f -d; git checkout 724a6b18a9224343ef04fe49199dfb6020ce132a 2>/dev/null ; true; \
-cd ../; cp $(TOPDIR)/ygot-modified-files/ygot.patch .; \
-patch -p1 < ygot.patch; rm -f ygot.patch; \
-$(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ygot; \
-        cd $(BUILD_GOPATH)/src/github.com/openconfig/goyang/; git reset --hard HEAD; git clean -f -d; git checkout 064f9690516f4f72db189f4690b84622c13b7296 >/dev/null ; true; \
-	cp $(TOPDIR)/goyang-modified-files/goyang.patch .; \
-	patch -p1 < goyang.patch; rm -f goyang.patch; \
+	cd $(BUILD_GOPATH)/src/github.com/openconfig/; \
+        patch -p1 < $(TOPDIR)/ygot-modified-files/ygot.patch; rm -f ygot.patch; \
+        $(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ygot;
+	cd $(BUILD_GOPATH)/src/github.com/openconfig/goyang; \
+	patch -p1 < $(TOPDIR)/goyang-modified-files/goyang.patch; rm -f goyang.patch; \
 	$(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/openconfig/goyang; \
-	cd $(BUILD_GOPATH)/src/github.com/antchfx/jsonquery; git reset --hard HEAD; \
-	git checkout 3535127d6ca5885dbf650204eb08eabf8374a274 2>/dev/null ; \
+	cd $(BUILD_GOPATH)/src/github.com/antchfx/jsonquery; \
 	git apply $(TOPDIR)/patches/jsonquery.patch; \
 	$(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/antchfx/jsonquery
 
