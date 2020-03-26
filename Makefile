@@ -119,7 +119,7 @@ go-patch: go-deps
         $(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ygot;
 	cd $(BUILD_GOPATH)/src/github.com/openconfig/goyang; \
 	patch -p1 < $(TOPDIR)/goyang-modified-files/goyang.patch; rm -f goyang.patch; \
-	$(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/openconfig/goyang; \
+	$(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/openconfig/goyang;
 	cd $(BUILD_GOPATH)/src/github.com/antchfx/jsonquery; \
 	git apply $(TOPDIR)/patches/jsonquery.patch; \
 	$(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/antchfx/jsonquery
