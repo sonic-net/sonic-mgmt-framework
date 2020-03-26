@@ -115,8 +115,8 @@ yamlGen:
 
 go-patch: go-deps
 	cd $(BUILD_GOPATH)/src/github.com/openconfig/; \
-        patch -p1 < $(TOPDIR)/ygot-modified-files/ygot.patch; rm -f ygot.patch; \
-        $(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ygot;
+	patch -p1 < $(TOPDIR)/ygot-modified-files/ygot.patch; rm -f ygot.patch; \
+	$(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ygot;
 	cd $(BUILD_GOPATH)/src/github.com/openconfig/goyang; \
 	patch -p1 < $(TOPDIR)/goyang-modified-files/goyang.patch; rm -f goyang.patch; \
 	$(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/openconfig/goyang;
