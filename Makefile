@@ -36,7 +36,7 @@ endif
 
 INSTALL := /usr/bin/install
 
-MAIN_TARGET = sonic-mgmt-framework_1.0-01_amd64.deb
+MAIN_TARGET = sonic-mgmt-framework_1.0-01_$(CONFIGURED_ARCH).deb
 
 GO_DEPS_LIST = github.com/gorilla/mux \
                github.com/Workiva/go-datastructures/queue \

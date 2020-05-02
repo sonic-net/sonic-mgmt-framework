@@ -1,5 +1,6 @@
 #!/usr/bin/make -f  
 %:  
+	sed -i "s/Architecture: .*/Architecture: $(CONFIGURED_ARCH)/g" debian/control
 	dh $@ --with systemd
 
 
