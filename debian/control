@@ -7,13 +7,13 @@ Section: net
 
 Package: sonic-mgmt-framework 
 Priority: extra  
-Architecture: amd64
+Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}  
 Description: SONiC Management Framework 
 
 Package: sonic-mgmt-framework-dbg
 Priority: extra
-Architecture: amd64
+Architecture: any
 Section: debug
 Depends: sonic-mgmt-framework (=${binary:Version})
 Description: debugging symbols for SONiC Management Framework

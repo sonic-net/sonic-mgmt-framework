@@ -29,6 +29,8 @@ endif
 
 export GOPATH=$(BUILD_GOPATH):$(TOPDIR)
 
+CONFIGURED_ARCH ?= amd64
+
 ifeq ($(GO),)
 GO := /usr/local/go/bin/go 
 export GO
