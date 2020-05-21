@@ -40,65 +40,58 @@ INSTALL := /usr/bin/install
 
 MAIN_TARGET = sonic-mgmt-framework_1.0-01_$(CONFIGURED_ARCH).deb
 
-GO_DEPS_LIST = github.com/gorilla/mux \
-               github.com/Workiva/go-datastructures/queue \
-               github.com/go-redis/redis \
-               github.com/golang/glog \
-               github.com/pkg/profile \
-               gopkg.in/go-playground/validator.v9 \
-               golang.org/x/crypto/ssh \
-               github.com/antchfx/jsonquery \
-               github.com/antchfx/xmlquery \
-               github.com/facette/natsort \
-               github.com/philopon/go-toposort
+GO_DEPS_LIST = golang.org/x/crypto@https\://go.googlesource.com/crypto@0ec3e9974c59449edd84298612e9f16fa13368e8 \
+               golang.org/x/sys@https\://go.googlesource.com/sys@85ca7c5b95cdf1e557abb38a283d1e61a5959c31 \
+               golang.org/x/text@https\://go.googlesource.com/text@06d492aade888ab8698aad35476286b7b555c961 \
+               golang.org/x/net@https\://go.googlesource.com/net@d3edc9973b7eb1fb302b0ff2c62357091cea9a30 \
+               gopkg.in/go-playground/validator.v9@https\://gopkg.in/go-playground/validator.v9@21c910fc6d9c3556c28252b04beb17de0c2d40ec \
+               google.golang.org/grpc@https\://github.com/grpc/grpc-go@192c8a2a3506bb69336f5c135733a3435a04fb30 \
+               google.golang.org/genproto@https\://github.com/google/go-genproto@5b2d0af7952bff3ac94fc13b18af3efa8927cf94 \
+               google.golang.org/protobuf@https\://go.googlesource.com/protobuf@d037755d51bc456237589295f966da868ee6dd35 \
+               github.com/golang/protobuf@https\://github.com/golang/protobuf@84668698ea25b64748563aa20726db66a6b8d299 \
+               github.com/golang/groupcache@https\://github.com/golang/groupcache@8c9f03a8e57eb486e42badaed3fb287da51807ba \
+               github.com/golang/glog@https\://github.com/golang/glog@23def4e6c14b4da8ac2ed8007337bc5eb5007998 \
+               github.com/go-redis/redis@https\://github.com/go-redis/redis@1c4dd844c436c4f293fd9f17c522027a5dc96e56 \
+               github.com/openconfig/gnmi@https\://github.com/openconfig/gnmi@e7106f7f5493a9fa152d28ab314f2cc734244ed8 \
+               github.com/openconfig/ygot@https\://github.com/openconfig/ygot@724a6b18a9224343ef04fe49199dfb6020ce132a \
+               github.com/openconfig/goyang@https\://github.com/openconfig/goyang@a00bece872fc729c37e32bc697c8f3e7eb019172 \
+               github.com/pkg/profile@https\://github.com/pkg/profile@acd64d450fd45fb2afa41f833f3788c8a7797219 \
+               github.com/go-playground/locales@https\://github.com/go-playground/locales@9f105231d3a5f6877a2bf8321dfa15ea6f844b1b \
+               github.com/go-playground/universal-translator@https\://github.com/go-playground/universal-translator@f87b1403479a348651dbf5f07f5cc6e5fcf07008 \
+               github.com/leodido/go-urn@https\://github.com/leodido/go-urn@a0f5013415294bb94553821ace21a1a74c0298cc \
+               github.com/Workiva/go-datastructures@https\://github.com/Workiva/go-datastructures@0819bcaf26091e7c33585441f8961854c2400faa \
+               github.com/facette/natsort@https\://github.com/facette/natsort@2cd4dd1e2dcba4d85d6d3ead4adf4cfd2b70caf2 \
+               github.com/kylelemons/godebug@https\://github.com/kylelemons/godebug@fa7b53cdfc9105c70f134574002f406232921437 \
+               github.com/google/go-cmp@https\://github.com/google/go-cmp@f6dc95b586bc4e5c03cc308129693d9df2819e1c \
+               github.com/antchfx/xpath@https\://github.com/antchfx/xpath@496661144dd35339be6985b945ae86a1b17d7064 \
+               github.com/antchfx/jsonquery@https\://github.com/antchfx/jsonquery@29c5ac780efc692efb427b5f8863607c86133b38 \
+               github.com/antchfx/xmlquery@https\://github.com/antchfx/xmlquery@96baba5f1e7e8d1e44efcbf1bb0827f6c8181232 \
+               github.com/pborman/getopt@https\://github.com/pborman/getopt@ee0cd42419d3adee9239dbd1c375717fe482dac7 \
+               github.com/gorilla/mux@https\://github.com/gorilla/mux@75dcda0896e109a2a22c9315bca3bb21b87b2ba5 \
+               github.com/philopon/go-toposort@https\://github.com/philopon/go-toposort@9be86dbd762f98b5b9a4eca110a3f40ef31d0375
 
-# GO_DEPS_LIST_2 includes "download only" dependencies.
-# They are patched, compiled and installed explicitly later.
-GO_DEPS_LIST_2 = github.com/openconfig/goyang \
-                 github.com/openconfig/gnmi/proto/gnmi_ext \
-                 github.com/openconfig/ygot/ygot
 
 REST_BIN = $(BUILD_DIR)/rest_server/main
 CERTGEN_BIN = $(BUILD_DIR)/rest_server/generate_cert
 
 
-all: build-deps go-deps go-pkg-version go-patch translib rest-server cli
+all: build-deps go-deps go-patch translib rest-server cli
 
 build-deps:
 	mkdir -p $(BUILD_DIR)
+	rm -rf $(BUILD_GOPATH)/src
 
-go-deps: $(GO_DEPS_LIST) $(GO_DEPS_LIST_2) 
-
-go-pkg-version: go-deps
-	cd $(BUILD_GOPATH)/src/github.com/go-redis/redis; git checkout d19aba07b47683ef19378c4a4d43959672b7cec8 2>/dev/null ; true; \
-$(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/go-redis/redis; \
-cd $(BUILD_GOPATH)/src/github.com/gorilla/mux; git checkout 49c01487a141b49f8ffe06277f3dca3ee80a55fa 2>/dev/null ; true; \
-$(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/gorilla/mux; \
-cd $(BUILD_GOPATH)/src/github.com/Workiva/go-datastructures; git checkout f07cbe3f82ca2fd6e5ab94afce65fe43319f675f 2>/dev/null ; true; \
-$(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/Workiva/go-datastructures; \
-cd $(BUILD_GOPATH)/src/github.com/golang/glog; git checkout 23def4e6c14b4da8ac2ed8007337bc5eb5007998 2>/dev/null ; true; \
-$(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/golang/glog; \
-cd $(BUILD_GOPATH)/src/github.com/pkg/profile; git checkout acd64d450fd45fb2afa41f833f3788c8a7797219 2>/dev/null ; true; \
-$(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/pkg/profile; \
-cd $(BUILD_GOPATH)/src/github.com/antchfx/xmlquery; git checkout 16f1e6cdc5fe44a7f8e2a8c9faf659a1b3a8fd9b 2>/dev/null ; true; \
-$(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/antchfx/xmlquery; \
-cd $(BUILD_GOPATH)/src/github.com/facette/natsort; git checkout 2cd4dd1e2dcba4d85d6d3ead4adf4cfd2b70caf2 2>/dev/null ; true; \
-$(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/facette/natsort; \
-cd $(BUILD_GOPATH)/src/github.com/philopon/go-toposort; git checkout 9be86dbd762f98b5b9a4eca110a3f40ef31d0375 2>/dev/null ; true; \
-$(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/philopon/go-toposort; \
-cd $(BUILD_GOPATH)/src/github.com/openconfig/gnmi/proto/gnmi_ext; git checkout e7106f7f5493a9fa152d28ab314f2cc734244ed8 2>/dev/null ; true; \
-$(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/openconfig/gnmi/proto/gnmi_ext
+go-deps: $(GO_DEPS_LIST)
 
 $(GO_DEPS_LIST):
-	$(GO) get -v $@
+	mkdir -p $(BUILD_GOPATH)/src/$(word 1,$(subst @, , $@))
+	git clone $(word 2,$(subst @, , $@)) $(BUILD_GOPATH)/src/$(word 1,$(subst @, , $@)) && git -C $(BUILD_GOPATH)/src/$(word 1,$(subst @, , $@)) checkout $(word 3,$(subst @, , $@))
 
-$(GO_DEPS_LIST_2):
-	$(GO) get -v -d $@
 
 cli: rest-server
 	$(MAKE) -C src/CLI
 
-cvl: go-deps go-patch go-pkg-version
+cvl: go-deps go-patch
 	$(MAKE) -C src/cvl
 	$(MAKE) -C src/cvl/schema
 	$(MAKE) -C src/cvl/testdata/schema
@@ -123,16 +116,13 @@ yamlGen:
 	$(MAKE) -C models/yang/sonic
 
 go-patch: go-deps
-	cd $(BUILD_GOPATH)/src/github.com/openconfig/ygot/; git reset --hard HEAD; git clean -f -d; git checkout 724a6b18a9224343ef04fe49199dfb6020ce132a 2>/dev/null ; true; \
-cd ../; cp $(TOPDIR)/ygot-modified-files/ygot.patch .; \
-patch -p1 < ygot.patch; rm -f ygot.patch; \
-$(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ygot; \
-        cd $(BUILD_GOPATH)/src/github.com/openconfig/goyang/; git reset --hard HEAD; git clean -f -d; git checkout 064f9690516f4f72db189f4690b84622c13b7296 >/dev/null ; true; \
-	cp $(TOPDIR)/goyang-modified-files/goyang.patch .; \
-	patch -p1 < goyang.patch; rm -f goyang.patch; \
-	$(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/openconfig/goyang; \
-	cd $(BUILD_GOPATH)/src/github.com/antchfx/jsonquery; git reset --hard HEAD; \
-	git checkout 3535127d6ca5885dbf650204eb08eabf8374a274 2>/dev/null ; \
+	cd $(BUILD_GOPATH)/src/github.com/openconfig/; \
+	patch -p1 < $(TOPDIR)/ygot-modified-files/ygot.patch; rm -f ygot.patch; \
+	$(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ygot;
+	cd $(BUILD_GOPATH)/src/github.com/openconfig/goyang; \
+	patch -p1 < $(TOPDIR)/goyang-modified-files/goyang.patch; rm -f goyang.patch; \
+	$(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/openconfig/goyang;
+	cd $(BUILD_GOPATH)/src/github.com/antchfx/jsonquery; \
 	git apply $(TOPDIR)/patches/jsonquery.patch; \
 	$(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/antchfx/jsonquery
 
