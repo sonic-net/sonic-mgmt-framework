@@ -20,14 +20,11 @@ package translib
 
 import (
     "reflect"
-    "encoding/json"
+    "strconv"
     "errors"
     "translib/db"
     "translib/ocbinds"
     "github.com/openconfig/ygot/ygot"
-    "os"
-    "translib/tlerr"
-    "io/ioutil"
     log "github.com/golang/glog"
 )
 
@@ -36,7 +33,8 @@ type PlatformApp struct {
     reqData     []byte
     ygotRoot    *ygot.GoStruct
     ygotTarget  *interface{}
-
+    eepromTs    *db.TableSpec
+    eepromTable map[string]dbEntry
 
 }
 
@@ -65,6 +63,7 @@ func (app *PlatformApp) initialize(data appData) {
     app.reqData = data.payload
     app.ygotRoot = data.ygotRoot
     app.ygotTarget = data.ygotTarget
+    app.eepromTs = &db.TableSpec{Name: "EEPROM_INFO"}
 
 }
 
@@ -150,9 +149,33 @@ func (app *PlatformApp) processDelete(d *db.DB) (SetResponse, error)  {
 
 func (app *PlatformApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error)  {
     pathInfo := app.path
-    var payload []byte
     log.Infof("Received GET for PlatformApp Template: %s ,path: %s, vars: %v",
     pathInfo.Template, pathInfo.Path, pathInfo.Vars)
+
+    stateDb := dbs[db.StateDB]
+    
+    var payload []byte
+
+    // Read eeprom info from DB
+    app.eepromTable = make(map[string]dbEntry)
+
+    tbl, derr := stateDb.GetTable(app.eepromTs)
+    if derr != nil {
+        log.Error("EEPROM_INFO table get failed!")
+        return GetResponse{Payload: payload}, derr
+    }
+
+    keys, _ := tbl.GetKeys()
+    for _, key := range keys {
+        e, kerr := tbl.GetEntry(key)
+        if kerr != nil {
+            log.Error("EEPROM_INFO entry get failed!")
+            return GetResponse{Payload: payload}, kerr
+        }
+
+        app.eepromTable[key.Get(0)] = dbEntry{entry: e}
+    }
+
     targetUriPath, perr := getYangPathFromUri(app.path.Path)
     if perr != nil {
         log.Infof("getYangPathFromUri failed.")
@@ -167,57 +190,102 @@ func (app *PlatformApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error)  {
 }
 
 ///////////////////////////
-func (app *PlatformApp) doGetSysEeprom() (GetResponse, error) {
-
-    return app.getSysEepromJson()
-}
 
 
 /**
-Structures to read syseeprom from json file
+Structures to read syseeprom from redis-db
 */
-type JSONEeprom  struct {
-    Product_Name        string `json:"Product Name"`
-    Part_Number         string `json:"Part Number"`
-    Serial_Number       string `json:"Serial Number"`
-    Base_MAC_Address    string `json:"Base MAC Address"`
-    Manufacture_Date    string `json:"Manufacture Date"`
-    Device_Version      string `json:"Device Version"`
-    Label_Revision      string `json:"Label Revision"`
-    Platform_Name       string `json:"Platform Name"`
-    ONIE_Version        string `json:"ONIE Version"`
-    MAC_Addresses       int    `json:"MAC Addresses"`
-    Manufacturer        string `json:"Manufacturer"`
-    Manufacture_Country  string `json:"Manufacture Country"`
-    Vendor_Name         string `json:"Vendor Name"`
-    Diag_Version        string `json:"Diag Version"`
-    Service_Tag         string `json:"Service Tag"`
-    Vendor_Extension    string `json:"Vendor Extension"`
-    Magic_Number        int    `json:"Magic Number"`
-    Card_Type           string `json:"Card Type"`
-    Hardware_Version    string `json:"Hardware Version"`
-    Software_Version    string `json:"Software Version"`
-    Model_Name          string `json:"Model Name"`
+type EepromDb  struct {
+    Product_Name        string
+    Part_Number         string
+    Serial_Number       string
+    Base_MAC_Address    string
+    Manufacture_Date    string
+    Device_Version      string
+    Label_Revision      string
+    Platform_Name       string
+    ONIE_Version        string
+    MAC_Addresses       int
+    Manufacturer        string
+    Manufacture_Country  string
+    Vendor_Name         string
+    Diag_Version        string
+    Service_Tag         string
+    Vendor_Extension    string
+    Magic_Number        int
+    Card_Type           string
+    Hardware_Version    string
+    Software_Version    string
+    Model_Name          string
 
 }
 
-func (app *PlatformApp) getSysEepromFromFile (eeprom *ocbinds.OpenconfigPlatform_Components_Component_State, all bool) (error) {
+func (app *PlatformApp) getEepromDbObj () (EepromDb){
+    log.Infof("parseEepromDb Enter")
 
-    log.Infof("getSysEepromFromFile Enter")
-    jsonFile, err := os.Open("/mnt/platform/syseeprom")
-    if err != nil {
-        log.Infof("syseeprom.json open failed")
-        errStr := "Information not available or Not supported"
-        terr := tlerr.NotFoundError{Format: errStr}
-        return terr
+    var eepromDbObj EepromDb
+
+    for epItem, _ := range app.eepromTable {
+        e := app.eepromTable[epItem].entry
+        name := e.Get("Name")
+
+        switch name {
+        case "Device Version":
+            eepromDbObj.Device_Version = e.Get("Value")
+        case "Service Tag":
+            eepromDbObj.Service_Tag = e.Get("Value")
+        case "Vendor Extension":
+            eepromDbObj.Vendor_Extension = e.Get("Value")
+        case "Magic Number":
+            mag, _ := strconv.ParseInt(e.Get("Value"), 10, 64)
+            eepromDbObj.Magic_Number = int(mag)
+        case "Card Type":
+            eepromDbObj.Card_Type = e.Get("Value")
+        case "Hardware Version":
+            eepromDbObj.Hardware_Version = e.Get("Value")
+        case "Software Version":
+            eepromDbObj.Software_Version = e.Get("Value")
+        case "Model Name":
+            eepromDbObj.Model_Name = e.Get("Value")
+        case "ONIE Version":
+            eepromDbObj.ONIE_Version = e.Get("Value")
+        case "Serial Number":
+            eepromDbObj.Serial_Number = e.Get("Value")
+        case "Vendor Name":
+            eepromDbObj.Vendor_Name = e.Get("Value")
+        case "Manufacturer":
+            eepromDbObj.Manufacturer = e.Get("Value")
+        case "Manufacture Country":
+            eepromDbObj.Manufacture_Country = e.Get("Value")
+        case "Platform Name":
+            eepromDbObj.Platform_Name = e.Get("Value")
+        case "Diag Version":
+            eepromDbObj.Diag_Version = e.Get("Value")
+        case "Label Revision":
+            eepromDbObj.Label_Revision = e.Get("Value")
+        case "Part Number":
+            eepromDbObj.Part_Number = e.Get("Value")
+        case "Product Name":
+            eepromDbObj.Product_Name = e.Get("Value")
+        case "Base MAC Address":
+            eepromDbObj.Base_MAC_Address = e.Get("Value")
+        case "Manufacture Date":
+            eepromDbObj.Manufacture_Date = e.Get("Value")
+        case "MAC Addresses":
+            mac, _ := strconv.ParseInt(e.Get("Value"), 10, 16)
+            eepromDbObj.MAC_Addresses = int(mac)
+        }
     }
 
-    defer jsonFile.Close()
+    return eepromDbObj
+}
 
-    byteValue, _ := ioutil.ReadAll(jsonFile)
-    var jsoneeprom JSONEeprom
+func (app *PlatformApp) getSysEepromFromDb (eeprom *ocbinds.OpenconfigPlatform_Components_Component_State, all bool) (error) {
 
-    json.Unmarshal(byteValue, &jsoneeprom)
+    log.Infof("getSysEepromFromDb Enter")
+
+    eepromDb := app.getEepromDbObj()
+
     empty := false
     removable := false
     name := "System Eeprom"
@@ -230,52 +298,52 @@ func (app *PlatformApp) getSysEepromFromFile (eeprom *ocbinds.OpenconfigPlatform
         eeprom.OperStatus = ocbinds.OpenconfigPlatformTypes_COMPONENT_OPER_STATUS_ACTIVE
         eeprom.Location = &location
 
-        if jsoneeprom.Product_Name != "" {
-            eeprom.Id = &jsoneeprom.Product_Name
+        if eepromDb.Product_Name != "" {
+            eeprom.Id = &eepromDb.Product_Name
         }
-        if jsoneeprom.Part_Number != "" {
-            eeprom.PartNo = &jsoneeprom.Part_Number
+        if eepromDb.Part_Number != "" {
+            eeprom.PartNo = &eepromDb.Part_Number
         }
-        if jsoneeprom.Serial_Number != "" {
-            eeprom.SerialNo = &jsoneeprom.Serial_Number
+        if eepromDb.Serial_Number != "" {
+            eeprom.SerialNo = &eepromDb.Serial_Number
         }
-        if jsoneeprom.Base_MAC_Address != "" {
+        if eepromDb.Base_MAC_Address != "" {
         }
-        if jsoneeprom.Manufacture_Date != "" {
-            eeprom.MfgDate = &jsoneeprom.Manufacture_Date
+        if eepromDb.Manufacture_Date != "" {
+            eeprom.MfgDate = &eepromDb.Manufacture_Date
         }
-        if jsoneeprom.Label_Revision != "" {
-            eeprom.HardwareVersion = &jsoneeprom.Label_Revision
+        if eepromDb.Label_Revision != "" {
+            eeprom.HardwareVersion = &eepromDb.Label_Revision
         }
-        if jsoneeprom.Platform_Name != "" {
-            eeprom.Description = &jsoneeprom.Platform_Name
+        if eepromDb.Platform_Name != "" {
+            eeprom.Description = &eepromDb.Platform_Name
         }
-        if jsoneeprom.ONIE_Version != "" {
+        if eepromDb.ONIE_Version != "" {
         }
-        if jsoneeprom.MAC_Addresses != 0 {
+        if eepromDb.MAC_Addresses != 0 {
         }
-        if jsoneeprom.Manufacturer != "" {
-            eeprom.MfgName = &jsoneeprom.Manufacturer
+        if eepromDb.Manufacturer != "" {
+            eeprom.MfgName = &eepromDb.Manufacturer
         }
-        if jsoneeprom.Manufacture_Country != "" {
+        if eepromDb.Manufacture_Country != "" {
         }
-        if jsoneeprom.Vendor_Name != "" {
+        if eepromDb.Vendor_Name != "" {
             if eeprom.MfgName == nil {
-                eeprom.MfgName = &jsoneeprom.Vendor_Name
+                eeprom.MfgName = &eepromDb.Vendor_Name
             }
         }
-        if jsoneeprom.Diag_Version != "" {
+        if eepromDb.Diag_Version != "" {
         }
-        if jsoneeprom.Service_Tag != "" {
+        if eepromDb.Service_Tag != "" {
             if eeprom.SerialNo == nil {
-                eeprom.SerialNo = &jsoneeprom.Service_Tag
+                eeprom.SerialNo = &eepromDb.Service_Tag
             }
         }
-        if jsoneeprom.Hardware_Version != "" {
-            eeprom.HardwareVersion = &jsoneeprom.Hardware_Version
+        if eepromDb.Hardware_Version != "" {
+            eeprom.HardwareVersion = &eepromDb.Hardware_Version
         }
-        if jsoneeprom.Software_Version != "" {
-            eeprom.SoftwareVersion = &jsoneeprom.Software_Version
+        if eepromDb.Software_Version != "" {
+            eeprom.SoftwareVersion = &eepromDb.Software_Version
         }
     } else {
         targetUriPath, _ := getYangPathFromUri(app.path.Path)
@@ -291,60 +359,60 @@ func (app *PlatformApp) getSysEepromFromFile (eeprom *ocbinds.OpenconfigPlatform
         case "/openconfig-platform:components/component/state/oper-status":
             eeprom.OperStatus = ocbinds.OpenconfigPlatformTypes_COMPONENT_OPER_STATUS_ACTIVE
         case "/openconfig-platform:components/component/state/id":
-            if jsoneeprom.Product_Name != "" {
-                eeprom.Id = &jsoneeprom.Product_Name
+            if eepromDb.Product_Name != "" {
+                eeprom.Id = &eepromDb.Product_Name
             }
         case "/openconfig-platform:components/component/state/part-no":
-            if jsoneeprom.Part_Number != "" {
-                eeprom.PartNo = &jsoneeprom.Part_Number
+            if eepromDb.Part_Number != "" {
+                eeprom.PartNo = &eepromDb.Part_Number
             }
         case "/openconfig-platform:components/component/state/serial-no":
-            if jsoneeprom.Serial_Number != "" {
-                eeprom.SerialNo = &jsoneeprom.Serial_Number
+            if eepromDb.Serial_Number != "" {
+                eeprom.SerialNo = &eepromDb.Serial_Number
             }
-            if jsoneeprom.Service_Tag != "" {
+            if eepromDb.Service_Tag != "" {
                 if eeprom.SerialNo == nil {
-                    eeprom.SerialNo = &jsoneeprom.Service_Tag
+                    eeprom.SerialNo = &eepromDb.Service_Tag
                 }
             }
         case "/openconfig-platform:components/component/state/mfg-date":
-            if jsoneeprom.Manufacture_Date != "" {
-                eeprom.MfgDate = &jsoneeprom.Manufacture_Date
+            if eepromDb.Manufacture_Date != "" {
+                eeprom.MfgDate = &eepromDb.Manufacture_Date
             }
         case "/openconfig-platform:components/component/state/hardware-version":
-            if jsoneeprom.Label_Revision != "" {
-                eeprom.HardwareVersion = &jsoneeprom.Label_Revision
+            if eepromDb.Label_Revision != "" {
+                eeprom.HardwareVersion = &eepromDb.Label_Revision
             }
-            if jsoneeprom.Hardware_Version != "" {
+            if eepromDb.Hardware_Version != "" {
                 if eeprom.HardwareVersion == nil {
-                    eeprom.HardwareVersion = &jsoneeprom.Hardware_Version
+                    eeprom.HardwareVersion = &eepromDb.Hardware_Version
                 }
             }
         case "/openconfig-platform:components/component/state/description":
-            if jsoneeprom.Platform_Name != "" {
-                eeprom.Description = &jsoneeprom.Platform_Name
+            if eepromDb.Platform_Name != "" {
+                eeprom.Description = &eepromDb.Platform_Name
             }
         case "/openconfig-platform:components/component/state/mfg-name":
-            if jsoneeprom.Manufacturer != "" {
-                eeprom.MfgName = &jsoneeprom.Manufacturer
+            if eepromDb.Manufacturer != "" {
+                eeprom.MfgName = &eepromDb.Manufacturer
             }
-            if jsoneeprom.Vendor_Name != "" {
+            if eepromDb.Vendor_Name != "" {
                 if eeprom.MfgName == nil {
-                    eeprom.MfgName = &jsoneeprom.Vendor_Name
+                    eeprom.MfgName = &eepromDb.Vendor_Name
                 }
             }
         case "/openconfig-platform:components/component/state/software-version":
-            if jsoneeprom.Software_Version != "" {
-                eeprom.SoftwareVersion = &jsoneeprom.Software_Version
+            if eepromDb.Software_Version != "" {
+                eeprom.SoftwareVersion = &eepromDb.Software_Version
             }
         }
     }
     return nil 
 }
 
-func (app *PlatformApp) getSysEepromJson () (GetResponse, error) {
+func (app *PlatformApp) doGetSysEeprom () (GetResponse, error) {
 
-    log.Infof("Preparing json for system eeprom");
+    log.Infof("Preparing collection for system eeprom");
 
     var payload []byte
     var err error
@@ -355,7 +423,7 @@ func (app *PlatformApp) getSysEepromJson () (GetResponse, error) {
     case "/openconfig-platform:components":
         pf_comp,_ := pf_cpts.NewComponent("System Eeprom")
         ygot.BuildEmptyTree(pf_comp)
-        err = app.getSysEepromFromFile(pf_comp.State, true)
+        err = app.getSysEepromFromDb(pf_comp.State, true)
         if err != nil {
             return GetResponse{Payload: payload}, err
         }
@@ -365,7 +433,7 @@ func (app *PlatformApp) getSysEepromJson () (GetResponse, error) {
         if compName == "" {
             pf_comp,_ := pf_cpts.NewComponent("System Eeprom")
             ygot.BuildEmptyTree(pf_comp)
-            err = app.getSysEepromFromFile(pf_comp.State, true)
+            err = app.getSysEepromFromDb(pf_comp.State, true)
             if err != nil {
                 return GetResponse{Payload: payload}, err
             }
@@ -377,7 +445,7 @@ func (app *PlatformApp) getSysEepromJson () (GetResponse, error) {
             pf_comp := pf_cpts.Component[compName]
             if pf_comp != nil {
                 ygot.BuildEmptyTree(pf_comp)
-                err = app.getSysEepromFromFile(pf_comp.State, true)
+                err = app.getSysEepromFromDb(pf_comp.State, true)
                 if err != nil {
                     return GetResponse{Payload: payload}, err
                 }
@@ -392,7 +460,7 @@ func (app *PlatformApp) getSysEepromJson () (GetResponse, error) {
             pf_comp := pf_cpts.Component[compName]
             if pf_comp != nil {
                 ygot.BuildEmptyTree(pf_comp)
-                err = app.getSysEepromFromFile(pf_comp.State, true)
+                err = app.getSysEepromFromDb(pf_comp.State, true)
                 if err != nil {
                     return GetResponse{Payload: payload}, err
                 }
@@ -413,7 +481,7 @@ func (app *PlatformApp) getSysEepromJson () (GetResponse, error) {
                 pf_comp := pf_cpts.Component[compName]
                 if pf_comp != nil {
                     ygot.BuildEmptyTree(pf_comp)
-                    err = app.getSysEepromFromFile(pf_comp.State, false)
+                    err = app.getSysEepromFromDb(pf_comp.State, false)
                     if err != nil {
                         return GetResponse{Payload: payload}, err
                     }
