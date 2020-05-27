@@ -408,12 +408,16 @@ func (app *IntfApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
 					payload, err = dumpIetfJson(intfObj, false)
 				} else {
 					dummyifInfo := &ocbinds.OpenconfigInterfaces_Interfaces_Interface{}
+					counter_all_val := &ocbinds.OpenconfigInterfaces_Interfaces_Interface_State{}
 					if *app.ygotTarget == ifInfo.Config {
 						dummyifInfo.Config = ifInfo.Config
 						payload, err = dumpIetfJson(dummyifInfo, false)
 					} else if *app.ygotTarget == ifInfo.State {
 						dummyifInfo.State = ifInfo.State
 						payload, err = dumpIetfJson(dummyifInfo, false)
+					} else if *app.ygotTarget == ifInfo.State.Counters {
+						counter_all_val.Counters = ifInfo.State.Counters
+						payload, err = dumpIetfJson(counter_all_val, false)
 					} else {
 						log.Info("Not supported get type!")
 						err = errors.New("Requested get-type not supported!")
