@@ -22,15 +22,22 @@
 set -e
 
 TOPDIR=$PWD
+BUILD_DIR=$TOPDIR/build
 SERVER_DIR=$TOPDIR/build/rest_server
-CVLDIR=$TOPDIR/src/cvl
+MGMT_COMMON_DIR=$(realpath $TOPDIR/../sonic-mgmt-common)
+
+if [[ ! -f $SERVER_DIR/rest_server ]]; then
+    echo "error: REST server not compiled"
+    echo "Please run 'make rest-server' and try again"
+    exit 1
+fi
 
 # LD_LIBRARY_PATH for CVL
 [ -z $LD_LIBRARY_PATH ] && export LD_LIBRARY_PATH=/usr/local/lib
 
 # Setup CVL schema directory
 if [ -z $CVL_SCHEMA_PATH ]; then
-    export CVL_SCHEMA_PATH=$CVLDIR/schema
+    export CVL_SCHEMA_PATH=$MGMT_COMMON_DIR/build/cvl/schema
 fi
 
 echo "CVL schema directory is $CVL_SCHEMA_PATH"
@@ -39,9 +46,16 @@ if [ $(find $CVL_SCHEMA_PATH -name *.yin | wc -l) == 0 ]; then
     echo ""
 fi
 
+# Prepare CVL config file with all traces enabled
+if [[ -z $CVL_CFG_FILE ]]; then
+    export CVL_CFG_FILE=$SERVER_DIR/cvl_cfg.json
+    if [[ ! -e $CVL_CFG_FILE ]]; then
+        F=$MGMT_COMMON_DIR/cvl/conf/cvl_cfg.json
+        sed -E 's/((TRACE|LOG).*)\"false\"/\1\"true\"/' $F > $CVL_CFG_FILE
+    fi
+fi
+
 EXTRA_ARGS="-ui $SERVER_DIR/dist/ui -logtostderr"
-HAS_CRTFILE=
-HAS_KEYFILE=
 
 for V in $@; do
     case $V in
@@ -67,5 +81,5 @@ fi
 
 ##
 # Start server
-./main $EXTRA_ARGS $* 
+./rest_server $EXTRA_ARGS $* 
 

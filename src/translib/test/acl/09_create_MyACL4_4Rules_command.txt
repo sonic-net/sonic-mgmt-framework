@@ -1,1 +1,0 @@
-./gnmi_set -replace /openconfig-acl:acl/:@./09_create_MyACL4_4Rules.json -target_addr 127.0.0.1:8080 -alsologtostderr -insecure true -pretty

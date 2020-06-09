@@ -1,1 +1,0 @@
-./gnmi_get -xpath /openconfig-acl:acl/acl-sets/acl-set[name=MyACL4][type=ACL_IPV4] -target_addr 127.0.0.1:8080 -alsologtostderr -insecure true -pretty

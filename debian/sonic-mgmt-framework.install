@@ -1,3 +1,5 @@
-usr/sbin/*
-rest_ui/*
-usr/models/*
+build/rest_server/rest_server       usr/sbin
+build/rest_server/generate_cert     usr/sbin
+build/rest_server/dist/ui/*         rest_ui
+build/swagger_client_py/*_client    usr/sbin/lib/swagger_client_py
+build/cli                           usr/sbin
