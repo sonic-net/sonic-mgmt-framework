@@ -1,1 +1,0 @@
-{"openconfig-if-ip:ipv6": {"addresses": {"address": [{"ip": "2001:db8::","config": {"ip": "2001:db8::","prefix-length": 32}}]}}}
