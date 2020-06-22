@@ -64,9 +64,7 @@ var tusrPass = flag.String("tusrpass", "password", "TACACS+ non-admin password")
 var tadmName = flag.String("tadmname", "tactestadmin", "TACACS+ admin username")
 var tadmPass = flag.String("tadmpass", "password", "TACACS+ admin password")
 
-func init() {
-	fmt.Println("+++++ pamAuth_test +++++")
-}
+var authTestRouter *Router
 
 func TestMain(m *testing.M) {
 
@@ -90,53 +88,49 @@ func TestMain(m *testing.M) {
 
 	fmt.Println("+++++ Enabled auth test types", tlist)
 
+	if len(tlist) != 0 {
+		authTestRouter = newEmptyRouter()
+		authTestRouter.config.AuthEnable = true
+
+		authTestRouter.addRoute("test_auth_get", "GET", "/api-tests:auth", authTestHandler)
+		authTestRouter.addRoute("test_auth_head", "HEAD", "/api-tests:auth", authTestHandler)
+		authTestRouter.addRoute("test_auth_options", "OPTIONS", "/api-tests:auth", authTestHandler)
+		authTestRouter.addRoute("test_auth_post", "POST", "/api-tests:auth", authTestHandler)
+		authTestRouter.addRoute("test_auth_patch", "PATCH", "/api-tests:auth", authTestHandler)
+		authTestRouter.addRoute("test_auth_put", "PUT", "/api-tests:auth", authTestHandler)
+		authTestRouter.addRoute("test_auth_delete", "DELETE", "/api-tests:auth", authTestHandler)
+	}
+
 	os.Exit(m.Run())
 }
 
 // Dummy test handler which returns 200 on success; 401 on
 // authentication failure and 403 on authorization failure
-var authTestHandler = authMiddleware(http.HandlerFunc(
-	func(w http.ResponseWriter, r *http.Request) {
+func authTestHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(200)
-	}))
-
-func TestLocalUser_Get(t *testing.T) {
-	ensureAuthTestEnabled(t, "local")
-	testAuthGet(t, *lusrName, *lusrPass, 200)
 }
 
-func TestLocalUser_Set(t *testing.T) {
+func TestAuth_LocalUser(t *testing.T) {
 	ensureAuthTestEnabled(t, "local")
+	testAuthGet(t, *lusrName, *lusrPass, 200)
 	testAuthSet(t, *lusrName, *lusrPass, 403)
 }
 
-func TestLocalAdmin_Get(t *testing.T) {
+func TestAuth_LocalAdmin(t *testing.T) {
 	ensureAuthTestEnabled(t, "local")
 	testAuthGet(t, *ladmName, *ladmPass, 200)
-}
-
-func TestLocalAdmin_Set(t *testing.T) {
-	ensureAuthTestEnabled(t, "local")
 	testAuthSet(t, *ladmName, *ladmPass, 200)
 }
 
-func TestTacacsUser_Get(t *testing.T) {
+func TestAuth_TacacsUser(t *testing.T) {
 	ensureAuthTestEnabled(t, "tacacs")
 	testAuthGet(t, *tusrName, *tusrPass, 200)
-}
-
-func TestTacacslUser_Set(t *testing.T) {
-	ensureAuthTestEnabled(t, "tacacs")
 	testAuthSet(t, *tusrName, *tusrPass, 403)
 }
 
-func TestTacacsAdmin_Get(t *testing.T) {
+func TestAuth_TacacsAdmin(t *testing.T) {
 	ensureAuthTestEnabled(t, "tacacs")
 	testAuthGet(t, *tadmName, *tadmPass, 200)
-}
-
-func TestTacacsAdmin_Set(t *testing.T) {
-	ensureAuthTestEnabled(t, "tacacs")
 	testAuthSet(t, *tadmName, *tadmPass, 200)
 }
 
@@ -179,14 +173,14 @@ func testAuthSet(t *testing.T, username, password string, expStatus int) {
 
 func testAuth(method, username, password string, expStatus int) func(*testing.T) {
 	return func(t *testing.T) {
-		r := httptest.NewRequest(method, "/auth", nil)
+		r := httptest.NewRequest(method, "/api-tests:auth", nil)
 		w := httptest.NewRecorder()
 
 		if username != "" {
 			r.SetBasicAuth(username, password)
 		}
 
-		authTestHandler.ServeHTTP(w, r)
+		authTestRouter.ServeHTTP(w, r)
 
 		if w.Code != expStatus {
 			t.Fatalf("Expected response %d; got %d", expStatus, w.Code)

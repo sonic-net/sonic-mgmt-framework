@@ -55,7 +55,7 @@ if [[ -z $CVL_CFG_FILE ]]; then
     fi
 fi
 
-EXTRA_ARGS="-ui $SERVER_DIR/dist/ui -logtostderr"
+EXTRA_ARGS="-rest_ui $SERVER_DIR/dist/ui -logtostderr"
 
 for V in $@; do
     case $V in

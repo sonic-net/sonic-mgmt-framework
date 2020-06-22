@@ -45,11 +45,23 @@ type RequestContext struct {
 	// the body. When set, the request handler can validate the
 	// request payload by loading the body into this model object.
 	Model interface{}
+
+	// PMap is the mapping of URI parameter names to actual yang
+	// leaf names. Yang xpaths can have duplicate parameter names,
+	// which is not supported by swagger and mux libraries. We
+	// work around it by assigning different parameter names in
+	// swagger and map them back to yang names while converting
+	// REST paths to TransLib paths.
+	PMap NameMap
 }
 
 type contextkey int
 
-const requestContextKey contextkey = 0
+const (
+	requestContextKey contextkey = iota + 1
+	routerObjContextKey
+	routeMatchContextKey
+)
 
 // Request Id generator
 var requestCounter uint64
@@ -68,8 +80,20 @@ func GetContext(r *http.Request) (*RequestContext, *http.Request) {
 	rc := new(RequestContext)
 	rc.ID = fmt.Sprintf("REST-%v", atomic.AddUint64(&requestCounter, 1))
 
-	r = r.WithContext(context.WithValue(r.Context(), requestContextKey, rc))
+	r = setContextValue(r, requestContextKey, rc)
 	return rc, r
+}
+
+// setContextValue sets a new value into http request's context.
+// Returns the new http.Request object containing the new context.
+func setContextValue(r *http.Request, k contextkey, v interface{}) *http.Request {
+	return r.WithContext(context.WithValue(r.Context(), k, v))
+}
+
+// getContextValue looks up a value in a http request's context.
+// Returns nil if the value was not found.
+func getContextValue(r *http.Request, k contextkey) interface{} {
+	return r.Context().Value(k)
 }
 
 ///////////
@@ -187,4 +211,18 @@ func (m MediaTypes) String() string {
 		types = append(types, entry.Type)
 	}
 	return fmt.Sprintf("%v", types)
+}
+
+//////////
+
+// NameMap is a simple mapping of names (string to string)
+type NameMap map[string]string
+
+// Get function returns the mapped name for a given name.
+// Returns given name itself if no mapping exists.
+func (m *NameMap) Get(name string) string {
+	if mappedName, ok := (*m)[name]; ok {
+		return mappedName
+	}
+	return name
 }
