@@ -69,7 +69,7 @@ func Process(w http.ResponseWriter, r *http.Request) {
 	}
 
 write_resp:
-	glog.Infof("[%s] Sending response %d, type=%s, size=%s", reqID, status, rtype, len(data))
+	glog.Infof("[%s] Sending response %d, type=%s, size=%d", reqID, status, rtype, len(data))
 	glog.V(1).Infof("[%s] data=%s", reqID, data)
 
 	// Write http response.. Following strict order should be
@@ -212,8 +212,8 @@ func trimRestconfPrefix(path string) string {
 
 // translibArgs holds arguments for invoking translib APIs.
 type translibArgs struct {
-	path   string // Translib path
-	data   []byte // payload
+	path string // Translib path
+	data []byte // payload
 }
 
 // invokeTranslib calls appropriate TransLib API for the given HTTP
