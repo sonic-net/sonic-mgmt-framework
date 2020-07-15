@@ -20,6 +20,7 @@
 package server
 
 import (
+	"encoding/json"
 	"encoding/xml"
 	"errors"
 	"fmt"
@@ -440,38 +441,62 @@ func testRespData(r *http.Request, rc *RequestContext, data []byte, expType stri
 
 func TestProcessGET(t *testing.T) {
 	w := httptest.NewRecorder()
-	Process(w, prepareRequest(t, "GET", "/test", ""))
-	verifyResponse(t, w, 500)
+	Process(w, prepareRequest(t, "GET", "/api-tests:sample", ""))
+	verifyResponseData(t, w, 200, jsonObj{"path": "/api-tests:sample", "depth": 0})
 }
 
-func TestProcessGET_ACL(t *testing.T) {
+func TestProcessGET_error(t *testing.T) {
 	w := httptest.NewRecorder()
-	Process(w, prepareRequest(t, "GET", "/openconfig-acl:acl", ""))
-	verifyResponse(t, w, 200)
+	Process(w, prepareRequest(t, "GET", "/api-tests:sample/error/not-found", ""))
+	verifyResponse(t, w, 404)
 }
 
 func TestProcessPUT(t *testing.T) {
 	w := httptest.NewRecorder()
-	Process(w, prepareRequest(t, "PUT", "/test", "{}"))
-	verifyResponse(t, w, 500)
+	Process(w, prepareRequest(t, "PUT", "/api-tests:sample", "{}"))
+	verifyResponse(t, w, 204)
+}
+
+func TestProcessPUT_error(t *testing.T) {
+	w := httptest.NewRecorder()
+	Process(w, prepareRequest(t, "PUT", "/api-tests:sample/error/not-supported", "{}"))
+	verifyResponse(t, w, 405)
 }
 
 func TestProcessPOST(t *testing.T) {
 	w := httptest.NewRecorder()
-	Process(w, prepareRequest(t, "POST", "/test", "{}"))
-	verifyResponse(t, w, 500)
+	Process(w, prepareRequest(t, "POST", "/api-tests:sample", "{}"))
+	verifyResponse(t, w, 201)
+}
+
+func TestProcessPOST_error(t *testing.T) {
+	w := httptest.NewRecorder()
+	Process(w, prepareRequest(t, "POST", "/api-tests:sample/error/invalid-args", "{}"))
+	verifyResponse(t, w, 400)
 }
 
 func TestProcessPATCH(t *testing.T) {
 	w := httptest.NewRecorder()
-	Process(w, prepareRequest(t, "PATCH", "/test", "{}"))
+	Process(w, prepareRequest(t, "PATCH", "/api-tests:sample", "{}"))
+	verifyResponse(t, w, 204)
+}
+
+func TestProcessPATCH_error(t *testing.T) {
+	w := httptest.NewRecorder()
+	Process(w, prepareRequest(t, "PATCH", "/api-tests:sample/error/unknown", "{}"))
 	verifyResponse(t, w, 500)
 }
 
 func TestProcessDELETE(t *testing.T) {
 	w := httptest.NewRecorder()
-	Process(w, prepareRequest(t, "DELETE", "/test", "{}"))
-	verifyResponse(t, w, 500)
+	Process(w, prepareRequest(t, "DELETE", "/api-tests:sample", "{}"))
+	verifyResponse(t, w, 204)
+}
+
+func TestProcessDELETE_error(t *testing.T) {
+	w := httptest.NewRecorder()
+	Process(w, prepareRequest(t, "DELETE", "/api-tests:sample/error/not-found", ""))
+	verifyResponse(t, w, 404)
 }
 
 func TestProcessBadMethod(t *testing.T) {
@@ -520,5 +545,24 @@ func prepareRequest(t *testing.T, method, path, data string) *http.Request {
 func verifyResponse(t *testing.T, w *httptest.ResponseRecorder, expCode int) {
 	if w.Code != expCode {
 		t.Fatalf("Expecting response status %d; got %d", expCode, w.Code)
+	}
+}
+
+type jsonObj map[string]interface{}
+
+func verifyResponseData(t *testing.T, w *httptest.ResponseRecorder,
+	expCode int, expData jsonObj) {
+	verifyResponse(t, w, expCode)
+
+	data := make(jsonObj)
+	err := json.Unmarshal(w.Body.Bytes(), &data)
+	if err != nil {
+		t.Fatalf("Unmarshal error: %v", err)
+	}
+
+	for k, v := range expData {
+		if fmt.Sprintf("%v", v) != fmt.Sprintf("%v", data[k]) {
+			t.Fatalf("Data mismatch for key '%s'; exp='%v', found='%v'", k, v, data[k])
+		}
 	}
 }
