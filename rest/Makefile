@@ -61,8 +61,8 @@ else
 endif
 
 # Gotest binary for REST Server
-$(REST_TEST_BIN): $(REST_TEST_SRCS) $(REST_GO_SRCS) | $(REST_BUILD_DIR)/
-	$(GO) test -mod=vendor -cover -c ../rest/server -o $@
+$(REST_TEST_BIN): $(REST_TEST_SRCS) $(REST_SRCS) | $(REST_BUILD_DIR)/
+	$(GO) test -mod=vendor -tags test -cover -c ../rest/server -o $@
 
 # Compile certificate generator from standard crypto/tls/generate_cert.go.
 # Source file will be available in GOROOT/src.
