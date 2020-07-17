@@ -20,7 +20,6 @@
 package server
 
 import (
-	"bytes"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -275,19 +274,6 @@ func invokeTranslib(args *translibArgs, r *http.Request, rc *RequestContext) (in
 	}
 
 	return status, content, err
-}
-
-// hostMetadataHandler function handles "GET /.well-known/host-meta"
-// request as per RFC6415. RESTCONF specification requires this for
-// advertising the RESTCONF root path ("/restconf" in our case).
-func hostMetadataHandler(w http.ResponseWriter, r *http.Request) {
-	var data bytes.Buffer
-	data.WriteString("<XRD xmlns='http://docs.oasis-open.org/ns/xri/xrd-1.0'>")
-	data.WriteString("<Link rel='restconf' href='/restconf'/>")
-	data.WriteString("</XRD>")
-
-	w.Header().Set("Content-Type", "application/xrd+xml")
-	w.Write(data.Bytes())
 }
 
 // writeErrorResponse writes HTTP error response for a error object

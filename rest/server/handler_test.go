@@ -21,7 +21,6 @@ package server
 
 import (
 	"encoding/json"
-	"encoding/xml"
 	"errors"
 	"fmt"
 	"net/http"
@@ -80,57 +79,6 @@ func testGet(url string, expStatus int) func(*testing.T) {
 		if w.Code != expStatus {
 			t.Fatalf("Expected response code %d; found %d", expStatus, w.Code)
 		}
-	}
-}
-
-func TestMetadataHandler(t *testing.T) {
-	r := httptest.NewRequest("GET", "/.well-known/host-meta", nil)
-	w := httptest.NewRecorder()
-
-	newDefaultRouter().ServeHTTP(w, r)
-
-	if w.Code != 200 {
-		t.Fatalf("Request failed with status %d", w.Code)
-	}
-
-	ct, _ := parseMediaType(w.Header().Get("content-type"))
-	if ct == nil || ct.Type != "application/xrd+xml" {
-		t.Fatalf("Unexpected content-type '%s'", w.Header().Get("content-type"))
-	}
-
-	data := w.Body.Bytes()
-	if len(data) == 0 {
-		t.Fatalf("No response body")
-	}
-
-	var payload struct {
-		XMLName xml.Name `xml:"XRD"`
-		Links   []struct {
-			Rel  string `xml:"rel,attr"`
-			Href string `xml:"href,attr"`
-		} `xml:"Link"`
-	}
-
-	err := xml.Unmarshal(data, &payload)
-	if err != nil {
-		t.Fatalf("Response parsing failed; err=%v", err)
-	}
-
-	if payload.XMLName.Local != "XRD" ||
-		payload.XMLName.Space != "http://docs.oasis-open.org/ns/xri/xrd-1.0" {
-		t.Fatalf("Invalid response '%s'", data)
-	}
-
-	var rcRoot string
-	for _, x := range payload.Links {
-		if x.Rel == "restconf" {
-			rcRoot = x.Href
-		}
-	}
-
-	t.Logf("Restconf root = '%s'", rcRoot)
-	if rcRoot != "/restconf" {
-		t.Fatalf("Invalid restconf root; expected '/restconf'")
 	}
 }
 

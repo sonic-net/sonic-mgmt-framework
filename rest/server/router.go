@@ -367,11 +367,6 @@ func (rs *routeStore) addServiceRoutes() {
 	// Redirect "/ui" to "/ui/index.html"
 	router.Methods("GET").Path("/ui").
 		Handler(http.RedirectHandler("/ui/index.html", http.StatusMovedPermanently))
-
-	// Metadata discovery handler
-	metadataHandler := http.HandlerFunc(hostMetadataHandler)
-	router.Methods("GET").Path("/.well-known/host-meta").
-		Handler(withMiddleware(metadataHandler, "hostMetadataHandler"))
 }
 
 // getRouteMatchInfo returns routeMatchInfo from request context.
