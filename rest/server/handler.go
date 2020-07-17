@@ -24,6 +24,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"sort"
 	"strings"
 
 	"github.com/Azure/sonic-mgmt-common/translib"
@@ -283,6 +284,28 @@ func invokeTranslib(args *translibArgs, r *http.Request, rc *RequestContext) (in
 	return status, content, err
 }
 
+// writeOptionsResponse writes response for OPTIONS request. Caller
+// should provide current path and allowed methods for the path.
+func writeOptionsResponse(w http.ResponseWriter, r *http.Request,
+	path string, methods []string) {
+	hasPatch := containsString(methods, "PATCH")
+
+	// "Allow" header
+	if len(methods) != 0 {
+		if !containsString(methods, "OPTIONS") {
+			methods = append(methods, "OPTIONS")
+		}
+
+		sort.Strings(methods)
+		w.Header().Set("Allow", strings.Join(methods, ", "))
+	}
+
+	// "Accept-Patch" header for RESTCONF data paths
+	if hasPatch && strings.HasPrefix(path, restconfDataPathPrefix) {
+		w.Header().Set("Accept-Patch", mimeYangDataJSON)
+	}
+}
+
 // writeErrorResponse writes HTTP error response for a error object
 func writeErrorResponse(w http.ResponseWriter, r *http.Request, err error) {
 	status, data, ctype := prepareErrorResponse(err, r)
@@ -290,4 +313,14 @@ func writeErrorResponse(w http.ResponseWriter, r *http.Request, err error) {
 	w.Header().Set("Content-Type", ctype)
 	w.WriteHeader(status)
 	w.Write(data)
+}
+
+// containsString checks if slice 'arr' contains the string value 's'
+func containsString(arr []string, s string) bool {
+	for _, v := range arr {
+		if v == s {
+			return true
+		}
+	}
+	return false
 }

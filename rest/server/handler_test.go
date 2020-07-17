@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"sort"
 	"strings"
 	"testing"
 )
@@ -79,6 +80,76 @@ func testGet(url string, expStatus int) func(*testing.T) {
 		if w.Code != expStatus {
 			t.Fatalf("Expected response code %d; found %d", expStatus, w.Code)
 		}
+	}
+}
+
+func TestOptions(t *testing.T) {
+	path1 := "/optionstest/1"
+	path2 := "/optionstest/2"
+	path3 := restconfDataPathPrefix + "optionstest/3"
+	path4 := restconfDataPathPrefix + "optionstest/4"
+	path5 := restconfDataPathPrefix + "optionstest/unknown"
+
+	h := newHandler(200)
+	AddRoute("OPTGET1", "GET", path1, h)
+	AddRoute("OPTGET2", "GET", path2, h)
+	AddRoute("OPTPUT2", "PUT", path2, h)
+	AddRoute("OPTPAT2", "PATCH", path2, h)
+	AddRoute("OPTPAT3", "PATCH", path3, h)
+	AddRoute("OPTPAT4", "POST", path4, h)
+
+	testRouter = newDefaultRouter()
+	t.Run("OPT-1", testOptions(path1, "GET, OPTIONS", ""))
+	t.Run("OPT-2", testOptions(path2, "GET, PUT, PATCH, OPTIONS", ""))
+	t.Run("OPT-3", testOptions(path3, "PATCH, OPTIONS", mimeYangDataJSON))
+	t.Run("OPT-4", testOptions(path4, "POST, OPTIONS", ""))
+	t.Run("OPT-5", testResponseStatus("OPTIONS", path5, 404))
+
+	testRouter = nil
+}
+
+func testOptions(path, expAllow, expAcceptPatch string) func(*testing.T) {
+	return func(t *testing.T) {
+		//t.Logf("Trying OPTIONS %s", path)
+		w := httptest.NewRecorder()
+		testRouter.ServeHTTP(w, httptest.NewRequest("OPTIONS", path, nil))
+
+		allow := w.Header().Get("Allow")
+		acceptPatch := w.Header().Get("Accept-Patch")
+
+		if w.Code != 200 {
+			t.Fatalf("Handler returned %d for path %s", w.Code, path)
+		}
+		if allow == "" {
+			t.Fatalf("Handler did not return 'Allow' header for path %s", path)
+		}
+		if normalizeCommaList(allow) != normalizeCommaList(expAllow) {
+			t.Fatalf("Expecting 'Allow' methods [%s]; found [%s] for path %s",
+				expAllow, allow, path)
+		}
+		if acceptPatch != expAcceptPatch {
+			t.Fatalf("Expecting 'Accept-Patch' [%s]; found [%s] for path %s",
+				expAcceptPatch, acceptPatch, path)
+		}
+	}
+}
+
+func normalizeCommaList(value string) string {
+	toks := strings.Split(value, ",")
+	for i, v := range toks {
+		toks[i] = strings.TrimSpace(v)
+	}
+	sort.Strings(toks)
+	return strings.Join(toks, ",")
+}
+
+func testResponseStatus(method, path string, expStatus int) func(*testing.T) {
+	return func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(method, path, nil)
+
+		testRouter.ServeHTTP(w, r)
+		verifyResponse(t, w, expStatus)
 	}
 }
 
