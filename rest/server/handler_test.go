@@ -442,6 +442,25 @@ func TestProcessGET_error(t *testing.T) {
 	verifyResponse(t, w, 404)
 }
 
+func TestProcessHEAD(t *testing.T) {
+	w := httptest.NewRecorder()
+	Process(w, prepareRequest(t, "HEAD", "/api-tests:sample", ""))
+	verifyResponse(t, w, 200)
+
+	if w.Header().Get("Content-Length") == "" {
+		t.Fatalf("Expecting Content-Length response header..")
+	}
+	if w.Body.Len() != 0 {
+		t.Fatalf("Expecting empty body; found %d bytes - %s", w.Body.Len(), w.Body.String())
+	}
+}
+
+func TestProcessHEAD_error(t *testing.T) {
+	w := httptest.NewRecorder()
+	Process(w, prepareRequest(t, "HEAD", "/api-tests:sample/error/not-found", ""))
+	verifyResponse(t, w, 404)
+}
+
 func TestProcessPUT(t *testing.T) {
 	w := httptest.NewRecorder()
 	Process(w, prepareRequest(t, "PUT", "/api-tests:sample", "{}"))
