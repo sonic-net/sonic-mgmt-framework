@@ -24,12 +24,11 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/Azure/sonic-mgmt-common/translib"
-
 	"github.com/golang/glog"
-	"github.com/gorilla/mux"
 )
 
 // Process function is the common landing place for all REST requests.
@@ -38,23 +37,24 @@ import (
 func Process(w http.ResponseWriter, r *http.Request) {
 	rc, r := GetContext(r)
 	reqID := rc.ID
-	path := r.URL.Path
+	args := translibArgs{}
 
+	var err error
 	var status int
 	var data []byte
 	var rtype string
 
-	glog.Infof("[%s] %s %s; content-len=%d", reqID, r.Method, path, r.ContentLength)
-	_, body, err := getRequestBody(r, rc)
+	glog.Infof("[%s] %s %s; content-len=%d", reqID, r.Method, r.URL.Path, r.ContentLength)
+	_, args.data, err = getRequestBody(r, rc)
 	if err != nil {
 		status, data, rtype = prepareErrorResponse(err, r)
 		goto write_resp
 	}
 
-	path = getPathForTranslib(r)
-	glog.Infof("[%s] Translated path = %s", reqID, path)
+	args.path = getPathForTranslib(r, rc)
+	glog.V(1).Infof("[%s] Translated path = %s", reqID, args.path)
 
-	status, data, err = invokeTranslib(reqID, r.Method, path, body)
+	status, data, err = invokeTranslib(&args, r, rc)
 	if err != nil {
 		glog.Errorf("[%s] Translib error %T - %v", reqID, err, err)
 		status, data, rtype = prepareErrorResponse(err, r)
@@ -69,7 +69,8 @@ func Process(w http.ResponseWriter, r *http.Request) {
 	}
 
 write_resp:
-	glog.Infof("[%s] Sending response %d, type=%s, data=%s", reqID, status, rtype, data)
+	glog.Infof("[%s] Sending response %d, type=%s, size=%d", reqID, status, rtype, len(data))
+	glog.V(1).Infof("[%s] data=%s", reqID, data)
 
 	// Write http response.. Following strict order should be
 	// maintained to form proper response.
@@ -153,16 +154,13 @@ func resolveResponseContentType(data []byte, r *http.Request, rc *RequestContext
 }
 
 // getPathForTranslib converts REST URIs into GNMI paths
-func getPathForTranslib(r *http.Request) string {
-	// Return the URL path if no variables in the template..
-	vars := mux.Vars(r)
-	if len(vars) == 0 {
-		return trimRestconfPrefix(r.URL.Path)
-	}
+func getPathForTranslib(r *http.Request, rc *RequestContext) string {
+	match := getRouteMatchInfo(r)
+	path := match.path
+	vars := match.vars
 
-	path, err := mux.CurrentRoute(r).GetPathTemplate()
-	if err != nil {
-		glog.Infof("No path template for this route")
+	// Return the URL path if no variables in the template..
+	if len(vars) == 0 {
 		return trimRestconfPrefix(r.URL.Path)
 	}
 
@@ -175,14 +173,30 @@ func getPathForTranslib(r *http.Request) string {
 	path = trimRestconfPrefix(path)
 	path = strings.Replace(path, "={", "{", -1)
 	path = strings.Replace(path, "},{", "}{", -1)
+	var err error
 
 	for k, v := range vars {
+		v, err = url.PathUnescape(v)
+		if err != nil {
+			glog.Warningf("Failed to unescape path var \"%s\". err=%v", v, err)
+			v = vars[k]
+		}
+
 		restStyle := fmt.Sprintf("{%v}", k)
-		gnmiStyle := fmt.Sprintf("[%v=%v]", k, v)
+		gnmiStyle := fmt.Sprintf("[%v=%v]", rc.PMap.Get(k), escapeKeyValue(v))
 		path = strings.Replace(path, restStyle, gnmiStyle, 1)
 	}
 
 	return path
+}
+
+// escapeKeyValue function escapes a path key's value as per gNMI path
+// conventions -- prefixes '\' to ']' and '\'
+func escapeKeyValue(val string) string {
+	val = strings.Replace(val, "\\", "\\\\", -1)
+	val = strings.Replace(val, "]", "\\]", -1)
+
+	return val
 }
 
 // trimRestconfPrefix removes "/restconf/data" prefix from the path.
@@ -196,16 +210,24 @@ func trimRestconfPrefix(path string) string {
 	return path
 }
 
+// translibArgs holds arguments for invoking translib APIs.
+type translibArgs struct {
+	path string // Translib path
+	data []byte // payload
+}
+
 // invokeTranslib calls appropriate TransLib API for the given HTTP
 // method. Returns response status code and content.
-func invokeTranslib(reqID, method, path string, payload []byte) (int, []byte, error) {
+func invokeTranslib(args *translibArgs, r *http.Request, rc *RequestContext) (int, []byte, error) {
 	var status = 400
 	var content []byte
 	var err error
 
-	switch method {
+	switch r.Method {
 	case "GET":
-		req := translib.GetRequest{Path: path}
+		req := translib.GetRequest{
+			Path: args.path,
+		}
 		resp, err1 := translib.Get(req)
 		if err1 == nil {
 			status = 200
@@ -217,27 +239,38 @@ func invokeTranslib(reqID, method, path string, payload []byte) (int, []byte, er
 	case "POST":
 		//TODO return 200 for operations request
 		status = 201
-		req := translib.SetRequest{Path: path, Payload: payload}
+		req := translib.SetRequest{
+			Path:    args.path,
+			Payload: args.data,
+		}
 		_, err = translib.Create(req)
 
 	case "PUT":
 		//TODO send 201 if PUT resulted in creation
 		status = 204
-		req := translib.SetRequest{Path: path, Payload: payload}
+		req := translib.SetRequest{
+			Path:    args.path,
+			Payload: args.data,
+		}
 		_, err = translib.Replace(req)
 
 	case "PATCH":
 		status = 204
-		req := translib.SetRequest{Path: path, Payload: payload}
+		req := translib.SetRequest{
+			Path:    args.path,
+			Payload: args.data,
+		}
 		_, err = translib.Update(req)
 
 	case "DELETE":
 		status = 204
-		req := translib.SetRequest{Path: path}
+		req := translib.SetRequest{
+			Path: args.path,
+		}
 		_, err = translib.Delete(req)
 
 	default:
-		glog.Errorf("[%s] Unknown method '%v'", reqID, method)
+		glog.Errorf("[%s] Unknown method '%v'", rc.ID, r.Method)
 		err = httpBadRequest("Invalid method")
 	}
 
@@ -255,4 +288,13 @@ func hostMetadataHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/xrd+xml")
 	w.Write(data.Bytes())
+}
+
+// writeErrorResponse writes HTTP error response for a error object
+func writeErrorResponse(w http.ResponseWriter, r *http.Request, err error) {
+	status, data, ctype := prepareErrorResponse(err, r)
+
+	w.Header().Set("Content-Type", ctype)
+	w.WriteHeader(status)
+	w.Write(data)
 }

@@ -28,72 +28,48 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-
-	"github.com/gorilla/mux"
 )
 
-func init() {
-	fmt.Println("+++++ init handler_test +++++")
-}
-
-var testRouter *mux.Router
+var testRouter *Router
 
 // Basic mux.Router tests
 func TestRoutes(t *testing.T) {
-	initCount := countRoutes(NewRouter())
+	AddRoute("one", "GET", "/testroute/1", newHandler(1))
+	AddRoute("two", "GET", "/testroute/2", newHandler(2))
+	AddRoute("two", "GET", "/restconf/data/testroute/3", newHandler(3))
+	AddRoute("two", "GET", "/restconf/data/testroute/4", newHandler(4))
 
-	// Add couple of test handlers
-
-	AddRoute("one", "GET", "/test/1", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(1)
-	})
-
-	AddRoute("two", "GET", "/test/2", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(2)
-	})
-
-	SetUIDirectory("/tmp/ui") // !!?
-	testRouter = NewRouter()
-	newCount := countRoutes(testRouter)
-
-	if newCount != initCount+2 {
-		t.Fatalf("Expected route count %d; found %d", initCount+2, newCount)
-	}
+	testRouter = newDefaultRouter()
 
 	// Try the test URLs and an unknown URL. The unknonw path
 	// should return 404
-	t.Run("Get1", testGet("/test/1", 1))
-	t.Run("Get2", testGet("/test/2", 2))
-	t.Run("GetUnknown", testGet("/test/unknown", 404))
+	t.Run("Get1", testGet("/testroute/1", 1))
+	t.Run("Get2", testGet("/testroute/2", 2))
+	t.Run("Get3", testGet("/restconf/data/testroute/3", 3))
+	t.Run("Get4", testGet("/restconf/data/testroute/4", 4))
+	t.Run("GetUnknown", testGet("/testroute/4", 404))
 	t.Run("Meta", testGet("/.well-known/host-meta", 200))
 
 	// Try the test URLs with authentication enabled.. This should
 	// fail the requests with 401 error. Unknown path should still
 	// return 404.
-	SetUserAuthEnable(true)
-	testRouter = NewRouter()
-	t.Run("Get1_auth", testGet("/test/1", 401))
-	t.Run("Get2_auth", testGet("/test/2", 401))
-	t.Run("GetUnknown_auth", testGet("/test/unknown", 404))
-
-	// Meta handler should not be affected by user auth
-	t.Run("Meta_auth", testGet("/.well-known/host-meta", 200))
+	testRouter.config.AuthEnable = true
+	t.Run("Get1_auth", testGet("/testroute/1", 401))
+	t.Run("Get2_auth", testGet("/testroute/2", 401))
+	t.Run("Get3", testGet("/restconf/data/testroute/3", 401))
+	t.Run("Get4", testGet("/restconf/data/testroute/4", 401))
+	t.Run("GetUnknown_auth", testGet("/testroute/4", 404))
+	t.Run("Meta_auth", testGet("/.well-known/host-meta", 401))
 
 	// Cleanup for next tests
-	SetUserAuthEnable(false)
 	testRouter = nil
 }
 
-// countRoutes counts the registered routes in a mux.Router
-// object by walking it
-func countRoutes(r *mux.Router) int {
-	var count int
-	r.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
-		count++
-		return nil
-	})
-
-	return count
+// newHandler creates a http handler that returns given status
+func newHandler(n int) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(n)
+	}
 }
 
 // Try the url and check response code
@@ -111,7 +87,7 @@ func TestMetadataHandler(t *testing.T) {
 	r := httptest.NewRequest("GET", "/.well-known/host-meta", nil)
 	w := httptest.NewRecorder()
 
-	NewRouter().ServeHTTP(w, r)
+	newDefaultRouter().ServeHTTP(w, r)
 
 	if w.Code != 200 {
 		t.Fatalf("Request failed with status %d", w.Code)
@@ -230,31 +206,98 @@ func TestPathConv(t *testing.T) {
 		"*",
 		"/test/id=NOTEMPLATE",
 		"/test/id=NOTEMPLATE"))
+
+	t.Run("empty_params", testPathConv2(
+		map[string]string{},
+		"/test/id={name}",
+		"/test/id=X",
+		"/test/id[name=X]"))
+
+	t.Run("1param", testPathConv2(
+		map[string]string{"name1": "name"},
+		"/test/id={name1}",
+		"/test/id=X",
+		"/test/id[name=X]"))
+
+	t.Run("nparams", testPathConv2(
+		map[string]string{"name1": "name", "name2": "name"},
+		"/test/id={name1}/data/ref={name2}",
+		"/test/id=X/data/ref=Y",
+		"/test/id[name=X]/data/ref[name=Y]"))
+
+	t.Run("extra_params", testPathConv2(
+		map[string]string{"name1": "name", "name2": "name"},
+		"/test/id={name1}",
+		"/test/id=X",
+		"/test/id[name=X]"))
+
+	t.Run("escaped", testPathConv(
+		"/test/interface={name}/ip={addr}",
+		"/test/interface=Ethernet%200%2f1/ip=10.0.0.1%2f24",
+		"/test/interface[name=Ethernet 0/1]/ip[addr=10.0.0.1/24]"))
+
+	t.Run("escaped2", testPathConv(
+		"/test/interface={name},{ip}",
+		"/test/interface=Eth0%2f1%5b2%5c%5d,1::1",
+		"/test/interface[name=Eth0/1[2\\\\\\]][ip=1::1]"))
+
+	t.Run("escaped+param", testPathConv2(
+		map[string]string{"name1": "name"},
+		"/test/interface={name1},{type}",
+		"/test/interface=Eth0%2f1:1,PHY",
+		"/test/interface[name=Eth0/1:1][type=PHY]"))
+
+	t.Run("rcdata_nparams", testPathConv2(
+		map[string]string{"name1": "name", "name2": "name"},
+		"/restconf/data/id={name1}/data/ref={name2}",
+		"/restconf/data/id=X/data/ref=Y",
+		"/id[name=X]/data/ref[name=Y]"))
+
+	t.Run("rcdata_escaped", testPathConv(
+		"/restconf/data/interface={name}/ip={addr}",
+		"/restconf/data/interface=Ethernet%200%2f1/ip=10.0.0.1%2f24",
+		"/interface[name=Ethernet 0/1]/ip[addr=10.0.0.1/24]"))
+
+	t.Run("rcdata_escaped2", testPathConv(
+		"/restconf/data/interface={name},{ip}",
+		"/restconf/data/interface=Eth0%2f1%5b2%5c%5d,1::1",
+		"/interface[name=Eth0/1[2\\\\\\]][ip=1::1]"))
+
+	t.Run("rcdata_escaped+param", testPathConv2(
+		map[string]string{"name1": "name"},
+		"/restconf/data/interface={name1},{type}",
+		"/restconf/data/interface=Eth0%2f1:1,PHY",
+		"/interface[name=Eth0/1:1][type=PHY]"))
+
 }
 
 // test handler to invoke getPathForTranslib and write the conveted
 // path into response. Conversion logic depends on context values
 // managed by mux router. Hence should be called from a handler.
 var pathConvHandler = func(w http.ResponseWriter, r *http.Request) {
-	// t, err := mux.CurrentRoute(r).GetPathTemplate()
-	// fmt.Printf("Patt : %v (err=%v)\n", t, err)
-	// fmt.Printf("Vars : %v\n", mux.Vars(r))
-
-	w.Write([]byte(getPathForTranslib(r)))
+	rc, r := GetContext(r)
+	w.Write([]byte(getPathForTranslib(r, rc)))
 }
 
 func testPathConv(template, path, expPath string) func(*testing.T) {
+	return testPathConv2(nil, template, path, expPath)
+}
+
+func testPathConv2(m map[string]string, template, path, expPath string) func(*testing.T) {
 	return func(t *testing.T) {
-		router := mux.NewRouter()
-		if template == "*" {
-			t.Logf("No template...")
-			router.Methods("GET").HandlerFunc(pathConvHandler)
-		} else {
-			router.HandleFunc(template, pathConvHandler)
+		router := newEmptyRouter()
+		router.addRoute(t.Name(), "GET", template, pathConvHandler)
+
+		r := httptest.NewRequest("GET", path, nil)
+		w := httptest.NewRecorder()
+
+		if m != nil {
+			rc, r1 := GetContext(r)
+			rc.PMap = m
+			r = r1
 		}
 
-		w := httptest.NewRecorder()
-		router.ServeHTTP(w, httptest.NewRequest("GET", path, nil))
+		router.ServeHTTP(w, r)
 
 		convPath := w.Body.String()
 		if convPath != expPath {
@@ -564,5 +607,26 @@ func verifyResponseData(t *testing.T, w *httptest.ResponseRecorder,
 		if fmt.Sprintf("%v", v) != fmt.Sprintf("%v", data[k]) {
 			t.Fatalf("Data mismatch for key '%s'; exp='%v', found='%v'", k, v, data[k])
 		}
+	}
+}
+
+// newDefaultRouter creates a router instance through NewRouter function
+// with default configurations. Includes already registred routes.
+func newDefaultRouter() *Router {
+	return NewRouter(RouterConfig{})
+}
+
+// newEmptyRouter creates an empty router instance (with no routes).
+// Routes can be added through addRoute function.
+func newEmptyRouter() *Router {
+	return &Router{routes: newRouteStore()}
+}
+
+func (r *Router) addRoute(name, method, path string, h http.HandlerFunc) {
+	if path == "*" {
+		r.routes.muxRoutes.Methods(method).Handler(withMiddleware(h, name))
+	} else {
+		rr := routeRegInfo{name: name, method: method, path: path, handler: h}
+		r.routes.addRoute(&rr)
 	}
 }

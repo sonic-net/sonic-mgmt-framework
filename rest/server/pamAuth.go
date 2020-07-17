@@ -151,13 +151,16 @@ func isWriteOperation(r *http.Request) bool {
 // fails.
 func authMiddleware(inner http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		config := getRouterConfig(r)
+		if config == nil || !config.AuthEnable {
+			inner.ServeHTTP(w, r)
+			return
+		}
+
 		rc, r := GetContext(r)
 		err := PAMAuthenAndAuthor(r, rc)
 		if err != nil {
-			status, data, ctype := prepareErrorResponse(err, r)
-			w.Header().Set("Content-Type", ctype)
-			w.WriteHeader(status)
-			w.Write(data)
+			writeErrorResponse(w, r, err)
 		} else {
 			inner.ServeHTTP(w, r)
 		}
