@@ -58,13 +58,17 @@ def generate_body(func, args):
        keypath = [ args[0], args[1] ]
 
     # Configure ACL table
-    elif func.__name__ == 'patch_openconfig_acl_acl_acl_sets_acl_set' :
-       keypath = [ args[0], args[1] ]
-       body = { "openconfig-acl:config": {
+    elif func.__name__ == 'patch_list_openconfig_acl_acl_acl_sets_acl_set' :
+       keypath = []
+       body = { "openconfig-acl:acl-set": [{
                    "name": args[0],
                    "type": args[1],
-                   "description": ""
-                 }
+                   "config": {
+                      "name": args[0],
+                      "type": args[1],
+                      "description": ""
+                   }
+                 }]
               }
 
     # Configure ACL rule specific to an ACL table
