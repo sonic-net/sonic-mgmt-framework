@@ -155,7 +155,7 @@ class Response(object):
 
     def error_message(self, formatter_func=None):
         err = self.errors().get('error')
-        if err == None:
+        if err is None:
             return None
         if isinstance(err, list):
             err = err[0]
