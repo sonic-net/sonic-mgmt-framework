@@ -121,7 +121,9 @@ def show_cli_output(template_file, response):
     # Create the jinja2 environment.
     # Notice the use of trim_blocks, which greatly helps control whitespace.
 
-    template_path = os.path.abspath(os.path.join(THIS_DIR, "../render-templates"))
+    template_path = os.getenv("RENDERER_TEMPLATE_PATH")
+    if template_path is None:
+        template_path = os.path.abspath(os.path.join(THIS_DIR, "../render-templates"))
 
     j2_env = Environment(loader=FileSystemLoader(template_path),extensions=['jinja2.ext.do'])
     j2_env.trim_blocks = True
