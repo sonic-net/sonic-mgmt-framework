@@ -130,6 +130,7 @@ $(SERVER_DIST_INIT): | $$(@D)/.
 		-DpackageName=$(subst -,_,$(*F))_client \
 		--lang python \
 		--input-spec $(YANGAPI_DIR)/$(*F).yaml \
+		--template-dir $(CODEGEN_TOOLS_DIR)/py-client/templates \
 		--output $(@D)
 	touch $@
 
@@ -142,6 +143,7 @@ $(SERVER_DIST_INIT): | $$(@D)/.
 		-DpackageName=$(subst -,_,$(*F))_client \
 		--lang python \
 		--input-spec $(OPENAPI_DIR)/$(*F).yaml \
+		--template-dir $(CODEGEN_TOOLS_DIR)/py-client/templates \
 		--output $(@D)
 	touch $@
 
