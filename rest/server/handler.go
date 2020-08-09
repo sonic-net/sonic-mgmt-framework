@@ -20,11 +20,11 @@
 package server
 
 import (
-	"bytes"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"sort"
 	"strings"
 
 	"github.com/Azure/sonic-mgmt-common/translib"
@@ -59,6 +59,13 @@ func Process(w http.ResponseWriter, r *http.Request) {
 		glog.Errorf("[%s] Translib error %T - %v", reqID, err, err)
 		status, data, rtype = prepareErrorResponse(err, r)
 		goto write_resp
+	}
+
+	// Special handling for HEAD -- ignore the data but set content-length.
+	// HTTP spec says HEAD can return content-length and content-type as if it was a GET.
+	if r.Method == "HEAD" {
+		w.Header().Set("Content-Length", fmt.Sprintf("%d", len(data)))
+		data = nil
 	}
 
 	rtype, err = resolveResponseContentType(data, r, rc)
@@ -224,7 +231,7 @@ func invokeTranslib(args *translibArgs, r *http.Request, rc *RequestContext) (in
 	var err error
 
 	switch r.Method {
-	case "GET":
+	case "GET", "HEAD":
 		req := translib.GetRequest{
 			Path: args.path,
 		}
@@ -277,17 +284,26 @@ func invokeTranslib(args *translibArgs, r *http.Request, rc *RequestContext) (in
 	return status, content, err
 }
 
-// hostMetadataHandler function handles "GET /.well-known/host-meta"
-// request as per RFC6415. RESTCONF specification requires this for
-// advertising the RESTCONF root path ("/restconf" in our case).
-func hostMetadataHandler(w http.ResponseWriter, r *http.Request) {
-	var data bytes.Buffer
-	data.WriteString("<XRD xmlns='http://docs.oasis-open.org/ns/xri/xrd-1.0'>")
-	data.WriteString("<Link rel='restconf' href='/restconf'/>")
-	data.WriteString("</XRD>")
+// writeOptionsResponse writes response for OPTIONS request. Caller
+// should provide current path and allowed methods for the path.
+func writeOptionsResponse(w http.ResponseWriter, r *http.Request,
+	path string, methods []string) {
+	hasPatch := containsString(methods, "PATCH")
 
-	w.Header().Set("Content-Type", "application/xrd+xml")
-	w.Write(data.Bytes())
+	// "Allow" header
+	if len(methods) != 0 {
+		if !containsString(methods, "OPTIONS") {
+			methods = append(methods, "OPTIONS")
+		}
+
+		sort.Strings(methods)
+		w.Header().Set("Allow", strings.Join(methods, ", "))
+	}
+
+	// "Accept-Patch" header for RESTCONF data paths
+	if hasPatch && strings.HasPrefix(path, restconfDataPathPrefix) {
+		w.Header().Set("Accept-Patch", mimeYangDataJSON)
+	}
 }
 
 // writeErrorResponse writes HTTP error response for a error object
@@ -297,4 +313,14 @@ func writeErrorResponse(w http.ResponseWriter, r *http.Request, err error) {
 	w.Header().Set("Content-Type", ctype)
 	w.WriteHeader(status)
 	w.Write(data)
+}
+
+// containsString checks if slice 'arr' contains the string value 's'
+func containsString(arr []string, s string) bool {
+	for _, v := range arr {
+		if v == s {
+			return true
+		}
+	}
+	return false
 }

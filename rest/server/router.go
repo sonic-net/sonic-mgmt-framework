@@ -78,6 +78,9 @@ func (router *Router) serveFromTree(path string, r *http.Request, w http.Respons
 	}
 
 	handler := node.handlers[r.Method]
+	if handler == nil && r.Method == "OPTIONS" {
+		handler = router.routes.rcOptsHandler
+	}
 
 	// Node found, but no handler for the method
 	if handler == nil {
@@ -310,11 +313,15 @@ func NewRouter(config RouterConfig) *Router {
 // starting with "/restconf") are maintained in a routeTree. Other routes
 // are maintained in a mux router.
 type routeStore struct {
-	rcRoutes     routeTree // restconf routes
-	rcRouteCount uint32    // number of restconf routes
+	rcRoutes      routeTree    // restconf routes
+	rcOptsHandler http.Handler // OPTIONS handler for restconf routes
+	rcRouteCount  uint32       // number of restconf routes
 
-	muxRoutes     *mux.Router // non-restconf and internal routes (UI, yang)
-	muxRouteCount uint32      // number of routes in mux router
+	muxRoutes      *mux.Router         // non-restconf and internal routes (UI, yang)
+	muxOptsRouter  *mux.Router         // subrouter for OPTIONS handlers
+	muxOptsHandler http.Handler        // OPTIONS handler for mux routes
+	muxOptsData    map[string][]string // path to operations map for mux routes
+	muxRouteCount  uint32              // number of routes in mux router
 
 	svcRoutesAdded bool // indicates if service routes have been registered
 }
@@ -323,12 +330,16 @@ type routeStore struct {
 func newRouteStore() *routeStore {
 	rs := new(routeStore)
 	rs.rcRoutes = make(routeTree)
+	rs.rcOptsHandler = withMiddleware(http.HandlerFunc(rcOptions), "optionsHandler")
 
 	r := mux.NewRouter().StrictSlash(true).UseEncodedPath()
 	r.NotFoundHandler = http.HandlerFunc(notFound)
 	r.MethodNotAllowedHandler = http.HandlerFunc(notAllowed)
 
 	rs.muxRoutes = r
+	rs.muxOptsRouter = r.Methods("OPTIONS").Subrouter()
+	rs.muxOptsData = make(map[string][]string)
+	rs.muxOptsHandler = withMiddleware(http.HandlerFunc(muxOptions), "optionsHandler")
 
 	return rs
 }
@@ -347,6 +358,8 @@ func (rs *routeStore) addRoute(rr *routeRegInfo) {
 func (rs *routeStore) addMuxRoute(rr *routeRegInfo) {
 	h := withMiddleware(rr.handler, rr.name)
 	rs.muxRoutes.Methods(rr.method).Path(rr.path).Handler(h)
+	rs.muxOptsRouter.Path(rr.path).Handler(rs.muxOptsHandler)
+	rs.muxOptsData[rr.path] = append(rs.muxOptsData[rr.path], rr.method)
 	rs.muxRouteCount++
 }
 
@@ -367,11 +380,6 @@ func (rs *routeStore) addServiceRoutes() {
 	// Redirect "/ui" to "/ui/index.html"
 	router.Methods("GET").Path("/ui").
 		Handler(http.RedirectHandler("/ui/index.html", http.StatusMovedPermanently))
-
-	// Metadata discovery handler
-	metadataHandler := http.HandlerFunc(hostMetadataHandler)
-	router.Methods("GET").Path("/.well-known/host-meta").
-		Handler(withMiddleware(metadataHandler, "hostMetadataHandler"))
 }
 
 // getRouteMatchInfo returns routeMatchInfo from request context.
@@ -438,4 +446,21 @@ func notAllowed(w http.ResponseWriter, r *http.Request) {
 	glog.V(2).Infof("NOT ALLOWED: %s %s from %s", r.Method, r.URL.Path, r.RemoteAddr)
 	writeErrorResponse(w, r,
 		httpError(http.StatusMethodNotAllowed, "%s Not Allowed", r.Method))
+}
+
+// rcOptions handles OPTIONS for routeTree based paths
+func rcOptions(w http.ResponseWriter, r *http.Request) {
+	match := getRouteMatchInfo(r)
+	var methods []string
+	for k := range match.node.handlers {
+		methods = append(methods, k)
+	}
+	writeOptionsResponse(w, r, match.path, methods)
+}
+
+// muxOptions handles OPTIONS for mux matched paths
+func muxOptions(w http.ResponseWriter, r *http.Request) {
+	match := getRouteMatchInfo(r)
+	routr := getContextValue(r, routerObjContextKey).(*Router)
+	writeOptionsResponse(w, r, match.path, routr.routes.muxOptsData[match.path])
 }
