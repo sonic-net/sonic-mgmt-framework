@@ -111,7 +111,7 @@ limitations under the License.
              ptype="STRING_63"
              >
         </PARAM>
-        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-acl.py patch_openconfig_acl_acl_acl_sets_acl_set ${access-list-name} ACL_IPV4</ACTION>
+        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-acl.py patch_list_openconfig_acl_acl_acl_sets_acl_set ${access-list-name} ACL_IPV4</ACTION>
     </COMMAND>
 
 <!-- no ip access-list -->
