@@ -39,11 +39,12 @@ type errorResponse struct {
 // errorEntry defines the RESTCONF compilant error information
 // payload.
 type errorEntry struct {
-	Type    errtype `json:"error-type"`
-	Tag     errtag  `json:"error-tag"`
-	AppTag  string  `json:"error-app-tag,omitempty"`
-	Path    string  `json:"error-path,omitempty"`
-	Message string  `json:"error-message,omitempty"`
+	Type    errtype     `json:"error-type"`
+	Tag     errtag      `json:"error-tag"`
+	AppTag  string      `json:"error-app-tag,omitempty"`
+	Path    string      `json:"error-path,omitempty"`
+	Message string      `json:"error-message,omitempty"`
+	ErrInfo interface{} `json:"error-info,omitempty"`
 }
 
 type errtype string
@@ -138,6 +139,13 @@ func toErrorEntry(err error, r *http.Request) (status int, errInfo errorEntry) {
 		errInfo.Type = errtypeProtocol
 		errInfo.Tag = errtagInvalidValue
 		errInfo.Message = e.ErrorStr.Error()
+
+	case tlerr.TranslibUnsupportedClientVersion:
+		status = http.StatusBadRequest
+		errInfo.Type = errtypeProtocol
+		errInfo.Tag = errtagOperationNotSupported
+		errInfo.Message = e.Error()
+		errInfo.ErrInfo = map[string]interface{}{"version-error": e}
 
 	case tlerr.TranslibRedisClientEntryNotExist:
 		status = http.StatusNotFound

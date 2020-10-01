@@ -46,6 +46,11 @@ func Process(w http.ResponseWriter, r *http.Request) {
 
 	glog.Infof("[%s] %s %s; content-len=%d", reqID, r.Method, r.URL.Path, r.ContentLength)
 	_, args.data, err = getRequestBody(r, rc)
+
+	if err == nil {
+		err = args.parseClientVersion(r, rc)
+	}
+
 	if err != nil {
 		status, data, rtype = prepareErrorResponse(err, r)
 		goto write_resp
@@ -219,8 +224,21 @@ func trimRestconfPrefix(path string) string {
 
 // translibArgs holds arguments for invoking translib APIs.
 type translibArgs struct {
-	path string // Translib path
-	data []byte // payload
+	path    string           // Translib path
+	data    []byte           // payload
+	version translib.Version // client version
+}
+
+// parseClientVersion parses the Accept-Version request header value
+func (args *translibArgs) parseClientVersion(r *http.Request, rc *RequestContext) error {
+	if v := r.Header.Get("Accept-Version"); len(v) != 0 {
+		if err := args.version.Set(v); err != nil {
+			return httpBadRequest("Invalid Accept-Version \"%s\"", v)
+		}
+	}
+
+	glog.V(1).Infof("[%s] Client version = \"%s\"", rc.ID, args.version)
+	return nil
 }
 
 // invokeTranslib calls appropriate TransLib API for the given HTTP
@@ -233,7 +251,8 @@ func invokeTranslib(args *translibArgs, r *http.Request, rc *RequestContext) (in
 	switch r.Method {
 	case "GET", "HEAD":
 		req := translib.GetRequest{
-			Path: args.path,
+			Path:          args.path,
+			ClientVersion: args.version,
 		}
 		resp, err1 := translib.Get(req)
 		if err1 == nil {
@@ -247,8 +266,9 @@ func invokeTranslib(args *translibArgs, r *http.Request, rc *RequestContext) (in
 		//TODO return 200 for operations request
 		status = 201
 		req := translib.SetRequest{
-			Path:    args.path,
-			Payload: args.data,
+			Path:          args.path,
+			Payload:       args.data,
+			ClientVersion: args.version,
 		}
 		_, err = translib.Create(req)
 
@@ -256,23 +276,26 @@ func invokeTranslib(args *translibArgs, r *http.Request, rc *RequestContext) (in
 		//TODO send 201 if PUT resulted in creation
 		status = 204
 		req := translib.SetRequest{
-			Path:    args.path,
-			Payload: args.data,
+			Path:          args.path,
+			Payload:       args.data,
+			ClientVersion: args.version,
 		}
 		_, err = translib.Replace(req)
 
 	case "PATCH":
 		status = 204
 		req := translib.SetRequest{
-			Path:    args.path,
-			Payload: args.data,
+			Path:          args.path,
+			Payload:       args.data,
+			ClientVersion: args.version,
 		}
 		_, err = translib.Update(req)
 
 	case "DELETE":
 		status = 204
 		req := translib.SetRequest{
-			Path: args.path,
+			Path:          args.path,
+			ClientVersion: args.version,
 		}
 		_, err = translib.Delete(req)
 

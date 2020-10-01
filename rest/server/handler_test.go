@@ -28,6 +28,8 @@ import (
 	"sort"
 	"strings"
 	"testing"
+
+	"github.com/Azure/sonic-mgmt-common/translib"
 )
 
 var testRouter *Router
@@ -498,6 +500,52 @@ func testRespData(r *http.Request, rc *RequestContext, data []byte, expType stri
 		if err != nil {
 			t.Fatalf("Unexpected error %v", err)
 		}
+	}
+}
+
+func TestVersion_none(t *testing.T) {
+	r := httptest.NewRequest("GET", "/test", nil)
+	verifyParseVersion(t, r, true, translib.Version{})
+}
+
+func TestVersion_empty(t *testing.T) {
+	r := httptest.NewRequest("GET", "/test", nil)
+	r.Header.Set("Accept-Version", "")
+	verifyParseVersion(t, r, true, translib.Version{})
+}
+
+func TestVersion_000(t *testing.T) {
+	r := httptest.NewRequest("GET", "/test", nil)
+	r.Header.Set("Accept-Version", "0.0.0")
+	verifyParseVersion(t, r, false, translib.Version{})
+}
+
+func TestVersion_123(t *testing.T) {
+	r := httptest.NewRequest("GET", "/test", nil)
+	r.Header.Set("Accept-Version", "1.2.3")
+	verifyParseVersion(t, r, true, translib.Version{Major: 1, Minor: 2, Patch: 3})
+}
+
+func TestVersion_bad(t *testing.T) {
+	r := httptest.NewRequest("GET", "/test", nil)
+	r.Header.Set("Accept-Version", "bad")
+	verifyParseVersion(t, r, false, translib.Version{})
+}
+
+func verifyParseVersion(t *testing.T, r *http.Request, expSuccess bool, expVer translib.Version) {
+	var args translibArgs
+	rc, r := GetContext(r)
+	err := args.parseClientVersion(r, rc)
+	ver := r.Header.Get("Accept-Version")
+
+	if expSuccess && err != nil {
+		t.Fatalf("Unexpected error parsing AcceptVersion \"%s\"; err=%v", ver, err)
+	}
+	if !expSuccess && err == nil {
+		t.Fatalf("Expected error parsing AcceptVersion \"%s\"", ver)
+	}
+	if expSuccess && args.version != expVer {
+		t.Fatalf("Failed to parse AcceptVersion \"%s\"; expected=%s, found=%s", ver, expVer, args.version)
 	}
 }
 
