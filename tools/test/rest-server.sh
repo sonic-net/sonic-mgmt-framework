@@ -21,7 +21,7 @@
 
 set -e
 
-TOPDIR=$PWD
+TOPDIR=$(git rev-parse --show-toplevel || echo ${PWD})
 BUILD_DIR=$TOPDIR/build
 SERVER_DIR=$TOPDIR/build/rest_server
 MGMT_COMMON_DIR=$(realpath $TOPDIR/../sonic-mgmt-common)
@@ -30,6 +30,11 @@ if [[ ! -f $SERVER_DIR/rest_server ]]; then
     echo "error: REST server not compiled"
     echo "Please run 'make rest-server' and try again"
     exit 1
+fi
+
+# Setup database config file path
+if [[ -z ${DB_CONFIG_PATH} ]]; then
+    export DB_CONFIG_PATH=${MGMT_COMMON_DIR}/tools/test/database_config.json
 fi
 
 # LD_LIBRARY_PATH for CVL
@@ -53,6 +58,19 @@ if [[ -z $CVL_CFG_FILE ]]; then
         F=$MGMT_COMMON_DIR/cvl/conf/cvl_cfg.json
         sed -E 's/((TRACE|LOG).*)\"false\"/\1\"true\"/' $F > $CVL_CFG_FILE
     fi
+fi
+
+# Prepare yang files directiry for transformer
+if [[ -z ${YANG_MODELS_PATH} ]]; then
+    export YANG_MODELS_PATH=${BUILD_DIR}/all_yangs
+    mkdir -p ${YANG_MODELS_PATH}
+    pushd ${YANG_MODELS_PATH} > /dev/null
+    MGMT_COMN=$(realpath --relative-to=${PWD} ${MGMT_COMMON_DIR})
+    rm -f *
+    find ${MGMT_COMN}/models/yang -name "*.yang" -not -path "*/testdata/*" -exec ln -sf {} \;
+    ln -sf ${MGMT_COMN}/models/yang/version.xml
+    ln -sf ${MGMT_COMN}/config/transformer/models_list
+    popd > /dev/null
 fi
 
 EXTRA_ARGS="-rest_ui $SERVER_DIR/dist/ui -logtostderr"
