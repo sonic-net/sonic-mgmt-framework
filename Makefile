@@ -56,6 +56,10 @@ GO_DEPS_LIST_2 = github.com/openconfig/goyang \
                  github.com/openconfig/gnmi/proto/gnmi_ext \
                  github.com/openconfig/ygot/ygot
 
+# List of go dependencies in PACKAGE/VERSION format. Version is mandatory.
+# These packages are downloaded before GO_DEPS_LIST.
+GO_DEPS_VER_LIST += go.opentelemetry.io/otel/1f2eba2cdb0fb7e92ce199c6c06167d4080a55ff
+
 REST_BIN = $(BUILD_DIR)/rest_server/main
 CERTGEN_BIN = $(BUILD_DIR)/rest_server/generate_cert
 
@@ -65,7 +69,7 @@ all: build-deps go-deps go-pkg-version go-patch translib rest-server cli
 build-deps:
 	mkdir -p $(BUILD_DIR)
 
-go-deps: $(GO_DEPS_LIST) $(GO_DEPS_LIST_2) 
+go-deps: $(GO_DEPS_VER_LIST) $(GO_DEPS_LIST) $(GO_DEPS_LIST_2) 
 
 go-pkg-version: go-deps
 	cd $(BUILD_GOPATH)/src/github.com/go-redis/redis; git checkout d19aba07b47683ef19378c4a4d43959672b7cec8 2>/dev/null ; true; \
@@ -92,6 +96,10 @@ $(GO_DEPS_LIST):
 
 $(GO_DEPS_LIST_2):
 	$(GO) get -v -d $@
+
+$(GO_DEPS_VER_LIST):
+	$(GO) get -v -d $(@D)
+	cd $(BUILD_GOPATH)/src/$(@D) && git clean -fd && git checkout -fq $(@F)
 
 cli: rest-server
 	$(MAKE) -C src/CLI
