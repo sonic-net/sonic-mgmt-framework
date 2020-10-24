@@ -45,6 +45,9 @@ func init() {
 	// Metadata discovery handler
 	AddRoute("hostMetadataHandler", "GET", "/.well-known/host-meta", hostMetadataHandler)
 
+	// yanglib version handler
+	AddRoute("yanglibVersionHandler", "GET", "/restconf/yang-library-version", yanglibVersionHandler)
+
 	// RESTCONF capability handler
 	AddRoute("capabilityHandler", "GET",
 		"/restconf/data/ietf-restconf-monitoring:restconf-state/capabilities", capabilityHandler)
@@ -63,6 +66,27 @@ func hostMetadataHandler(w http.ResponseWriter, r *http.Request) {
 	data.WriteString("</XRD>")
 
 	w.Header().Set("Content-Type", "application/xrd+xml")
+	w.Write(data.Bytes())
+}
+
+// yanglibVersionHandler handles "GET /restconf/yang-library-version"
+// request as per RFC8040. Yanglib version supported is "2016-06-21"
+func yanglibVersionHandler(w http.ResponseWriter, r *http.Request) {
+	var data bytes.Buffer
+	var contentType string
+	accept := r.Header.Get("Accept")
+
+	// Rudimentary content negotiation
+	if strings.Contains(accept, mimeYangDataXML) {
+		contentType = mimeYangDataXML
+		data.WriteString("<yang-library-version xmlns='urn:ietf:params:xml:ns:yang:ietf-restconf'>")
+		data.WriteString("2016-06-21</yang-library-version>")
+	} else {
+		contentType = mimeYangDataJSON
+		data.WriteString("{\"ietf-restconf:yang-library-version\": \"2016-06-21\"}")
+	}
+
+	w.Header().Set("Content-Type", contentType)
 	w.Write(data.Bytes())
 }
 
