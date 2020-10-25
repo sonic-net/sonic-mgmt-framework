@@ -223,6 +223,16 @@ func TestPathConv(t *testing.T) {
 		"/myroot/restconf/data/id=TEST1",
 		"/id[name=TEST1]"))
 
+	t.Run("rcoper", testPathConv(
+		"/restconf/operations/hello-world",
+		"/restconf/operations/hello-world",
+		"/hello-world"))
+
+	t.Run("x_rcoper", testPathConv(
+		"/myroot/restconf/operations/hello-world",
+		"/myroot/restconf/operations/hello-world",
+		"/hello-world"))
+
 	t.Run("no_template", testPathConv(
 		"*",
 		"/test/id=NOTEMPLATE",
@@ -602,6 +612,20 @@ func TestProcessPOST_error(t *testing.T) {
 	w := httptest.NewRecorder()
 	Process(w, prepareRequest(t, "POST", "/api-tests:sample/error/invalid-args", "{}"))
 	verifyResponse(t, w, 400)
+}
+
+func TestProcessRPC(t *testing.T) {
+	w := httptest.NewRecorder()
+	Process(w, prepareRequest(t, "POST", "/restconf/operations/api-tests:my-echo",
+		"{\"/api-tests:input\":{\"message\":\"Hii\"}}"))
+	verifyResponse(t, w, 200)
+}
+
+func TestProcessRPC_error(t *testing.T) {
+	w := httptest.NewRecorder()
+	Process(w, prepareRequest(t, "POST", "/restconf/operations/api-tests:my-echo",
+		"{\"api-tests:input\":{\"error-type\":\"not-supported\"}}"))
+	verifyResponse(t, w, 405)
 }
 
 func TestProcessPATCH(t *testing.T) {

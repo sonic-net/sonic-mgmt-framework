@@ -48,6 +48,9 @@ func Process(w http.ResponseWriter, r *http.Request) {
 	_, args.data, err = getRequestBody(r, rc)
 
 	if err == nil {
+		err = args.parseMethod(r, rc)
+	}
+	if err == nil {
 		err = args.parseClientVersion(r, rc)
 	}
 
@@ -59,7 +62,7 @@ func Process(w http.ResponseWriter, r *http.Request) {
 	args.path = getPathForTranslib(r, rc)
 	glog.V(1).Infof("[%s] Translated path = %s", reqID, args.path)
 
-	status, data, err = invokeTranslib(&args, r, rc)
+	status, data, err = invokeTranslib(&args, rc)
 	if err != nil {
 		glog.Errorf("[%s] Translib error %T - %v", reqID, err, err)
 		status, data, rtype = prepareErrorResponse(err, r)
@@ -211,10 +214,15 @@ func escapeKeyValue(val string) string {
 	return val
 }
 
-// trimRestconfPrefix removes "/restconf/data" prefix from the path.
+// trimRestconfPrefix removes "*/restconf/data" or "*/restconf/operations"
+// prefix from the path. Returns unchanged path if none of these prefixes found.
 func trimRestconfPrefix(path string) string {
-	pattern := "/restconf/data/"
+	pattern := restconfDataPathPrefix
 	k := strings.Index(path, pattern)
+	if k < 0 {
+		pattern = restconfOperPathPrefix
+		k = strings.Index(path, pattern)
+	}
 	if k >= 0 {
 		path = path[k+len(pattern)-1:]
 	}
@@ -222,11 +230,39 @@ func trimRestconfPrefix(path string) string {
 	return path
 }
 
+// isOperationsRequest checks if a request is a RESTCONF operations
+// request (rpc or action)
+func isOperationsRequest(r *http.Request) bool {
+	k := strings.Index(r.URL.Path, restconfOperPathPrefix)
+	return k >= 0
+	//FIXME URI pattern will not help identifying yang action APIs.
+	//Use swagger generated API name instead???
+}
+
 // translibArgs holds arguments for invoking translib APIs.
 type translibArgs struct {
+	method  string           // API name
 	path    string           // Translib path
 	data    []byte           // payload
 	version translib.Version // client version
+}
+
+// parseMethod maps http method name to translib method.
+func (args *translibArgs) parseMethod(r *http.Request, rc *RequestContext) error {
+	switch r.Method {
+	case "GET", "HEAD", "PUT", "PATCH", "DELETE":
+		args.method = r.Method
+	case "POST":
+		if isOperationsRequest(r) {
+			args.method = "ACTION"
+		} else {
+			args.method = r.Method
+		}
+	default:
+		glog.Errorf("[%s] Unknown method '%v'", rc.ID, r.Method)
+		return httpBadRequest("Invalid method")
+	}
+	return nil
 }
 
 // parseClientVersion parses the Accept-Version request header value
@@ -243,12 +279,12 @@ func (args *translibArgs) parseClientVersion(r *http.Request, rc *RequestContext
 
 // invokeTranslib calls appropriate TransLib API for the given HTTP
 // method. Returns response status code and content.
-func invokeTranslib(args *translibArgs, r *http.Request, rc *RequestContext) (int, []byte, error) {
+func invokeTranslib(args *translibArgs, rc *RequestContext) (int, []byte, error) {
 	var status = 400
 	var content []byte
 	var err error
 
-	switch r.Method {
+	switch args.method {
 	case "GET", "HEAD":
 		req := translib.GetRequest{
 			Path:          args.path,
@@ -299,9 +335,23 @@ func invokeTranslib(args *translibArgs, r *http.Request, rc *RequestContext) (in
 		}
 		_, err = translib.Delete(req)
 
+	case "ACTION":
+		req := translib.ActionRequest{
+			Path:          args.path,
+			Payload:       args.data,
+			ClientVersion: args.version,
+		}
+		res, err1 := translib.Action(req)
+		if err1 == nil {
+			status = 200
+			content = res.Payload
+		} else {
+			err = err1
+		}
+
 	default:
-		glog.Errorf("[%s] Unknown method '%v'", rc.ID, r.Method)
-		err = httpBadRequest("Invalid method")
+		glog.Errorf("[%s] Unknown method '%v'", rc.ID, args.method)
+		err = httpError(http.StatusNotImplemented, "Internal error")
 	}
 
 	return status, content, err
