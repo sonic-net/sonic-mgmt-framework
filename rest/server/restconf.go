@@ -24,6 +24,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
+
+	"github.com/golang/glog"
 )
 
 const (
@@ -118,6 +120,7 @@ func operationsDiscoveryHandler(w http.ResponseWriter, r *http.Request) {
 		operations[name] = emptyValue
 	}
 
+	glog.Infof("Found %d operation nodes", len(operations))
 	dataJSON := map[string]interface{}{
 		"operations": operations,
 	}
@@ -127,6 +130,7 @@ func operationsDiscoveryHandler(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", mimeYangDataJSON)
 		w.Write(data)
 	} else {
+		glog.Warning("Marshal error:", err)
 		writeErrorResponse(w, r, err)
 	}
 }

@@ -235,8 +235,8 @@ func trimRestconfPrefix(path string) string {
 func isOperationsRequest(r *http.Request) bool {
 	k := strings.Index(r.URL.Path, restconfOperPathPrefix)
 	return k >= 0
-	//FIXME URI pattern will not help identifying yang action APIs.
-	//Use swagger generated API name instead???
+	//TODO handle yang actions.. URL pattern cannot identify action requests.
+	// Works for now as current yang-to-openapi generator does not support them.
 }
 
 // translibArgs holds arguments for invoking translib APIs.
@@ -259,7 +259,7 @@ func (args *translibArgs) parseMethod(r *http.Request, rc *RequestContext) error
 			args.method = r.Method
 		}
 	default:
-		glog.Errorf("[%s] Unknown method '%v'", rc.ID, r.Method)
+		glog.Warningf("[%s] Unknown method '%v'", rc.ID, r.Method)
 		return httpBadRequest("Invalid method")
 	}
 	return nil
