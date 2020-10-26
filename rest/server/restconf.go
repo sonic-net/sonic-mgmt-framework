@@ -51,6 +51,9 @@ func init() {
 	AddRoute("capabilityHandler", "GET",
 		"/restconf/data/ietf-restconf-monitoring:restconf-state/capabilities/capability", capabilityHandler)
 
+	// RESTCONF operations discovery
+	AddRoute("operationsDiscovery", "GET",
+		"/restconf/operations", operationsDiscoveryHandler)
 }
 
 // hostMetadataHandler function handles "GET /.well-known/host-meta"
@@ -101,4 +104,29 @@ func capabilityHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", mimeYangDataJSON)
 	w.Write(data)
+}
+
+// operationsDiscoveryHandler serves "GET /restconf/operations" request
+// and returns all registered operations info -- RFC8040, section 3.3.2.
+func operationsDiscoveryHandler(w http.ResponseWriter, r *http.Request) {
+	emptyValue := []interface{}{nil}
+	operations := make(map[string]interface{})
+
+	match := getRouteMatchInfo(r)
+	for name := range match.node.subpaths {
+		name = strings.TrimPrefix(name, "/")
+		operations[name] = emptyValue
+	}
+
+	dataJSON := map[string]interface{}{
+		"operations": operations,
+	}
+
+	data, err := json.Marshal(dataJSON)
+	if err == nil {
+		w.Header().Set("Content-Type", mimeYangDataJSON)
+		w.Write(data)
+	} else {
+		writeErrorResponse(w, r, err)
+	}
 }
