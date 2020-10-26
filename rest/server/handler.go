@@ -50,6 +50,9 @@ func Process(w http.ResponseWriter, r *http.Request) {
 	if err == nil {
 		err = args.parseClientVersion(r, rc)
 	}
+	if err == nil {
+		err = args.parseQueryParams(r)
+	}
 
 	if err != nil {
 		status, data, rtype = prepareErrorResponse(err, r)
@@ -97,6 +100,17 @@ write_resp:
 		// No data, status only
 		w.WriteHeader(status)
 	}
+}
+
+// getRequestID returns the request ID for a http Request r.
+// ID is looked up from the RequestContext associated with this request.
+// Returns empty value if context is not initialized yet.
+func getRequestID(r *http.Request) string {
+	cv := getContextValue(r, requestContextKey)
+	if cv != nil {
+		return cv.(*RequestContext).ID
+	}
+	return ""
 }
 
 // getRequestBody returns the validated request body
@@ -224,9 +238,11 @@ func trimRestconfPrefix(path string) string {
 
 // translibArgs holds arguments for invoking translib APIs.
 type translibArgs struct {
-	path    string           // Translib path
-	data    []byte           // payload
-	version translib.Version // client version
+	path        string           // Translib path
+	data        []byte           // payload
+	version     translib.Version // client version
+	depth       uint             // RESTCONF depth, for Get API only
+	deleteEmpty bool             // Delete empty entry during field delete
 }
 
 // parseClientVersion parses the Accept-Version request header value
@@ -252,6 +268,7 @@ func invokeTranslib(args *translibArgs, r *http.Request, rc *RequestContext) (in
 	case "GET", "HEAD":
 		req := translib.GetRequest{
 			Path:          args.path,
+			Depth:         args.depth,
 			ClientVersion: args.version,
 		}
 		resp, err1 := translib.Get(req)
@@ -294,8 +311,9 @@ func invokeTranslib(args *translibArgs, r *http.Request, rc *RequestContext) (in
 	case "DELETE":
 		status = 204
 		req := translib.SetRequest{
-			Path:          args.path,
-			ClientVersion: args.version,
+			Path:             args.path,
+			ClientVersion:    args.version,
+			DeleteEmptyEntry: args.deleteEmpty,
 		}
 		_, err = translib.Delete(req)
 
