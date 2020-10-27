@@ -73,7 +73,7 @@ class ApiClient(object):
 
     def get(self, path, depth=None, ignore404=True, response_type=None):
         q = self.prepare_query(depth=depth)
-        resp = self.request("GET", path, response_type=response_type)
+        resp = self.request("GET", path, query=q, response_type=response_type)
         if ignore404 and resp.status_code == 404:
             resp.status_code = 200
             resp.content = None
