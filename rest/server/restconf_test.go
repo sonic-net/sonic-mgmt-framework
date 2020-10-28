@@ -23,7 +23,10 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"log"
+	"net/http"
 	"net/http/httptest"
+	"reflect"
+	"sort"
 	"testing"
 )
 
@@ -148,6 +151,69 @@ func testCapability(t *testing.T, path string) {
 	w := httptest.NewRecorder()
 	newDefaultRouter().ServeHTTP(w, r)
 
+	// Parse capability response
+	var cap interface{}
+	top := make(map[string]interface{})
+	parseResponseJSON(t, w, &top)
+
+	if c := top["ietf-restconf-monitoring:capabilities"]; c != nil {
+		cap = c.(map[string]interface{})["capability"]
+	} else {
+		cap = top["ietf-restconf-monitoring:capability"]
+	}
+
+	if c, ok := cap.([]interface{}); !ok || len(c) == 0 {
+		log.Fatalf("Could not parse capability info: %s", w.Body.String())
+	}
+}
+
+func TestOpsDiscovery_none(t *testing.T) {
+	testOpsDiscovery(t, nil)
+}
+
+func TestOpsDiscovery_one(t *testing.T) {
+	testOpsDiscovery(t, []string{"testing:system-restart"})
+}
+
+func TestOpsDiscovery(t *testing.T) {
+	testOpsDiscovery(t, []string{"testing:cpu", "testing:clock", "hello:world", "foo:bar"})
+}
+
+func testOpsDiscovery(t *testing.T, ops []string) {
+	s := newEmptyRouter()
+	f := func(w http.ResponseWriter, r *http.Request) {}
+	s.addRoute("opsDiscovery", "GET",
+		"/restconf/operations", operationsDiscoveryHandler)
+	for _, op := range ops {
+		s.addRoute(op, "POST", "/restconf/operations/"+op, f)
+	}
+
+	w := httptest.NewRecorder()
+	s.ServeHTTP(w, httptest.NewRequest("GET", "/restconf/operations", nil))
+
+	var resp struct {
+		Ops map[string][]interface{} `json:"operations"`
+	}
+
+	parseResponseJSON(t, w, &resp)
+	if resp.Ops == nil {
+		t.Fatal("Response does not contain 'operations' object:", resp)
+	}
+
+	var respOps []string
+	for op := range resp.Ops {
+		respOps = append(respOps, op)
+	}
+
+	sort.Strings(ops)
+	sort.Strings(respOps)
+	if !reflect.DeepEqual(respOps, ops) {
+		t.Fatalf("Response does not include expected operations list\n"+
+			"expected: %v\nfound: %v", ops, respOps)
+	}
+}
+
+func parseResponseJSON(t *testing.T, w *httptest.ResponseRecorder, resp interface{}) {
 	if w.Code != 200 {
 		t.Fatalf("Request failed with status %d", w.Code)
 	}
@@ -158,18 +224,8 @@ func testCapability(t *testing.T, path string) {
 		t.Fatalf("Expected content-type=%s, found=%s", mimeYangDataJSON, w.Header().Get("Content-Type"))
 	}
 
-	// Parse capability response
-	var cap interface{}
-	top := make(map[string]interface{})
-	json.Unmarshal(w.Body.Bytes(), &top)
-
-	if c := top["ietf-restconf-monitoring:capabilities"]; c != nil {
-		cap = c.(map[string]interface{})["capability"]
-	} else {
-		cap = top["ietf-restconf-monitoring:capability"]
-	}
-
-	if c, ok := cap.([]interface{}); !ok || len(c) == 0 {
-		log.Fatalf("Could not parse capability info: %s", w.Body.String())
+	err := json.Unmarshal(w.Body.Bytes(), resp)
+	if err != nil {
+		t.Fatalf("Unmarshal error: %v", err)
 	}
 }
