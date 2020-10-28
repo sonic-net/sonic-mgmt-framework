@@ -25,13 +25,14 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 
-	"github.com/Azure/sonic-mgmt-framework/rest/server"
 	"github.com/Azure/sonic-mgmt-framework/build/rest_server/dist/swagger"
+	"github.com/Azure/sonic-mgmt-framework/rest/server"
 	"github.com/golang/glog"
 	"github.com/pkg/profile"
 )
@@ -81,6 +82,9 @@ func main() {
 	rtrConfig := server.RouterConfig{}
 	if clientAuth == "user" {
 		rtrConfig.AuthEnable = true
+	}
+	if ip := findAManagementIP(); ip != "" {
+		rtrConfig.ServerAddr = fmt.Sprintf("https://%s:%d", ip, port)
 	}
 
 	router := server.NewRouter(rtrConfig)
@@ -189,4 +193,28 @@ func getPreferredCipherSuites() []uint16 {
 		tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
 		tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
 	}
+}
+
+// findAManagementIP returns a valid IPv4 address of eth0.
+// Empty string is returned if no address could be resolved.
+func findAManagementIP() string {
+	var addrs []net.Addr
+	eth0, err := net.InterfaceByName("eth0")
+	if err == nil {
+		addrs, err = eth0.Addrs()
+	}
+	if err != nil {
+		glog.Errorf("Could not read eth0 info; err=%v", err)
+		return ""
+	}
+
+	for _, addr := range addrs {
+		ip, _, err := net.ParseCIDR(addr.String())
+		if err == nil && ip.To4() != nil {
+			return ip.String()
+		}
+	}
+
+	glog.Warning("Could not find a management address!!")
+	return ""
 }

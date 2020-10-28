@@ -78,6 +78,63 @@ func TestMetaHandler(t *testing.T) {
 	}
 }
 
+func TestYanglibVer_json(t *testing.T) {
+	testYanglibVer(t, mimeYangDataJSON, mimeYangDataJSON)
+}
+
+func TestYanglibVer_xml(t *testing.T) {
+	testYanglibVer(t, mimeYangDataXML, mimeYangDataXML)
+}
+
+func TestYanglibVer_default(t *testing.T) {
+	testYanglibVer(t, "", mimeYangDataJSON)
+}
+
+func TestYanglibVer_unknown(t *testing.T) {
+	testYanglibVer(t, "text/plain", mimeYangDataJSON)
+}
+
+func testYanglibVer(t *testing.T, requestAcceptType, expectedContentType string) {
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest("GET", "/restconf/yang-library-version", nil)
+	if requestAcceptType != "" {
+		r.Header.Set("Accept", requestAcceptType)
+	}
+
+	t.Logf("GET /restconf/yang-library-version with accept=%s", requestAcceptType)
+	newDefaultRouter().ServeHTTP(w, r)
+
+	if w.Code != 200 {
+		t.Fatalf("Request failed with status %d", w.Code)
+	}
+	if len(w.Body.Bytes()) == 0 {
+		t.Fatalf("No response body")
+	}
+	if w.Header().Get("Content-Type") != expectedContentType {
+		t.Fatalf("Expected content-type=%s, found=%s", expectedContentType, w.Header().Get("Content-Type"))
+	}
+
+	var err error
+	var resp struct {
+		XMLName xml.Name `json:"-" xml:"urn:ietf:params:xml:ns:yang:ietf-restconf yang-library-version"`
+		Version string   `json:"ietf-restconf:yang-library-version" xml:",chardata"`
+	}
+
+	if expectedContentType == mimeYangDataXML {
+		err = xml.Unmarshal(w.Body.Bytes(), &resp)
+	} else {
+		err = json.Unmarshal(w.Body.Bytes(), &resp)
+	}
+	if err != nil {
+		t.Fatalf("Response parsing failed; err=%v", err)
+	}
+
+	t.Logf("GOT yang-library-version %s; content-type=%s", resp.Version, w.Header().Get("Content-Type"))
+	if resp.Version != "2016-06-21" {
+		t.Fatalf("Expected yanglib version 2016-06-21; received=%s", resp.Version)
+	}
+}
+
 func TestCapability_1(t *testing.T) {
 	testCapability(t, "/restconf/data/ietf-restconf-monitoring:restconf-state/capabilities")
 }
