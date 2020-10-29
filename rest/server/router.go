@@ -27,6 +27,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Azure/sonic-mgmt-common/translib"
 	"github.com/golang/glog"
 	"github.com/gorilla/mux"
 )
@@ -51,6 +52,10 @@ type Router struct {
 type RouterConfig struct {
 	// AuthEnable indicates if client authentication is enabled
 	AuthEnable bool
+
+	// ServerAddr is the address to contact main server. Will be used to
+	// advertise the server's address (like yang download path).. Optional
+	ServerAddr string
 }
 
 // ServeHTTP resolves and invokes the handler for http request r.
@@ -298,7 +303,7 @@ func NewRouter(config RouterConfig) *Router {
 		allRoutes.rcRouteCount, allRoutes.muxRouteCount)
 
 	// Add internal service API routes if not added already
-	allRoutes.addServiceRoutes()
+	allRoutes.addServiceRoutes(&config)
 
 	router := &Router{
 		config: config,
@@ -322,8 +327,6 @@ type routeStore struct {
 	muxOptsHandler http.Handler        // OPTIONS handler for mux routes
 	muxOptsData    map[string][]string // path to operations map for mux routes
 	muxRouteCount  uint32              // number of routes in mux router
-
-	svcRoutesAdded bool // indicates if service routes have been registered
 }
 
 // newRouteStore creates an empty routeStore instance.
@@ -363,23 +366,33 @@ func (rs *routeStore) addMuxRoute(rr *routeRegInfo) {
 	rs.muxRouteCount++
 }
 
-// finish creates routes for all internal service API handlers in
+// addServiceRoutes creates routes for all internal service API handlers in
 // mux router. Should be called after all REST API routes are added.
-func (rs *routeStore) addServiceRoutes() {
-	if rs.svcRoutesAdded {
-		return
-	}
-
-	rs.svcRoutesAdded = true
+func (rs *routeStore) addServiceRoutes(config *RouterConfig) {
 	router := rs.muxRoutes
 
 	// Documentation and test UI
-	uiHandler := http.StripPrefix("/ui/", http.FileServer(http.Dir(swaggerUIDir)))
-	router.Methods("GET").PathPrefix("/ui/").Handler(uiHandler)
+	if router.Get("swaggerUI") == nil {
+		rs.addFilesystemRoute("swaggerUI", "/ui/", swaggerUIDir)
 
-	// Redirect "/ui" to "/ui/index.html"
-	router.Methods("GET").Path("/ui").
-		Handler(http.RedirectHandler("/ui/index.html", http.StatusMovedPermanently))
+		// Redirect "/ui" to "/ui/index.html"
+		router.Methods("GET").Path("/ui").
+			Handler(http.RedirectHandler("/ui/index.html", http.StatusMovedPermanently))
+	}
+
+	// Yang download
+	if config.ServerAddr != "" && router.Get("yangDownload") == nil {
+		yangPrefix := "/models/yang/"
+		translib.SetSchemaRootURL(strings.TrimSuffix(config.ServerAddr, "/") + yangPrefix)
+		rs.addFilesystemRoute("yangDownload", yangPrefix, translib.GetYangPath())
+	}
+}
+
+// addFilesystemRoute creates a mux route to handle file system based GET requests.
+func (rs *routeStore) addFilesystemRoute(name, prefix, dir string) {
+	h := http.StripPrefix(prefix, http.FileServer(http.Dir(dir)))
+	//TODO enable authentication?
+	rs.muxRoutes.Name(name).Methods("GET", "HEAD").PathPrefix(prefix).Handler(h)
 }
 
 // getRouteMatchInfo returns routeMatchInfo from request context.

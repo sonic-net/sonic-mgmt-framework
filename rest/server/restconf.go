@@ -24,6 +24,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
+
+	"github.com/golang/glog"
 )
 
 const (
@@ -45,12 +47,18 @@ func init() {
 	// Metadata discovery handler
 	AddRoute("hostMetadataHandler", "GET", "/.well-known/host-meta", hostMetadataHandler)
 
+	// yanglib version handler
+	AddRoute("yanglibVersionHandler", "GET", "/restconf/yang-library-version", yanglibVersionHandler)
+
 	// RESTCONF capability handler
 	AddRoute("capabilityHandler", "GET",
 		"/restconf/data/ietf-restconf-monitoring:restconf-state/capabilities", capabilityHandler)
 	AddRoute("capabilityHandler", "GET",
 		"/restconf/data/ietf-restconf-monitoring:restconf-state/capabilities/capability", capabilityHandler)
 
+	// RESTCONF operations discovery
+	AddRoute("operationsDiscovery", "GET",
+		"/restconf/operations", operationsDiscoveryHandler)
 }
 
 // hostMetadataHandler function handles "GET /.well-known/host-meta"
@@ -63,6 +71,27 @@ func hostMetadataHandler(w http.ResponseWriter, r *http.Request) {
 	data.WriteString("</XRD>")
 
 	w.Header().Set("Content-Type", "application/xrd+xml")
+	w.Write(data.Bytes())
+}
+
+// yanglibVersionHandler handles "GET /restconf/yang-library-version"
+// request as per RFC8040. Yanglib version supported is "2016-06-21"
+func yanglibVersionHandler(w http.ResponseWriter, r *http.Request) {
+	var data bytes.Buffer
+	var contentType string
+	accept := r.Header.Get("Accept")
+
+	// Rudimentary content negotiation
+	if strings.Contains(accept, mimeYangDataXML) {
+		contentType = mimeYangDataXML
+		data.WriteString("<yang-library-version xmlns='urn:ietf:params:xml:ns:yang:ietf-restconf'>")
+		data.WriteString("2016-06-21</yang-library-version>")
+	} else {
+		contentType = mimeYangDataJSON
+		data.WriteString("{\"ietf-restconf:yang-library-version\": \"2016-06-21\"}")
+	}
+
+	w.Header().Set("Content-Type", contentType)
 	w.Write(data.Bytes())
 }
 
@@ -101,4 +130,31 @@ func capabilityHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", mimeYangDataJSON)
 	w.Write(data)
+}
+
+// operationsDiscoveryHandler serves "GET /restconf/operations" request
+// and returns all registered operations info -- RFC8040, section 3.3.2.
+func operationsDiscoveryHandler(w http.ResponseWriter, r *http.Request) {
+	emptyValue := []interface{}{nil}
+	operations := make(map[string]interface{})
+
+	match := getRouteMatchInfo(r)
+	for name := range match.node.subpaths {
+		name = strings.TrimPrefix(name, "/")
+		operations[name] = emptyValue
+	}
+
+	glog.Infof("Found %d operation nodes", len(operations))
+	dataJSON := map[string]interface{}{
+		"operations": operations,
+	}
+
+	data, err := json.Marshal(dataJSON)
+	if err == nil {
+		w.Header().Set("Content-Type", mimeYangDataJSON)
+		w.Write(data)
+	} else {
+		glog.Warning("Marshal error:", err)
+		writeErrorResponse(w, r, err)
+	}
 }
