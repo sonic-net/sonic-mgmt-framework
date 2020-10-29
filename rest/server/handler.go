@@ -53,6 +53,9 @@ func Process(w http.ResponseWriter, r *http.Request) {
 	if err == nil {
 		err = args.parseClientVersion(r, rc)
 	}
+	if err == nil {
+		err = args.parseQueryParams(r)
+	}
 
 	if err != nil {
 		status, data, rtype = prepareErrorResponse(err, r)
@@ -100,6 +103,17 @@ write_resp:
 		// No data, status only
 		w.WriteHeader(status)
 	}
+}
+
+// getRequestID returns the request ID for a http Request r.
+// ID is looked up from the RequestContext associated with this request.
+// Returns empty value if context is not initialized yet.
+func getRequestID(r *http.Request) string {
+	cv := getContextValue(r, requestContextKey)
+	if cv != nil {
+		return cv.(*RequestContext).ID
+	}
+	return ""
 }
 
 // getRequestBody returns the validated request body
@@ -241,10 +255,12 @@ func isOperationsRequest(r *http.Request) bool {
 
 // translibArgs holds arguments for invoking translib APIs.
 type translibArgs struct {
-	method  string           // API name
-	path    string           // Translib path
-	data    []byte           // payload
-	version translib.Version // client version
+	method      string           // API name
+	path        string           // Translib path
+	data        []byte           // payload
+	version     translib.Version // client version
+	depth       uint             // RESTCONF depth, for Get API only
+	deleteEmpty bool             // Delete empty entry during field delete
 }
 
 // parseMethod maps http method name to translib method.
@@ -288,6 +304,7 @@ func invokeTranslib(args *translibArgs, rc *RequestContext) (int, []byte, error)
 	case "GET", "HEAD":
 		req := translib.GetRequest{
 			Path:          args.path,
+			Depth:         args.depth,
 			ClientVersion: args.version,
 		}
 		resp, err1 := translib.Get(req)
@@ -330,8 +347,9 @@ func invokeTranslib(args *translibArgs, rc *RequestContext) (int, []byte, error)
 	case "DELETE":
 		status = 204
 		req := translib.SetRequest{
-			Path:          args.path,
-			ClientVersion: args.version,
+			Path:             args.path,
+			ClientVersion:    args.version,
+			DeleteEmptyEntry: args.deleteEmpty,
 		}
 		_, err = translib.Delete(req)
 
