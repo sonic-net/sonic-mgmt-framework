@@ -2,6 +2,7 @@
 
 import re
 import os
+import pwd
 from time import gmtime, strftime
 
 class pipestr:
@@ -10,7 +11,8 @@ class pipestr:
     For passing the pipestr from the actioner to the renderer
     """
     def __init__(self):
-        pass
+        pwrec = pwd.getpwuid(os.getuid())
+        self.pipestr = '/tmp/pipestr-' + pwrec.pw_name
    
     def write(self, argv):
         pipe_str = ''
@@ -20,7 +22,7 @@ class pipestr:
                 pipe_str += (arg + ' ')
             if arg == '|':
                 has_pipe = True
-        f = open("pipestr.txt", "w")
+        f = open(self.pipestr, "w")
         if len(pipe_str) > 0:
             pipe_str = pipe_str[:-1]
             f.write(pipe_str)
@@ -28,7 +30,7 @@ class pipestr:
 
     def read(self):
         pipe_lst = pipelst()
-        f = open('pipestr.txt', "r")
+        f = open(self.pipestr, "r")
         pipe_str = f.readline()
         f.close()
         if len(pipe_str) > 0:

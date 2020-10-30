@@ -50,7 +50,7 @@ limitations under the License.
 		  <PARAM
 		      name="phy-if-id"
 		      help="Physical interface(Multiples of 4)"
-	              ptype="UINT"
+	              ptype="UINT16"
 		      optional="true"
 		      >
 		  </PARAM>
@@ -97,7 +97,7 @@ limitations under the License.
                 <PARAM
                     name="phy-if-name"
                     help="Physical interface(Multiples of 4)"
-                    ptype="UINT"
+                    ptype="UINT16"
                     view="configure-if-view"
                     viewid="iface=Ethernet${phyifname}"
                     />

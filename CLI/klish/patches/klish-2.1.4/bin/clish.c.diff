@@ -1,0 +1,20 @@
+41a42,43
+> #include <stdbool.h>
+> 
+48a51,56
+> bool _nos_use_alt_name = false;
+> 
+> bool nos_use_alt_name() {
+>     return _nos_use_alt_name;
+> }
+> 
+88a97,101
+>     char *mode = getenv("SONIC_CLI_IFACE_MODE");
+>     if (mode) {
+>         _nos_use_alt_name = (strcmp(mode, "standard") == 0);
+>     }
+> 
+307c320
+< 		clish_shell__set_idle_timeout(shell, timeout);
+---
+> 		clish_shell__set_timeout(shell, timeout);

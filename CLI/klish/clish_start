@@ -2,10 +2,18 @@
 
 export SONIC_MGMT_ROOT=/usr/sbin
 export SONIC_CLI_ROOT=$SONIC_MGMT_ROOT/cli
-export SYSTEM_NAME="${HOSTNAME%%.*}"
-export PYTHONPATH=$SONIC_MGMT_ROOT:$SONIC_MGMT_ROOT/lib/swagger_client_py:$SONIC_CLI_ROOT:$SONIC_CLI_ROOT/scripts:$PYTHONPATH
+if [ -z $SYSTEM_NAME ]
+then
+ export SYSTEM_NAME="${HOSTNAME%%.*}"
+fi
+export PYTHONPATH=/usr/sbin/cli:/usr/sbin/cli/scripts:/usr/lib/python2.7:/usr/lib/python2.7/dist-packages:/usr/local/lib/python2.7/dist-packages:/usr/sbin/:/usr/sbin/lib/swagger_client_py:/usr/lib/python2.7:/usr/lib/python2.7/plat-x86_64-linux-gnu:/usr/lib/python2.7/lib-tk:/usr/lib/python2.7/lib-old:/usr/lib/python2.7/lib-dynload:/usr/local/lib/python2.7/dist-packages:/usr/local/lib/python2.7/dist-packages/pyang-2.0.1-py2.7.egg:/usr/local/lib/python2.7/dist-packages/lxml-4.3.4-py2.7-linux-x86_64.egg:/usr/local/lib/python2.7/dist-packages/pyang_json_schema_plugin-0.1-py2.7.egg:/usr/lib/python2.7/dist-packages:/usr/lib/python2.7/dist-packages/gtk-2.0
+export RENDERER_TEMPLATE_PATH=$SONIC_CLI_ROOT/render-templates
 export CLISH_PATH=$SONIC_CLI_ROOT/command-tree
 export LD_LIBRARY_PATH=/usr/local/lib:$SONIC_CLI_ROOT/.libs:$LD_LIBRARY_PATH
 export PATH=$PATH:/usr/local/sbin:/usr/sbin:/sbin:$SONIC_CLI_ROOT
 
-$SONIC_CLI_ROOT/clish "$@"
+MODE=$(sonic-cfggen -d -v "DEVICE_METADATA['localhost']['intf_naming_mode']")
+export SONIC_CLI_IFACE_MODE=$MODE
+export KLISH_CLI_USER=$CLI_USER
+
+$SONIC_CLI_ROOT/clish -o "$@"

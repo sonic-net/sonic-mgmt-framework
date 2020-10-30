@@ -57,8 +57,8 @@ function insert_in()
         printvalue="${pref}${value} ]>"
     fi
     #echo Insert_in $filename. Option $option
-    while read -r line; do
-        echo ${line} >> $outfile
+    while IFS= read -r line; do
+        echo "${line}" >> $outfile
         if [[ "${line}" =~ ${matchpattern} ]]; then
             #echo Match found for ${line}
             echo "${printvalue}" >> $outfile
@@ -81,7 +81,7 @@ function insert_entities()
     for i in ${list}; do
         echo Processing $i
         insert_in $i
-        xmllint $i >& /dev/null
+        xmllint $i > /dev/null
         if [ $? -ne 0 ]; then
             echo ENTITY insertion in $i failed
             exit 1

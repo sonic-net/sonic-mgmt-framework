@@ -1,0 +1,11 @@
+37c37,39
+< 	clish_ptype_method_e method, clish_ptype_preprocess_e preprocess)
+---
+> 	clish_ptype_method_e method, clish_ptype_preprocess_e preprocess,
+> 	const char *ext_pattern, const char *ext_help, const char *alt_ext_pattern,
+> 	const char *alt_pattern)
+44c46,47
+< 			method, preprocess);
+---
+> 			method, preprocess, ext_pattern, ext_help, 
+> 			alt_ext_pattern, alt_pattern);

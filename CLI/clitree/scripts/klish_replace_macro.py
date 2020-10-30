@@ -225,13 +225,23 @@ def expand_macro(macname, argcnt, argval, fd, macro_data):
 def process_input_file(filename, fd, macro_data):
 
     try:
-        with open(filename, "r") as input_file:
+        with open(filename, "r") as input_file:             
             multi_line = False
             macroname = []
             data = input_file.readlines()
-            for line in data:
+            docgen = False            
+            for line in data:              
+                if "<DOCGEN" in line:
+                    docgen =  True
+                if "</DOCGEN" in line:
+                    docgen =  False
+                if '<DOCGEN' in line and "</DOCGEN" in line:
+                    docgen =  True
                 nargs = 0
-                line = ' '.join(line.split())
+                if not docgen:
+                    line = ' '.join(line.split())
+                if '<DOCGEN' in line and "</DOCGEN" in line:
+                    docgen =  False                    
                 if DBG_FLAG == True:
                     print line, multi_line
                 if re.search(MACRO_START, line, 0) != None or multi_line == True:
@@ -305,9 +315,19 @@ def load_all_macros (macro_dir_path):
             macro_file_name = macro_dir_path + "/" + macro_file_name
             with open(macro_file_name, "r") as macrofile:
                 data = macrofile.readlines()
-
+                docgen =  False
                 for line in data:
-                    line = ' '.join(line.split())
+                    if "<DOCGEN" in line:
+                        docgen =  True
+                    if "</DOCGEN" in line:
+                        docgen =  False
+                    if '<DOCGEN' in line and "</DOCGEN" in line:
+                        docgen =  True
+                    if not docgen:
+                        line = ' '.join(line.split())
+                    if '<DOCGEN' in line and "</DOCGEN" in line:
+                        docgen =  False
+                    #line = ' '.join(line.split())
                     macro_data.append(line)
                 macrofile.close()
     return macro_data

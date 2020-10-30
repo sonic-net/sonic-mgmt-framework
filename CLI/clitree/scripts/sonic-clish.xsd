@@ -40,7 +40,7 @@ limitations under the License.
 
 <xs:simpleType name="stringType">
 <xs:restriction base="xs:string">
-<xs:minLength value="1"/>
+<xs:minLength value="0"/>
 </xs:restriction>
 </xs:simpleType>
 
@@ -60,6 +60,7 @@ limitations under the License.
   <xs:attribute name="ptype" type="stringType" use="optional"/>
   <xs:attribute name="view" type="stringType" use="optional"/>
   <xs:attribute name="viewid" type="stringType" use="optional"/>
+  <xs:attribute name="view_names" type="stringType" use="optional"/>
   <xs:attribute name="namespace" type="stringType" use="optional"/>
   <xs:attribute name="access" type="stringType" use="optional"/>
   <xs:attribute name="mode" type="stringType" use="optional"/>
@@ -84,6 +85,15 @@ limitations under the License.
   <xs:attribute name="release" type="stringType" use="optional"/>
   <xs:attribute name="example" type="stringType" use="optional"/>
   <xs:attribute name="render_view" type="stringType" use="optional"/>
+  <xs:attribute name="view_keys" type="stringType" use="optional"/>
+  <xs:attribute name="view_tables" type="stringType" use="optional"/>
+  <xs:attribute name="dbpath" type="stringType" use="optional"/>
+  <xs:attribute name="render_command_cb" type="stringType" use="optional"/>
+  <xs:attribute name="render_view_cb" type="stringType" use="optional"/>
+  <xs:attribute name="data_and_render_cb" type="stringType" use="optional"/>
+  <xs:attribute name="command_tables" type="stringType" use="optional"/>
+  <xs:attribute name="db_flag" type="stringType" use="optional"/>
+  <xs:attribute name="command_keys" type="stringType" use="optional"/>
 </xs:attributeGroup>
 
 <xs:attributeGroup name="paramAttr">
@@ -108,6 +118,16 @@ limitations under the License.
   <xs:attribute name="hidden" type="stringType" use="optional"/>
   <xs:attribute name="completion" type="stringType" use="optional"/>
   <xs:attribute name="access" type="stringType" use="optional"/>
+  <xs:attribute name="dbpath" type="stringType" use="optional"/>
+  <xs:attribute name="db_flag" type="stringType" use="optional"/>    
+</xs:attributeGroup>
+
+<xs:attributeGroup name="exampleAttr">
+  <xs:attribute name="summary" type="stringType" use="optional"/>
+</xs:attributeGroup>
+
+<xs:attributeGroup name="altAttr">
+  <xs:attribute name="type" type="stringType" use="required"/>
 </xs:attributeGroup>
 
 <xs:attributeGroup name="viewAttr">
@@ -142,6 +162,8 @@ limitations under the License.
   <xs:attribute name="ext_pattern" type="stringType" use="optional"/>
   <xs:attribute name="preprocess" type="stringType" use="optional"/>
   <xs:attribute name="ext_help" type="xs:string" use="optional"/>
+  <xs:attribute name="alt_pattern" type="stringType" use="optional"/>
+  <xs:attribute name="alt_ext_pattern" type="stringType" use="optional"/>
 </xs:attributeGroup>
 
 
@@ -170,6 +192,13 @@ limitations under the License.
 <xs:element name="ACTION" type="actionType"/>
 <xs:element name="PTYPE" type="ptypeType"/>
 <xs:element name="PARAM" type="paramType"/>
+<xs:element name="DOCGEN" type="docgenType"/>
+<xs:element name="DESCRIPTION" type="docgenStringType"/>
+<xs:element name="FEATURE" type="docgenStringType"/>
+<xs:element name="PLATFORM" type="docgenStringType"/>
+<xs:element name="ALTCMD" type="altType"/>
+<xs:element name="USAGE" type="usageType"/>
+<xs:element name="EXAMPLE" type="exampleType"/>
 <xs:element name="NAMESPACE" type="namespaceType"/>
 <xs:element name="VAR" type="varType"/>
 <xs:element name="HOOK" type="hookType"/>
@@ -210,6 +239,7 @@ limitations under the License.
   <xs:choice minOccurs="0" maxOccurs="unbounded">
     <xs:element ref="PARAM" minOccurs="0" maxOccurs="unbounded"/>
     <xs:element ref="ACTION" minOccurs="0" maxOccurs="1"/>
+    <xs:element ref="DOCGEN" minOccurs="0" maxOccurs="1"/>
     <xs:any namespace="http://www.w3.org/2001/XInclude"
             processContents="skip" minOccurs="0" maxOccurs="unbounded"/>
   </xs:choice>
@@ -231,6 +261,47 @@ limitations under the License.
   </xs:simpleContent>
 </xs:complexType>
 
+<xs:complexType name="docgenType">
+  <xs:choice minOccurs="0" maxOccurs="unbounded">
+    <xs:element ref="DESCRIPTION" minOccurs="0" maxOccurs="1"/>
+    <xs:element ref="FEATURE" minOccurs="0" maxOccurs="unbounded"/>
+    <xs:element ref="PLATFORM" minOccurs="0" maxOccurs="unbounded"/>
+    <xs:element ref="USAGE" minOccurs="0" maxOccurs="1"/>
+    <xs:element ref="EXAMPLE" minOccurs="0" maxOccurs="unbounded"/>
+    <xs:element ref="ALTCMD" minOccurs="0" maxOccurs="unbounded"/>    
+  </xs:choice>
+</xs:complexType>
+
+<xs:complexType name="docgenStringType">
+  <xs:simpleContent>
+    <xs:extension base="xs:string">
+    </xs:extension>
+  </xs:simpleContent>
+</xs:complexType>
+
+<xs:complexType name="usageType">
+  <xs:simpleContent>
+    <xs:extension base="xs:string">
+    </xs:extension>
+  </xs:simpleContent>
+</xs:complexType>
+
+<xs:complexType name="exampleType">
+  <xs:simpleContent>
+    <xs:extension base="xs:string">
+      <xs:attributeGroup ref="exampleAttr"/>
+    </xs:extension>
+  </xs:simpleContent>
+</xs:complexType>
+
+<xs:complexType name="altType">
+  <xs:simpleContent>
+    <xs:extension base="xs:string">
+      <xs:attributeGroup ref="altAttr"/>
+    </xs:extension>
+  </xs:simpleContent>
+</xs:complexType>
+
 <xs:complexType name="namespaceType">
   <xs:attributeGroup ref="namespaceAttr"/>
 </xs:complexType>
@@ -247,3 +318,4 @@ limitations under the License.
   <xs:attribute name="builtin" type="xs:string" use="optional"/>
 </xs:complexType>
 </xs:schema>
+

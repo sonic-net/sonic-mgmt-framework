@@ -44,7 +44,7 @@ limitations under the License.
 	<PARAM
             name="pid-no"
             help="PID number"
-            ptype="UINT"
+            ptype="UINT16"
            >
         </PARAM>
       <ACTION> python $SONIC_CLI_ROOT/sonic-cli-sys.py get_openconfig_system_system_processes system_show.j2  ${pid-no} ${__full_line} </ACTION>

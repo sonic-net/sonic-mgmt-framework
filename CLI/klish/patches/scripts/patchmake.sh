@@ -8,6 +8,7 @@ CLEAN_ALL="no"
 CLEAN="no"
 PATCH="no"
 SKIP_PATCH="no"
+FORCE_PATCH="yes"
 MAKE_CLEAN="no"
 MAKE_SKIP="no"
 
@@ -144,7 +145,7 @@ mkdir -p $TMP_PATH
 
 #Handling of skipping patch
 if [ ! "$SKIP_PATCH" == "yes" ]; then
-	if [ ! -f "$TMP_PATH/$TMP_SRC_PATH2/##patched##" ]; then
+	if [ "$FORCE_PATCH" == "yes" || ! -f "$TMP_PATH/$TMP_SRC_PATH2/##patched##" ]; then
 
 		#Copying the actual source files into the temporary directory
 		cp -r $TMP_SRC_PATH/$TMP_SRC_PATH2 $TMP_PATH
