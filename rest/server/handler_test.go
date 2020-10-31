@@ -559,6 +559,15 @@ func verifyParseVersion(t *testing.T, r *http.Request, expSuccess bool, expVer t
 	}
 }
 
+func TestPanic(t *testing.T) {
+	s := newEmptyRouter()
+	s.addRoute("panic", "GET", "/panic",
+		func(w http.ResponseWriter, r *http.Request) { panic("testing 123") })
+	w := httptest.NewRecorder()
+	s.ServeHTTP(w, prepareRequest(t, "GET", "/panic", ""))
+	verifyResponse(t, w, 500)
+}
+
 func TestProcessGET(t *testing.T) {
 	w := httptest.NewRecorder()
 	Process(w, prepareRequest(t, "GET", "/api-tests:sample", ""))
