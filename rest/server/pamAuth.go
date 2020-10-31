@@ -95,7 +95,7 @@ func PAMAuthenAndAuthor(r *http.Request, rc *RequestContext) error {
 
 	username, passwd, authOK := r.BasicAuth()
 	if authOK == false {
-		glog.Errorf("[%s] User info not present", rc.ID)
+		glog.Warningf("[%s] User info not present", rc.ID)
 		return httpError(http.StatusUnauthorized, "")
 	}
 
@@ -131,7 +131,7 @@ func PAMAuthenAndAuthor(r *http.Request, rc *RequestContext) error {
 
 	//Allow SET request only if user belong to admin group
 	if isWriteOperation(r) && IsAdminGroup(username) == false {
-		glog.Errorf("[%s] Not an admin; cannot allow %s", rc.ID, r.Method)
+		glog.Warningf("[%s] Not an admin; cannot allow %s", rc.ID, r.Method)
 		return httpError(http.StatusForbidden, "Not an admin user")
 	}
 
