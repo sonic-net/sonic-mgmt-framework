@@ -65,6 +65,17 @@ const (
 	errtagMalformedMessage      errtag = "malformed-message"
 )
 
+// cvlErrorData holds error-info data for cvl errors.
+type cvlErrorData struct {
+	Code  int      `json:"error-code,omitempty"`
+	Descr string   `json:"description,omitempty"`
+	Msg   string   `json:"message,omitempty"`
+	Table string   `json:"table-name,omitempty"`
+	Keys  []string `json:"key-values,omitempty"`
+	Field string   `json:"field-name,omitempty"`
+	Value string   `json:"field-value,omitempty"`
+}
+
 // httpErrorType is an error structure for indicating HTTP protocol
 // errors. Includes HTTP status code and user displayable message.
 type httpErrorType struct {
@@ -157,6 +168,18 @@ func toErrorEntry(err error, r *http.Request) (status int, errInfo errorEntry) {
 		errInfo.Tag = errtagInvalidValue
 		errInfo.Message = e.CVLErrorInfo.ConstraintErrMsg
 		errInfo.AppTag = e.CVLErrorInfo.ErrAppTag
+
+		errInfo.ErrInfo = map[string]interface{}{
+			"cvl-error": cvlErrorData{
+				Code:  e.Code,
+				Descr: e.CVLErrorInfo.CVLErrDetails,
+				Msg:   e.CVLErrorInfo.Msg,
+				Table: e.CVLErrorInfo.TableName,
+				Keys:  e.CVLErrorInfo.Keys,
+				Field: e.CVLErrorInfo.Field,
+				Value: e.CVLErrorInfo.Value,
+			},
+		}
 
 		switch cvl.CVLRetCode(e.Code) {
 		case cvl.CVL_SEMANTIC_KEY_ALREADY_EXIST, cvl.CVL_SEMANTIC_KEY_DUPLICATE:
