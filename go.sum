@@ -24,6 +24,7 @@ github.com/go-playground/universal-translator v0.17.0 h1:icxd5fm+REJzpZx7ZfpaD87
 github.com/go-playground/universal-translator v0.17.0/go.mod h1:UkSxE5sNxxRwHyU+Scu5vgOQjsIJAF8j9muTVoKLVtA=
 github.com/go-redis/redis v6.15.6+incompatible h1:H9evprGPLI8+ci7fxQx6WNZHJSb7be8FqJQRhdQZ5Sg=
 github.com/go-redis/redis v6.15.6+incompatible/go.mod h1:NAIEuMOZ/fxfXJIrKDQDz8wamY7mA7PouImQ2Jvg6kA=
+github.com/go-redis/redis/v7 v7.0.0-beta.3.0.20190824101152-d19aba07b476 h1:WNSiFp8Ww4ZP7XUzW56zDYv5roKQ4VfsdHCLoh8oDj4=
 github.com/go-redis/redis/v7 v7.0.0-beta.3.0.20190824101152-d19aba07b476/go.mod h1:xhhSbUMTsleRPur+Vgx9sUHtyN33bdjxY+9/0n9Ig8s=
 github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b h1:VKtxabqXZkF25pY9ekfRL6a582T4P37/31XEstQ5p58=
 github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b/go.mod h1:SBH7ygxi8pfUlaOkMMuAQtPIUF8ecWP5IEl/CR7VP2Q=
@@ -73,6 +74,8 @@ github.com/openconfig/ygot v0.6.1-0.20190723223108-724a6b18a922/go.mod h1:o30svN
 github.com/openconfig/ygot v0.7.1 h1:kqDRYQpowXTr7EhGwr2BBDKJzqs+H8aFYjffYQ8lBsw=
 github.com/openconfig/ygot v0.7.1/go.mod h1:5MwNX6DMP1QMf2eQjW+aJN/KNslVqRJtbfSL3SO6Urk=
 github.com/pborman/getopt v0.0.0-20190409184431-ee0cd42419d3/go.mod h1:85jBQOZwpVEaDAr341tbn15RS4fCAsIst0qp7i8ex1o=
+github.com/philopon/go-toposort v0.0.0-20170620085441-9be86dbd762f h1:WyCn68lTiytVSkk7W1K9nBiSGTSRlUOdyTnSjwrIlok=
+github.com/philopon/go-toposort v0.0.0-20170620085441-9be86dbd762f/go.mod h1:/iRjX3DdSK956SzsUdV55J+wIsQ+2IBWmBrB4RvZfk4=
 github.com/pkg/profile v1.4.0 h1:uCmaf4vVbWAOZz36k1hrQD7ijGRzLwaME8Am/7a4jZI=
 github.com/pkg/profile v1.4.0/go.mod h1:NWz/XGvpEW1FyYQ7fCx4dqYBLlfTcE+A9FLAkNKqjFE=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
