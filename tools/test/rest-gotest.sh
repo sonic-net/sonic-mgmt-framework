@@ -59,6 +59,8 @@ MGMT_COMMON_DIR=$(realpath ${TOPDIR}/../sonic-mgmt-common)
 
 export CVL_SCHEMA_PATH=${MGMT_COMMON_DIR}/build/cvl/schema
 
+export DB_CONFIG_PATH=${MGMT_COMMON_DIR}/tools/test/database_config.json
+
 PKG="github.com/Azure/sonic-mgmt-framework/rest/server"
 DIR="${PWD}"
 

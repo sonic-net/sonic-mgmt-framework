@@ -79,8 +79,14 @@ for V in $@; do
     case $V in
     -cert|--cert|-cert=*|--cert=*) HAS_CRTFILE=1;;
     -key|--key|-key=*|--key=*) HAS_KEYFILE=1;;
+    -v|--v|-v=*|--v=*) HAS_V=1;;
+    -client_auth|--client_auth) HAS_AUTH=1;;
+    -client_auth=*|--client_auth=*) HAS_AUTH=1;;
     esac
 done
+
+[[ -z ${HAS_V} ]] && EXTRA_ARGS+=" -v 1"
+[[ -z ${HAS_AUTH} ]] && EXTRA_ARGS+=" -client_auth none"
 
 cd $SERVER_DIR
 

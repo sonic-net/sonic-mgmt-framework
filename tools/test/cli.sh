@@ -60,7 +60,16 @@ export SHOW_CONFIG_TOOLS=${CLIBUILD}/render-templates
 export CLISH_PATH=${CLIBUILD}/command-tree
 
 # KLISH_BIN can be set to use klish exe and libs from other directory.
-[[ ! -d "${KLISH_BIN}" ]] && KLISH_BIN=${CLIBUILD}
+if [[ -z ${KLISH_BIN} ]]; then
+    if [[ -f ${CLIBUILD}/clish ]]; then
+        KLISH_BIN=${CLIBUILD}
+    elif [[ -f ${BUILDDIR}/target/clish ]]; then
+        KLISH_BIN=${BUILDDIR}/target
+    else
+        echo "Error: could not locate clish."
+        exit 1
+    fi
+fi
 
 PYTHONPATH+=:${CLISOURCE}/actioner
 PYTHONPATH+=:${CLISOURCE}/renderer
