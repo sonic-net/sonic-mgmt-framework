@@ -26,6 +26,7 @@ GOPATH  ?= /tmp/go
 
 GO_MOD   = go.mod
 GO_DEPS  = vendor/.done
+GO_CODEGEN_INIT := $(BUILD_DIR)/rest_server/dist/.init_done
 
 export TOPDIR MGMT_COMMON_DIR GO GOPATH
 
@@ -35,8 +36,7 @@ all: rest cli
 $(GO_MOD):
 	$(GO) mod init github.com/Azure/sonic-mgmt-framework
 
-$(GO_DEPS): $(GO_MOD)
-	$(MAKE) -C models -f openapi_codegen.mk go-server-init
+$(GO_DEPS): $(GO_MOD) $(GO_CODEGEN_INIT)
 	$(GO) mod vendor
 	$(MGMT_COMMON_DIR)/patches/apply.sh vendor
 	touch  $@
@@ -68,8 +68,11 @@ rest-server: go-deps-clean
 rest-clean: go-deps-clean models-clean
 	$(MAKE) -C rest clean
 
+$(GO_CODEGEN_INIT):
+	$(MAKE) -C models -f openapi_codegen.mk go-server-init
+
 .PHONY: models
-models:
+models: | $(GO_CODEGEN_INIT)
 	$(MAKE) -C models
 
 models-clean:
