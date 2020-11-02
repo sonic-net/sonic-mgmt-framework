@@ -16,21 +16,18 @@
 #
 ###########################################################################
 
-.PHONY: install doc_gen doc_gen_clean
+.PHONY: install
 
 TOPDIR               := ../..
 # TGT_DIR is the directory wher all prepreocssed cli model, actioner and
 # renderer scripts and temlates will be dumped. Can be overidden from caller.
 TGT_DIR              ?= $(SONIC_CLI_ROOT)/target
-doc_gen              := doc_gen
-doc_gen_clean        := doc_gen_clean
 CLI_XML_FILES        := $(shell find $(TOPDIR)/CLI/clitree/cli-xml -name '*.xml' | sort)
 CLI_XML_MACRO_FILES  := $(shell find $(TOPDIR)/CLI/clitree/macro -name '*.xml' | sort)
-CLI_DOCGEN_SCRIPT    := $(TOPDIR)/CLI/clitree/scripts/klish_cli_doc_gen.py
 cli_done             := ${TGT_DIR}/command-tree/.done
 cli_guide            := ${TGT_DIR}/command-tree/industry_standard_cli_reference_guide.md
 
-all: $(cli_done) $(doc_gen)
+all: $(cli_done)
 
 $(cli_done): $(CLI_XML_FILES) $(CLI_XML_MACRO_FILES)
 	mkdir -p ${TGT_DIR}/command-tree ${TGT_DIR}/cli-macro ${TGT_DIR}/render-templates ${TGT_DIR}/scripts
@@ -49,17 +46,7 @@ $(cli_done): $(CLI_XML_FILES) $(CLI_XML_MACRO_FILES)
 	rm -rf scripts/*.pyc
 	touch $@
 
-$(doc_gen): $(cli_guide)
-
-$(cli_guide): $(cli_done) $(CLI_DOCGEN_SCRIPT)
-	@echo "==Generating documentation for CLIs=="
-	python scripts/klish_cli_doc_gen.py ${TGT_DIR}/command-tree
-
-doc_gen_clean:
-	@echo "Documentation guide removed"
-	rm -rf $(cli_guide)
-
-clean: doc_gen_clean
+clean:
 	rm -rf ${TGT_DIR}
 	@echo "Clitree Cleaned"
 

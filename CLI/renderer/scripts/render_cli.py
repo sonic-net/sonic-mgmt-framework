@@ -8,7 +8,6 @@ import select
 import termios
 from rpipe_utils import pipestr
 import datetime
-import json_tools
 
 # Capture our current directory
 #THIS_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -19,7 +18,6 @@ global ctrl_rfd
 # AFB: 12/09/2019: If sonic_cli_output() gets called twice in actioner
 # script, then # render_init() is called twice ==> os.fdopen() is called
 # twice ==> "OSError: [Errno 9] Bad file descriptor" executing the os.fdopen()
-global render_init_called
 render_init_called = False
 
 def render_init(fd):
@@ -157,7 +155,6 @@ def show_cli_output(template_file, response, continuation=False, **kwargs):
         return datetime.datetime.fromtimestamp(int(time)).strftime('%Y-%m-%d %H:%M:%S')
 
     j2_env.globals.update(datetimeformat=datetimeformat)
-    j2_env.globals.update(json_tools=json_tools)
 
     full_cmd = os.getenv('USER_COMMAND', None)
     if full_cmd is not None:
