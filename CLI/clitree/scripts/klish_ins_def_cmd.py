@@ -79,7 +79,7 @@ INHERIT_ENABLE_MODE_CMD_WITHOUT_PREFIX = """<NAMESPACE
 
 
 END_CMD = """<COMMAND name="end"
-                 help="Exit to the exec Mode"
+                 help="Exit to EXEC mode"
                  view="enable-view"/>"""
 
 VIEW_TAG_STR = """{http://www.dellemc.com/sonic/XMLSchema}VIEW"""

@@ -1,0 +1,113 @@
+6a7
+> //#include "clish/plugin/clish_api.h"
+17c18,19
+< 	clish_help_t *help, const char *line, size_t *max_width)
+---
+> 	clish_help_t *help, const char *line, size_t *max_width,
+> 	clish_context_t *context)
+20a23
+> 	clish_context_t local_context;
+25a29
+> 	clish_context_init(&local_context, this);
+26a31,38
+> 		clish_context__set_cmd(&local_context, cmd);
+> 		if(clish_shell_command_test(cmd, &local_context) == BOOL_FALSE)
+> 			continue;
+> 
+> 		if (clish_command__get_hidden(cmd) == BOOL_TRUE)
+>                         continue;
+> 		if (clish_command__get_enabled(cmd) == BOOL_FALSE)
+>                         continue;
+51c63
+< 	clish_pargv_status_e status = CLISH_LINE_OK;
+---
+> 	clish_pargv_status_t status = CLISH_LINE_OK;
+74c86
+< 		argv, &idx, completion, index);
+---
+> 		argv, &idx, completion, index, NULL, NULL);
+80a93
+> 		const clish_parg_t *parg;
+84a98,104
+> 		if (clish_param__get_hidden(param) == BOOL_TRUE)
+> 			continue;
+> 
+> 		if (clish_param__get_enabled(param) == BOOL_FALSE)
+> 			continue;
+> 
+> 		parg = clish_pargv__get_parg(completion, i);
+93c113
+< 		clish_param_help(param, help);
+---
+> 		clish_param_help(param, help, clish_parg__get_value((parg)));
+107c127,160
+< void clish_shell_help(clish_shell_t *this, const char *line)
+---
+> void sort_help_command (const lub_argv_t *name , const lub_argv_t *help, int complete_status) {
+>         int count = 0;
+>         int indexi,indexj;
+>         char * temp = NULL;
+>         const char *str1 = NULL;
+>         const char *str2 = NULL;
+> 
+>         count = lub_argv__get_count(name);
+>         /* if the last element is <cr>, then don't sort that the last element */
+>         if (!complete_status) {
+>                 count = count - 1;
+>         }
+> 
+>         for (indexi=0;indexi<count-1;indexi++) {
+>                 for (indexj=indexi+1;indexj<count;indexj++) {
+>                         str1 = lub_argv__get_arg(name, indexi);
+>                         str2 = lub_argv__get_arg(name, indexj);
+> 
+>                         if ((str1 == NULL) || (str2 == NULL))
+>                                 continue;
+>                         /* check two strings. if compared string is lowest letter, then swap */
+>                         if(lub_string_nocasecmp(str1,str2) > 0) {
+>                                 /*swap the name to sort */
+>                                 lub_argv__swap_arg(name,indexi,indexj);
+>                                 /*swap the corresponding help string of command */
+>                                 lub_argv__swap_arg(help,indexi,indexj);
+>                         }
+>                 }
+>         }
+> 
+> }
+> 
+> /*--------------------------------------------------------- */
+> void clish_shell_help(clish_shell_t *this, const char *line, clish_context_t *context)
+112a166
+> 	int complete_status = 0;
+119c173
+< 	available_commands(this, &help, line, &max_width);
+---
+> 	available_commands(this, &help, line, &max_width, context);
+122c176
+< 	cmd = clish_shell_resolve_command(this, line);
+---
+> 	cmd = clish_shell_resolve_command(this, line, context);
+126,127c180
+< 		int status;
+< 		status = available_params(this, &help, cmd, line, &width);
+---
+> 		complete_status = available_params(this, &help, cmd, line, &width);
+131c184
+< 		if (!status) {
+---
+> 		if (!complete_status) {
+138a192,196
+>     
+> 	for (i = 0; i < lub_argv__get_count(help.name); i++) {
+> 		if(max_width < strlen(lub_argv__get_arg(help.name, i)))
+> 			max_width = strlen(lub_argv__get_arg(help.name, i));
+> 	}
+139a198,199
+> 	/* Sort the help command name and is help strings */
+> 	sort_help_command(help.name, help.help, complete_status);
+142c202,204
+< 		fprintf(stderr, "  %-*s  %s\n", (int)max_width,
+---
+> 		if(max_width < strlen(lub_argv__get_arg(help.name, i)))
+> 			max_width = strlen(lub_argv__get_arg(help.name, i));
+> 		fprintf(stderr, "  %-*s  %-s\n", (int)max_width,
