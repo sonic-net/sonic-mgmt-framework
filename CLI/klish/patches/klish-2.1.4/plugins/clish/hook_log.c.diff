@@ -1,0 +1,16 @@
+diff --git a/plugins/clish/hook_log.c b/plugins/clish/hook_log.c
+index cafd29e..da59419 100644
+--- a/plugins/clish/hook_log.c
++++ b/plugins/clish/hook_log.c
+@@ -37,8 +37,9 @@ CLISH_HOOK_LOG(clish_hook_log)
+ 		if (!(uname = getenv("LOGNAME")))
+ 			uname = user ? user->pw_name : "unknown";
+ 	}
+-	syslog(LOG_INFO, "%u(%s) %s : %d",
+-		user ? user->pw_uid : getuid(), uname, line, retcode);
++
++        int facility = LOG_LOCAL4;
++        syslog(LOG_INFO|facility, "User \"%s\" command \"%s\" status - %s", uname, line, retcode ? "failure" : "success");
+ 
+ 	return 0;
+ }
