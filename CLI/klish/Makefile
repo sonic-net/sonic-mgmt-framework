@@ -4,7 +4,6 @@ SHELL = /bin/bash
 
 KLISH_VERSION = 2.1.4
 PYTHONVER=2.7
-LIBCJSON_PATH ?= /usr/lib
 
 KLISH_SRC = $(SONIC_CLI_ROOT)/klish-$(KLISH_VERSION)
 
@@ -13,7 +12,7 @@ all : $(SRC_REPLACEMENTS)
 	tar xzvf klish-$(KLISH_VERSION).tgz -C $(SONIC_CLI_ROOT)
 	./patches/scripts/patchmake.sh -p VER=${KLISH_VERSION} TSP=${SONIC_CLI_ROOT} DSP=${CURDIR}/patches TWP=${SONIC_CLI_ROOT}
 
-	cd ${KLISH_SRC} && sh autogen.sh && ./configure --with-libxml2=/usr --enable-debug=no LIBS='-l:libcurl-gnutls.so.4 -lpython2.7 $(LIBCJSON_PATH)/libcjson.a' CFLAGS='${CFLAGS} -g -I/usr/include/python2.7' && make
+	cd ${KLISH_SRC} && sh autogen.sh && ./configure --with-libxml2=/usr --enable-debug=no LIBS='-l:libcurl-gnutls.so.4 -lpython2.7 -Wl,-rpath=/usr/lib/x86_64-linux-gnu -lcjson' CFLAGS='${CFLAGS} -g -I/usr/include/python2.7' && make
 
 	mkdir -p $(SONIC_CLI_ROOT)/target/.libs
 	cp $(CURDIR)/clish_start $(SONIC_CLI_ROOT)/target/.
