@@ -67,7 +67,7 @@ func Process(w http.ResponseWriter, r *http.Request) {
 
 	status, data, err = invokeTranslib(&args, rc)
 	if err != nil {
-		glog.Errorf("[%s] Translib error %T - %v", reqID, err, err)
+		glog.Warningf("[%s] Translib error %T - %v", reqID, err, err)
 		status, data, rtype = prepareErrorResponse(err, r)
 		goto write_resp
 	}
@@ -81,7 +81,7 @@ func Process(w http.ResponseWriter, r *http.Request) {
 
 	rtype, err = resolveResponseContentType(data, r, rc)
 	if err != nil {
-		glog.Errorf("[%s] Failed to resolve response content-type, err=%v", rc.ID, err)
+		glog.Warningf("[%s] Failed to resolve response content-type, err=%v", rc.ID, err)
 		status, data, rtype = prepareErrorResponse(err, r)
 		goto write_resp
 	}
@@ -141,7 +141,7 @@ func getRequestBody(r *http.Request, rc *RequestContext) (*MediaType, []byte, er
 
 	ct, err := parseMediaType(ctype)
 	if err != nil {
-		glog.Errorf("[%s] Bad content-type '%s'; err=%v",
+		glog.Warningf("[%s] Bad content-type '%s'; err=%v",
 			rc.ID, r.Header.Get("Content-Type"), err)
 		return nil, nil, httpBadRequest("Bad content-type")
 	}
@@ -149,7 +149,7 @@ func getRequestBody(r *http.Request, rc *RequestContext) (*MediaType, []byte, er
 	// Check if content type is one of the acceptable types specified
 	// in "consumes" section in OpenAPI spec.
 	if !rc.Consumes.Contains(ct.Type) {
-		glog.Errorf("[%s] Content-type '%s' not supported. Valid types %v", rc.ID, ct.Type, rc.Consumes)
+		glog.Warningf("[%s] Content-type '%s' not supported. Valid types %v", rc.ID, ct.Type, rc.Consumes)
 		return nil, nil, httpError(http.StatusUnsupportedMediaType, "Unsupported content-type")
 	}
 
