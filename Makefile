@@ -40,7 +40,6 @@ MAIN_TARGET = sonic-mgmt-framework_1.0-01_amd64.deb
 
 GO_DEPS_LIST = github.com/gorilla/mux \
                github.com/Workiva/go-datastructures/queue \
-               github.com/go-redis/redis \
                github.com/golang/glog \
                github.com/pkg/profile \
                gopkg.in/go-playground/validator.v9 \
@@ -58,7 +57,7 @@ GO_DEPS_LIST_2 = github.com/openconfig/goyang \
 
 # List of go dependencies in PACKAGE/VERSION format. Version is mandatory.
 # These packages are downloaded before GO_DEPS_LIST.
-GO_DEPS_VER_LIST += go.opentelemetry.io/otel/1f2eba2cdb0fb7e92ce199c6c06167d4080a55ff
+GO_DEPS_VER_LIST += github.com/go-redis/redis/d19aba07b47683ef19378c4a4d43959672b7cec8
 
 REST_BIN = $(BUILD_DIR)/rest_server/main
 CERTGEN_BIN = $(BUILD_DIR)/rest_server/generate_cert
@@ -72,9 +71,7 @@ build-deps:
 go-deps: $(GO_DEPS_VER_LIST) $(GO_DEPS_LIST) $(GO_DEPS_LIST_2) 
 
 go-pkg-version: go-deps
-	cd $(BUILD_GOPATH)/src/github.com/go-redis/redis; git checkout d19aba07b47683ef19378c4a4d43959672b7cec8 2>/dev/null ; true; \
-$(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/go-redis/redis; \
-cd $(BUILD_GOPATH)/src/github.com/gorilla/mux; git checkout 49c01487a141b49f8ffe06277f3dca3ee80a55fa 2>/dev/null ; true; \
+	cd $(BUILD_GOPATH)/src/github.com/gorilla/mux; git checkout 49c01487a141b49f8ffe06277f3dca3ee80a55fa 2>/dev/null ; true; \
 $(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/gorilla/mux; \
 cd $(BUILD_GOPATH)/src/github.com/Workiva/go-datastructures; git checkout f07cbe3f82ca2fd6e5ab94afce65fe43319f675f 2>/dev/null ; true; \
 $(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/Workiva/go-datastructures; \
@@ -180,3 +177,4 @@ clean: rest-clean
 cleanall:
 	$(MAKE) -C src/cvl cleanall
 	rm -rf build/*
+	rm -rf gopkgs
