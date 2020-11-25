@@ -5,7 +5,7 @@ import json
 import sys
 import gc
 import select
-from rpipe_utils import pipestr
+from .rpipe_utils import pipestr
 
 
 # Capture our current directory

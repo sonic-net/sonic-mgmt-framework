@@ -48,7 +48,7 @@ def generate_body(func, args):
     elif func.__name__ == 'get_openconfig_lldp_lldp_interfaces_interface':
         keypath = [args[1]]
     else:
-       body = {}
+        body = {}
 
     return keypath,body
 
@@ -63,35 +63,35 @@ def run(func, args):
 
     try:
         if body is not None:
-           api_response = getattr(aa,func.__name__)(*keypath, body=body)
+            api_response = getattr(aa,func.__name__)(*keypath, body=body)
         else :
-           api_response = getattr(aa,func.__name__)(*keypath)
+            api_response = getattr(aa,func.__name__)(*keypath)
         if api_response is None:
             print ("Success")
         else:
             response = api_response.to_dict()
-            if 'openconfig_lldpinterfaces' in response.keys():
+            if 'openconfig_lldpinterfaces' in list(response.keys()):
                 if not response['openconfig_lldpinterfaces']:
                     return
-		neigh_list = response['openconfig_lldpinterfaces']['interface']
+                neigh_list = response['openconfig_lldpinterfaces']['interface']
                 if neigh_list is None:
                     return
-		show_cli_output(sys.argv[2],neigh_list)
-            elif 'openconfig_lldpinterface' in response.keys():
-	        neigh = response['openconfig_lldpinterface']#[0]['neighbors']['neighbor']
+                show_cli_output(sys.argv[2],neigh_list)
+            elif 'openconfig_lldpinterface' in list(response.keys()):
+                neigh = response['openconfig_lldpinterface']#[0]['neighbors']['neighbor']
                 if neigh is None:
                     return
-		if sys.argv[3] is not None:
-		    if neigh[0]['neighbors']['neighbor'][0]['state'] is None:
-			print('No LLDP neighbor interface')
-		    else:
-			show_cli_output(sys.argv[2],neigh)
-		else:
-	     	    show_cli_output(sys.argv[2],neigh)
+                if sys.argv[3] is not None:
+                    if neigh[0]['neighbors']['neighbor'][0]['state'] is None:
+                        print('No LLDP neighbor interface')
+                    else:
+                        show_cli_output(sys.argv[2],neigh)
+                else:
+                    show_cli_output(sys.argv[2],neigh)
             else:
                 print("Failed")
     except ApiException as e:
-        print("Exception when calling OpenconfigLldpApi->%s : %s\n" %(func.__name__, e))
+        print(("Exception when calling OpenconfigLldpApi->%s : %s\n" %(func.__name__, e)))
 
 if __name__ == '__main__':
     pipestr().write(sys.argv)

@@ -11,7 +11,7 @@ class pipestr:
     """
     def __init__(self):
         pass
-   
+
     def write(self, argv):
         pipe_str = ''
         has_pipe = False
@@ -166,7 +166,7 @@ class pipelst:
     def print_pipes(self):
         """dump pipe objects"""
         for pipeobj in self.pipes:
-            print pipeobj
+            print(pipeobj)
         return
 
     def is_page_disabled(self):
@@ -193,8 +193,8 @@ class rpipe_grep:
                 self.regexp = re.compile(r'(.*?)' + match_str + '(.*?)')
             else:
                 self.regexp = re.compile(r'(.*?)' + match_str + '(.*?)', flags)
-        except Exception, error :
-            print '%Error: ' + str(error)
+        except Exception as error :
+            print('%Error: ' + str(error))
             raise
 
     def pipe_action(self, string):
@@ -232,8 +232,8 @@ class rpipe_except:
                 self.regexp = re.compile(r'(.*?)' + match_str + '(.*?)')
             else:
                 self.regexp = re.compile(r'(.*?)' + match_str + '(.*?)', flags)
-        except Exception, error :
-            print '%Error: ' + str(error)
+        except Exception as error :
+            print('%Error: ' + str(error))
             raise
 
     def pipe_action(self, string):
@@ -271,8 +271,8 @@ class rpipe_find:
                 self.regexp = re.compile(r'(.*?)' + match_str + '(.*?)')
             else:
                 self.regexp = re.compile(r'(.*?)' + match_str + '(.*?)', flags)
-        except Exception, error :
-            print '%Error: ' + str(error)
+        except Exception as error :
+            print('%Error: ' + str(error))
             raise
 
     def pipe_action(self, string):
@@ -310,10 +310,10 @@ class rpipe_save:
                     try:
                         self.fd = open(file_path, file_mode)
                     except IOError:
-                        print 'Error: cannot create regular file ', \
-                              '%s : No such file or Directory' % file_path
+                        print('Error: cannot create regular file ', \
+                              '%s : No such file or Directory' % file_path)
                 else:
-                    print "File name not present in %s" % file_path
+                    print("File name not present in %s" % file_path)
             else:
                 file_dir = os.path.dirname(file_path)
                 file_name = os.path.basename(file_path)
@@ -321,18 +321,18 @@ class rpipe_save:
                     try:
                         self.fd = open(file_path, file_mode)
                     except IOError:
-                        print 'Error: cannot create regular file ', \
-                              '%s : No such file or Directory' % file_path
+                        print('Error: cannot create regular file ', \
+                              '%s : No such file or Directory' % file_path)
                 else:
-                    print '%s is not a Valid filepath' % file_path
+                    print('%s is not a Valid filepath' % file_path)
         else:
             # For relative path, store the result in user's home
             file_path = os.path.expanduser('~') + '/' + file_path
             try:
                 self.fd = open(file_path, file_mode)
             except IOError:
-                print 'Error: cannot create regular file ', \
-                      '%s : No such file or Directory' % file_path
+                print('Error: cannot create regular file ', \
+                      '%s : No such file or Directory' % file_path)
         # Save computed file name for future reference
         self.file_path = file_path
         # Write header in file
@@ -349,7 +349,7 @@ class rpipe_save:
                 self.fd.write(string + '\n')
             self.fd.flush()
         except IOError:
-            print 'Error: Write into file %s failed' % self.file_path
+            print('Error: Write into file %s failed' % self.file_path)
             self.fd.close()
         return True
 
@@ -373,10 +373,9 @@ class rpipe_save:
                               "! ===================================" +
                               "=====================================" + '\n')
             except IOError:
-                print 'Error: Write into file %s failed' % self.file_path
+                print('Error: Write into file %s failed' % self.file_path)
                 self.fd.close()
 
     def __del__(self):
         if self.fd != None:
             self.fd.close()
-

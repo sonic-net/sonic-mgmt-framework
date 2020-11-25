@@ -34,11 +34,11 @@ urllib3.disable_warnings()
 plugins = dict()
 
 def util_capitalize(value):
-    for key,val in value.items():
+    for key,val in list(value.items()):
         temp = key.split('_')
         alt_key = ''
         for i in temp:
-        	alt_key = alt_key + i.capitalize() + ' '
+            alt_key = alt_key + i.capitalize() + ' '
         value[alt_key]=value.pop(key)
     return value
 
@@ -81,7 +81,7 @@ def generate_body(func, args):
         keypath = []
 
     else:
-       body = {}
+        body = {}
 
     return keypath,body
 
@@ -96,64 +96,64 @@ def run(func, args):
 
     try:
         if body is not None:
-           api_response = getattr(aa,func.__name__)(*keypath, body=body)
-           
+            api_response = getattr(aa,func.__name__)(*keypath, body=body)
+
         else :
-           api_response = getattr(aa,func.__name__)(*keypath)
+            api_response = getattr(aa,func.__name__)(*keypath)
         if api_response is None:
             print ("Success")
         else:
             response = api_response.to_dict()
-            if 'openconfig_systemstate' in response.keys():
+            if 'openconfig_systemstate' in list(response.keys()):
                 value = response['openconfig_systemstate']
                 if value is None:
                     return
                 show_cli_output(sys.argv[2], system_state_key_change(value))
 
-            elif 'openconfig_systemmemory' in response.keys():
+            elif 'openconfig_systemmemory' in list(response.keys()):
                 value = response['openconfig_systemmemory']
                 if value is None:
                     return
-		show_cli_output(sys.argv[2], memory_key_change(value['state']))
-            elif 'openconfig_systemcpus' in response.keys():
+                show_cli_output(sys.argv[2], memory_key_change(value['state']))
+            elif 'openconfig_systemcpus' in list(response.keys()):
                 value = response['openconfig_systemcpus']
                 if value is None:
                     return
                 show_cli_output(sys.argv[2], value['cpu'])
-            elif 'openconfig_systemprocesses' in response.keys():
+            elif 'openconfig_systemprocesses' in list(response.keys()):
                 value = response['openconfig_systemprocesses']
-		if 'pid' not in sys.argv:
+                if 'pid' not in sys.argv:
                     if value is None:
-                    	return
-	    	    show_cli_output(sys.argv[2],value['process'])
-		else:
-		    for proc in value['process']:
-			if proc['pid'] == int(sys.argv[3]):
-			    show_cli_output(sys.argv[2],util_capitalize(proc['state']))
-			    return
+                        return
+                    show_cli_output(sys.argv[2],value['process'])
+                else:
+                    for proc in value['process']:
+                        if proc['pid'] == int(sys.argv[3]):
+                            show_cli_output(sys.argv[2],util_capitalize(proc['state']))
+                            return
             else:
                 print("Failed")
     except ApiException as e:
         if e.body != "":
             body = json.loads(e.body)
             if "ietf-restconf:errors" in body:
-                 err = body["ietf-restconf:errors"]
-                 if "error" in err:
-                     errList = err["error"]
+                err = body["ietf-restconf:errors"]
+                if "error" in err:
+                    errList = err["error"]
 
-                     errDict = {}
-                     for dict in errList:
-                         for k, v in dict.iteritems():
-                              errDict[k] = v
+                    errDict = {}
+                    for dict in errList:
+                        for k, v in dict.items():
+                            errDict[k] = v
 
-                     if "error-message" in errDict:
-                         print "%Error: " + errDict["error-message"]
-                         return
-                     print "%Error: Application Failure"
-                     return
-            print "%Error: Application Failure"
+                    if "error-message" in errDict:
+                        print("%Error: " + errDict["error-message"])
+                        return
+                    print("%Error: Application Failure")
+                    return
+            print("%Error: Application Failure")
         else:
-            print "Failed"
+            print("Failed")
 
 if __name__ == '__main__':
 
@@ -161,4 +161,3 @@ if __name__ == '__main__':
     #pdb.set_trace()
     func = eval(sys.argv[1], globals(), openconfig_system_client.OpenconfigSystemApi.__dict__)
     run(func, sys.argv[2:])
-

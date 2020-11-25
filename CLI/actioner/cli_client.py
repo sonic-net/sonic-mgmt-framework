@@ -33,7 +33,7 @@ class ApiClient(object):
     Customized for CLI actioner use.
     """
 
-    # Initialize API root and session 
+    # Initialize API root and session
     __api_root = os.getenv('REST_API_ROOT', 'https://localhost')
     __session = requests.Session()
 
@@ -122,7 +122,7 @@ class Path(object):
         self.template = template
         self.params = kwargs
         self.path = template
-        for k, v in kwargs.items():
+        for k, v in list(kwargs.items()):
             self.path = self.path.replace('{%s}' % k, quote(v, safe=''))
 
     def __str__(self):
@@ -199,4 +199,3 @@ def add_error_prefix(err_msg):
     if not err_msg.startswith("%Error"):
         return '%Error: ' + err_msg
     return err_msg
-

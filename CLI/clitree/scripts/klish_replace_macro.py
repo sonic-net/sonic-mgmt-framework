@@ -115,7 +115,7 @@ MACRODEF_END = '</MACRODEF>'
 DBG_FLAG = False
 
 def align_and_save(temp_file_name, out_file_name, replace_entities):
-    print "Writing ", out_file_name
+    print("Writing ", out_file_name)
     try:
         parser = etree.XMLParser(remove_blank_text=True, resolve_entities=replace_entities)
         root = etree.parse(temp_file_name, parser)
@@ -127,7 +127,7 @@ def align_and_save(temp_file_name, out_file_name, replace_entities):
     except:
         #error = parser.error_log[0]
         #print "Error parsing ", os.path.basename(outputfile.name), error.message
-        print "Error writing ", out_file_name, sys.exc_info()
+        print("Error writing ", out_file_name, sys.exc_info())
         sys.exit(102)
 
 def process_spaces(line):
@@ -174,11 +174,11 @@ def expand_macro(macname, argcnt, argval, fd, macro_data):
                 matchfound = 1
                 gothit = 1
                 if DBG_FLAG == True:
-                    print "Macro Line Match found", macro_start
+                    print("Macro Line Match found", macro_start)
                 continue
             else:
                 if DBG_FLAG == True:
-                    print "macro ***not***  found part"
+                    print("macro ***not***  found part")
                 if macro_line.find(MACRODEF_END) != -1:
                     matchfound = 0
                     continue
@@ -195,20 +195,20 @@ def expand_macro(macname, argcnt, argval, fd, macro_data):
                             macro_line = re.sub(param, value, macro_line)
 
                     if DBG_FLAG == True:
-                        print "param : " + param
-                        print "argval" + str(i) + ": " + argval[i]
-                        print "macro_line : " +  macro_line
+                        print("param : " + param)
+                        print("argval" + str(i) + ": " + argval[i])
+                        print("macro_line : " +  macro_line)
                     fd.write(macro_line)
                     fd.write(" ")
         if gothit == 0:
             # A macro match is not found. Possibly a typo in macro name
             # Flag fatal error
-            print "Macro", macname, "not defined in list of macros"
+            print("Macro", macname, "not defined in list of macros")
             sys.exit(102)
 
     except:
         error = parser.error_log[0]
-        print "Error expand_macro ", os.path.basename(fd.name), error.message
+        print("Error expand_macro ", os.path.basename(fd.name), error.message)
         sys.exit(101)
 
 '''
@@ -233,14 +233,14 @@ def process_input_file(filename, fd, macro_data):
                 nargs = 0
                 line = ' '.join(line.split())
                 if DBG_FLAG == True:
-                    print line, multi_line
+                    print(line, multi_line)
                 if re.search(MACRO_START, line, 0) != None or multi_line == True:
                     if DBG_FLAG == True:
-                        print "MACRO is found", line
+                        print("MACRO is found", line)
                     line = process_spaces(line)
                     line = line.replace('\,', '#')
                     if DBG_FLAG == True:
-                        print line
+                        print(line)
                     mname = re.sub(MACRO_START, "", line)
                     if line.find("arg") != -1:
                         nargs = line.count(',') + 1
@@ -249,15 +249,15 @@ def process_input_file(filename, fd, macro_data):
                         multi_line = True
                         macroname = mname.strip()
                         if DBG_FLAG == True:
-                            print macroname, multi_line
+                            print(macroname, multi_line)
                         continue
                     nargs = int(nargs)
                     if DBG_FLAG == True:
-                        print nargs
+                        print(nargs)
                     if nargs == 0:
                         macroname = endoflinehandling(mname)
                         if DBG_FLAG == True:
-                            print macroname
+                            print(macroname)
                         expand_macro(macroname, 0, None, fd, macro_data)
                     else:
                         args = []
@@ -267,7 +267,7 @@ def process_input_file(filename, fd, macro_data):
                                 macroname = mname[0:mname.find(' ')]
                                 repmname = macroname + ' ' + 'arg="'
                         if DBG_FLAG == True:
-                            print macroname, nargs
+                            print(macroname, nargs)
                         mname = re.sub(repmname, "", mname)
                         for i in range(nargs):
                             e = mname.find(',')
@@ -280,7 +280,7 @@ def process_input_file(filename, fd, macro_data):
                             argval = argval.replace('#', ',')
                             args.append(argval)
                         if DBG_FLAG == True:
-                            print "about to expand_macro", macroname
+                            print("about to expand_macro", macroname)
                         expand_macro(macroname, nargs, args, fd, macro_data)
                 elif re.search(MACRO_END, line, 0) != None:
                     continue
@@ -290,10 +290,10 @@ def process_input_file(filename, fd, macro_data):
             fd.close()
             input_file.close()
     except IOError as e:
-        print "Cannot open file: ", filename, e.strerror
+        print("Cannot open file: ", filename, e.strerror)
         sys.exit(100)
     except :
-        print "Unknown error: ", sys.exc_info()[0], filename, input_file
+        print("Unknown error: ", sys.exc_info()[0], filename, input_file)
         sys.exit(100)
 
 def load_all_macros (macro_dir_path):
@@ -322,30 +322,30 @@ def process_dir (dirpath, macro_data, replace_entities):
     try:
         os.mkdir(tmp_dirpath)
     except OSError:
-        print 'The directory', tmp_dirpath, 'already exists. Using it.'
+        print('The directory', tmp_dirpath, 'already exists. Using it.')
     except:
-        print "Unknown error"
+        print("Unknown error")
         sys.exit (98)
 
     if DBG_FLAG == True:
-        print "process_dir ", dirpath, tmp_dirpath, temp_file_name
+        print("process_dir ", dirpath, tmp_dirpath, temp_file_name)
 
     for fname in os.listdir(dirpath):
         fname = dirpath + fname
         if not os.path.isfile (fname):
             if DBG_FLAG == True:
-                print 'Skipping', fname, 'since it is not a file'
+                print('Skipping', fname, 'since it is not a file')
             continue
         if DBG_FLAG == True:
-            print 'Parsing ', fname
+            print('Parsing ', fname)
         if fname.endswith(".xml", re.I):
             try:
                 temp_file = open(temp_file_name, "w")
             except IOError as e:
-                print e.filename, ":", e.strerror
+                print(e.filename, ":", e.strerror)
                 sys.exit(99)
             if DBG_FLAG == True:
-                print fname
+                print(fname)
             process_input_file(fname, temp_file, macro_data)
             align_and_save(temp_file_name, fname, replace_entities)
             temp_file.close()
@@ -370,7 +370,7 @@ def fix_macros (macro_dir_path, nested_levels):
     for i in range(nested_levels):
         macro_data = load_all_macros (macro_dir_path)
         if DBG_FLAG == True:
-            print "All macros loaded from", macro_dir_path
+            print("All macros loaded from", macro_dir_path)
         process_dir (macro_dir_path, macro_data, True)
 
     return macro_data
@@ -380,20 +380,20 @@ def replace_macros (dirpath, macro_dir_path, nested_levels, debug):
     macro_dir_path = macro_dir_path + "/"
     DBG_FLAG = debug
 
-    print "Resolving nested macro references in", macro_dir_path
+    print("Resolving nested macro references in", macro_dir_path)
     macro_data = fix_macros (macro_dir_path, int(nested_levels))
 
     if DBG_FLAG == True:
-        print macro_data
+        print(macro_data)
 
-    print "Processing directory:", dirpath
+    print("Processing directory:", dirpath)
     process_dir (dirpath, macro_data, False)
-    print "Done"
+    print("Done")
 
 if __name__ == "__main__":
 
     if len(sys.argv) == 1 or sys.argv[1] == "--help":
-        print "Usage:", sys.argv[0], "working-dir macrodir nested-macro-levels [--debug]"
+        print("Usage:", sys.argv[0], "working-dir macrodir nested-macro-levels [--debug]")
         sys.exit(0)
 
     dirpath = sys.argv[1]

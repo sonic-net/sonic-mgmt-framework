@@ -49,10 +49,10 @@ actionlst               = ['clish_history', 'clish_file_print', 'clish_show_alia
 @return Output Text
 '''
 def unescape(s):
-        s = re.sub("&lt;", "<", s)
-        s = re.sub("&gt;", ">", s)
-        s = re.sub("&amp;", "&", s)
-        return s
+    s = re.sub("&lt;", "<", s)
+    s = re.sub("&gt;", ">", s)
+    s = re.sub("&amp;", "&", s)
+    return s
 
 
 '''
@@ -64,13 +64,13 @@ def align_and_save(temp_file_name, output_file_name):
     try:
         parser = etree.XMLParser(remove_blank_text=True, resolve_entities=False)
         root = etree.parse(temp_file_name, parser)
-        text = etree.tostring(root, pretty_print=True, xml_declaration=True, encoding=root.docinfo.encoding)
+        text = etree.tostring(root, pretty_print=True, xml_declaration=True, encoding=root.docinfo.encoding).decode("utf8")
         text = unescape(text)
         root.write(output_file_name, pretty_print=True, xml_declaration=True, encoding=root.docinfo.encoding)
     except:
         error = parser.error_log[0]
-        print "Error parsing ", os.path.basename(outputfile.name), error.message
-        print "Error writing ", out_file_name, sys.exc_info()[0]
+        print("Error parsing ", os.path.basename(outputfile.name), error.message)
+        print("Error writing ", out_file_name, sys.exc_info()[0])
         sys.exit(102)
 
 
@@ -80,26 +80,26 @@ def align_and_save(temp_file_name, output_file_name):
 @return COMMAND tag with/without pipe sub-element added
 '''
 def addpipe(command):
-   splitstr = command.get('name').split()
-   action = command.find(ACTION_XPATH_EXPR).get('builtin')
-   if (splitstr[0] == 'show' or splitstr[0] == 'get'):
-      if action in actionlst:
-          etree.SubElement(command, "{"+XI_NS_HREF+"}include", href = PIPE_WITHOUT_DISPLAY_XML)
-      else:
-          etree.SubElement(command, "{"+XI_NS_HREF+"}include", href = PIPE_XML)
+    splitstr = command.get('name').split()
+    action = command.find(ACTION_XPATH_EXPR).get('builtin')
+    if (splitstr[0] == 'show' or splitstr[0] == 'get'):
+        if action in actionlst:
+            etree.SubElement(command, "{"+XI_NS_HREF+"}include", href = PIPE_WITHOUT_DISPLAY_XML)
+        else:
+            etree.SubElement(command, "{"+XI_NS_HREF+"}include", href = PIPE_XML)
 
-      if DBG_FLAG == True:
-          print "Adding Pipe for cmd: ", splitstr
-   return command
+        if DBG_FLAG == True:
+            print("Adding Pipe for cmd: ", splitstr)
+    return command
 
 
 '''
 @brief Register Namespaces so that XPATH expression matches
 '''
 def registerns():
-   ET.register_namespace("", DEFAULT_NS_HREF)
-   ET.register_namespace("xsi", XSI_NS_HREF)
-   ET.register_namespace("xi", XI_NS_HREF)
+    ET.register_namespace("", DEFAULT_NS_HREF)
+    ET.register_namespace("xsi", XSI_NS_HREF)
+    ET.register_namespace("xi", XI_NS_HREF)
 
 
 '''
@@ -110,26 +110,26 @@ def registerns():
 def process_input_file(input_file_name, tempfile):
     try:
         if True:
-                registerns()
-                parser = etree.XMLParser(remove_blank_text=True, resolve_entities=False)
-                tree = etree.parse(input_file_name,parser)
-                root = tree.getroot()
-                #root.set("xmlns:" + "xi", XI_NS_HREF)
-                if DBG_FLAG == True:
-                        print "Root Tag: ",root.tag
-                for command in root.findall(COMMAND_XPATH_EXPR):
-                        if len(command) != 0:
-                                command = addpipe(command)
-                for command in root.findall(HIDDEN_CMD_XPATH_EXPR):
-                        if len(command) != 0:
-                                command = addpipe(command)
+            registerns()
+            parser = etree.XMLParser(remove_blank_text=True, resolve_entities=False)
+            tree = etree.parse(input_file_name,parser)
+            root = tree.getroot()
+            #root.set("xmlns:" + "xi", XI_NS_HREF)
+            if DBG_FLAG == True:
+                print("Root Tag: ",root.tag)
+            for command in root.findall(COMMAND_XPATH_EXPR):
+                if len(command) != 0:
+                    command = addpipe(command)
+            for command in root.findall(HIDDEN_CMD_XPATH_EXPR):
+                if len(command) != 0:
+                    command = addpipe(command)
 
-                tree.write(tempfile, xml_declaration=True, encoding=tree.docinfo.encoding, pretty_print=True)
+            tree.write(tempfile, xml_declaration=True, encoding=tree.docinfo.encoding, pretty_print=True)
     except IOError as e:
-        print "Cannot open file: ", e.filename, ":", e.strerror
+        print("Cannot open file: ", e.filename, ":", e.strerror)
         sys.exit(100)
     except :
-        print "process_input_file:Unknown error: ", sys.exc_info()[0]
+        print("process_input_file:Unknown error: ", sys.exc_info()[0])
         sys.exit(100)
 
 def insert_pipe (dirpath, debug):
@@ -142,10 +142,10 @@ def insert_pipe (dirpath, debug):
     try:
         os.mkdir(tmp_dirpath)
     except OSError:
-        print 'The directory', tmp_dirpath, 'already exists. Using it.'
+        print('The directory', tmp_dirpath, 'already exists. Using it.')
     except:
         error = parser.error_log[0]
-        print "Unknown error", error.message
+        print("Unknown error", error.message)
         sys.exit (98)
     temp_file_name = tmp_dirpath + "out.xml"
 
@@ -156,18 +156,18 @@ def insert_pipe (dirpath, debug):
         fname = dirpath + fname
         if not os.path.isfile (fname):
             if DBG_FLAG == True:
-                print 'Skipping', fname, 'since it is not a file'
+                print('Skipping', fname, 'since it is not a file')
             continue
         if DBG_FLAG == True:
-            print 'Parsing ', fname
+            print('Parsing ', fname)
         if fname.endswith(".xml", re.I):
             try:
-                temp_file = open(temp_file_name, "w")
+                temp_file = open(temp_file_name, "wb")
             except IOError as e:
-                print e.filename, ":", e.strerror
+                print(e.filename, ":", e.strerror)
                 sys.exit(99)
             if DBG_FLAG == True:
-                print fname
+                print(fname)
             process_input_file(fname, temp_file)
             temp_file.close()
             align_and_save(temp_file_name, fname)
@@ -184,7 +184,7 @@ def insert_pipe (dirpath, debug):
 if __name__ == "__main__":
 
     if len(sys.argv) == 1 or sys.argv[1] == "--help":
-        print "Usage:", sys.argv[0], "working-dir [--debug]"
+        print("Usage:", sys.argv[0], "working-dir [--debug]")
         sys.exit(0)
 
     if len(sys.argv) == 3 and sys.argv[2] == "--debug":
@@ -194,4 +194,3 @@ if __name__ == "__main__":
 
     insert_pipe (sys.argv[1], debug)
     sys.exit(0)
-

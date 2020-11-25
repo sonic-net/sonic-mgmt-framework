@@ -26,10 +26,10 @@ limitations under the License.
 
 <VIEW name="enable-view">
    <COMMAND name="show lldp" help="Show lldp information">
-         <ACTION> python $SONIC_CLI_ROOT/sonic-cli-lldp.py get_openconfig_lldp_lldp_interfaces lldp_show.j2 ${__full_line}</ACTION>
+         <ACTION> python3 $SONIC_CLI_ROOT/sonic-cli-lldp.py get_openconfig_lldp_lldp_interfaces lldp_show.j2 ${__full_line}</ACTION>
    </COMMAND>
    <COMMAND name="show lldp table" help="Show lldp table information">
-         <ACTION> python $SONIC_CLI_ROOT/sonic-cli-lldp.py get_openconfig_lldp_lldp_interfaces lldp_show.j2 ${__full_line} </ACTION>
+         <ACTION> python3 $SONIC_CLI_ROOT/sonic-cli-lldp.py get_openconfig_lldp_lldp_interfaces lldp_show.j2 ${__full_line} </ACTION>
    </COMMAND>
    <COMMAND name="show lldp neighbor" help="Show lldp neighbor information">
 	 <PARAM
@@ -41,9 +41,9 @@ limitations under the License.
         </PARAM>
 	<ACTION>
 	    if test "${ifname}" = ""; then&#xA;
-            python $SONIC_CLI_ROOT/sonic-cli-lldp.py get_openconfig_lldp_lldp_interfaces lldp_neighbor_show.j2 ${__full_line}&#xA;
+            python3 $SONIC_CLI_ROOT/sonic-cli-lldp.py get_openconfig_lldp_lldp_interfaces lldp_neighbor_show.j2 ${__full_line}&#xA;
 	    else&#xA;
-	        python $SONIC_CLI_ROOT/sonic-cli-lldp.py get_openconfig_lldp_lldp_interfaces_interface lldp_neighbor_show.j2 ${ifname} ${__full_line}&#xA;
+	        python3 $SONIC_CLI_ROOT/sonic-cli-lldp.py get_openconfig_lldp_lldp_interfaces_interface lldp_neighbor_show.j2 ${ifname} ${__full_line}&#xA;
 		fi&#xA;
     </ACTION>
    </COMMAND>

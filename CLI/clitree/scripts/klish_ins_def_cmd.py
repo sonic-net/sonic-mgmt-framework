@@ -51,9 +51,9 @@ import os
 from lxml import etree
 
 EXIT_CMD = """<COMMAND name="exit"
-             	  help="Exit from current mode"
-               	  lock="false">
-            	  <ACTION builtin="clish_nested_up"/>
+                  help="Exit from current mode"
+                  lock="false">
+                  <ACTION builtin="clish_nested_up"/>
   </COMMAND>"""
 
 COMMENT_NS = """<NAMESPACE ref="hidden-view"
@@ -101,7 +101,7 @@ def update_view_tag(root, viewlist, filename, out_dirpath):
 
     for element_inst in root.iter(VIEW_TAG_STR):
         if DBG_FLAG == True:
-            print "Processed view name %s" % str(element_inst.keys())
+            print("Processed view name %s" % str(list(element_inst.keys())))
         if (element_inst.get('prompt') != None) and (element_inst.get('name') not in  SKIP_VIEW_LIST):
             view_name = element_inst.get('name')
 
@@ -113,7 +113,7 @@ def update_view_tag(root, viewlist, filename, out_dirpath):
                 comment_element = etree.XML(COMMENT_NS)
 
                 if DBG_FLAG == True:
-                    print "Appending to view %s ..." %view_name
+                    print("Appending to view %s ..." %view_name)
                 element_inst.insert(0,end_element)
                 element_inst.insert(0,exit_element)
                 element_inst.insert(0,inherit_enable_element)
@@ -124,18 +124,18 @@ def update_view_tag(root, viewlist, filename, out_dirpath):
                 viewlist.append(view_name)
 
                 if DBG_FLAG == True:
-                    print etree.tostring(element_inst, pretty_print=True)
-                    print "VIEW_LIST:"
+                    print(etree.tostring(element_inst, pretty_print=True))
+                    print("VIEW_LIST:")
                     # print VIEW_LIST
 
     if file_modified == True:
         if DBG_FLAG == True:
-            print "Writing File %s ..." %out_file
+            print("Writing File %s ..." %out_file)
         root.write(out_file, xml_declaration=True, encoding=root.docinfo.encoding, pretty_print=True)
     else:
 
         if DBG_FLAG == True:
-            print "Skipping File %s ..." %filename
+            print("Skipping File %s ..." %filename)
     return viewlist
 
 def ins_def_cmd (in_dirpath, out_dirpath, debug):
@@ -149,7 +149,7 @@ def ins_def_cmd (in_dirpath, out_dirpath, debug):
         for fname in file_list:
             if fname.endswith(".xml"):
                 if DBG_FLAG == True:
-                    print '\tInput File:%s' % fname
+                    print('\tInput File:%s' % fname)
                 tree = etree.parse(dir_name+'/'+fname, parser)
                 VIEW_LIST = update_view_tag(tree, VIEW_LIST, fname, out_dirpath)
 
@@ -157,12 +157,12 @@ if __name__ == "__main__":
 
     debug = False
     if len(sys.argv) < 2:
-        print ("Error: Missing Parameter " + os.linesep +
-               "Usage: klish_ins_def_cmd.py inDir [outDir] [--debug]")
+        print(("Error: Missing Parameter " + os.linesep +
+               "Usage: klish_ins_def_cmd.py inDir [outDir] [--debug]"))
         sys.exit(0)
 
     if sys.argv[1] == "--help":
-        print "Usage: klish_ins_def_cmd.py inDir [outDir] [--debug]"
+        print("Usage: klish_ins_def_cmd.py inDir [outDir] [--debug]")
         sys.exit(0)
 
     if  len(sys.argv) < 3:
@@ -181,7 +181,5 @@ if __name__ == "__main__":
         debug = True
 
     debug = True
-    print sys.argv[1], out_dirpath, 1
+    print(sys.argv[1], out_dirpath, 1)
     ins_def_cmd (sys.argv[1], out_dirpath, debug)
-
-
