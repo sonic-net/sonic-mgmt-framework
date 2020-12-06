@@ -26,50 +26,61 @@ PORT=443
 
 while [[ $# -gt 0 ]]; do
 case "$1" in
-    -h|-help|--help)
-        echo "usage: $(basename $0) [-host HOST] [-port PORT] [KLISH_OPTIONS]"
-        ARGS+=("-h")
-        shift ;;
     -host) HOST=$2; shift 2 ;;
     -port) PORT=$2; shift 2 ;;
-    -debug) DEBUG=1; shift ;;
+    -auth) AUTH=1; shift ;;
     *) ARGS+=("$1"); shift ;;
 esac
 done
 
-TOPDIR=$(git rev-parse --show-toplevel)
-BUILDDIR=${TOPDIR}/build
+TOPDIR=$PWD
+BUILDDIR=$TOPDIR/build
 
-CLISOURCE=${TOPDIR}/CLI
-CLIBUILD=${BUILDDIR}/cli
+CLISOURCE=$TOPDIR/CLI
+CLIBUILD=$BUILDDIR/cli
 
-[[ -z ${AUTH} ]] && export CLISH_NOAUTH=1
-[[ -z ${DEBUG} ]] || export LOGTOSCREEN=1
+[ -z $AUTH ] && export CLISH_NOAUTH=1
 
-# Prompt
-[[ -z ${SYSTEM_NAME} ]] && export SYSTEM_NAME=sonic-cli
+[ -z $SYSTEM_NAME ] && export SYSTEM_NAME=sonic-cli
 
-export REST_API_ROOT=https://${HOST}:${PORT}
+export REST_API_ROOT=https://$HOST:$PORT
 
-export SONIC_CLI_ROOT=${CLISOURCE}/actioner
+export SONIC_CLI_ROOT=$CLISOURCE/actioner
 
-export RENDERER_TEMPLATE_PATH=${CLISOURCE}/renderer/templates
+export RENDERER_TEMPLATE_PATH=$CLISOURCE/renderer/templates
 
-export SHOW_CONFIG_TOOLS=${CLIBUILD}/render-templates
+export SHOW_CONFIG_TOOLS=$CLIBUILD/render-templates
 
-export CLISH_PATH=${CLIBUILD}/command-tree
+#export CLISH_PATH=$CLISOURCE/clitree/cli-xml
+export CLISH_PATH=$CLIBUILD/command-tree
 
-# KLISH_BIN can be set to use klish exe and libs from other directory.
-[[ ! -d "${KLISH_BIN}" ]] && KLISH_BIN=${CLIBUILD}
+export PYTHONVER=3.7
 
-PYTHONPATH+=:${CLISOURCE}/actioner
-PYTHONPATH+=:${CLISOURCE}/renderer
-PYTHONPATH+=:${CLISOURCE}/renderer/scripts
-PYTHONPATH+=:${BUILDDIR}/swagger_client_py
-PYTHONPATH+=:$(realpath ${TOPDIR}/..)/sonic-py-swsssdk/src
+PYTHONPATH+=:$CLISOURCE/actioner
+PYTHONPATH+=:$CLISOURCE/renderer
+PYTHONPATH+=:$CLISOURCE/renderer/scripts
+PYTHONPATH+=:$BUILDDIR/swagger_client_py
+PYTHONPATH+=:$(realpath $TOPDIR/..)/sonic-py-swsssdk/src
 export PYTHONPATH
 
-export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${KLISH_BIN}/.libs
+# KLISH_BIN can be set to use klish exe and libs from other directory
+if [[ -z ${KLISH_BIN} ]]; then
+    if [[ -f ${CLIBUILD}/clish ]]; then
+        KLISH_BIN=${CLIBUILD}
+    elif [[ -f ${BUILDDIR}/target/clish ]]; then
+        KLISH_BIN=${BUILDDIR}/target
+    else
+        echo "Error: could not locate clish."
+        exit 1
+    fi
+fi
 
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$KLISH_BIN/.libs
+
+DBCLI="$(type -t sonic-db-cli > /dev/null && echo sonic-db-cli CONFIG_DB || echo redis-cli -n 4)"
+
+export SONIC_CLI_IFACE_MODE=$(${DBCLI} hget "DEVICE_METADATA|localhost" intf_naming_mode)
+[[ -z ${DEBUG} ]] || echo "SONIC_CLI_IFACE_MODE = '${SONIC_CLI_IFACE_MODE}'"
 
 (cd ${BUILDDIR} && ${KLISH_BIN}/clish "${ARGS[@]}")
+

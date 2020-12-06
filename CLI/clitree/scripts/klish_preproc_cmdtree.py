@@ -1,4 +1,4 @@
-#!/usr/bin/python2.7
+#!/usr/bin/python3
 ###########################################################################
 #
 # Copyright 2019 Dell, Inc.
@@ -25,7 +25,7 @@
     d. Insert the default default end and exit command for all config modes
 
     The Script Usage:
-        python klish_preproc_cmdtree.py <command-tree>buildpath macros-dir depth
+        python3 klish_preproc_cmdtree.py <command-tree>buildpath macros-dir depth
 '''
 import sys
 import os
@@ -36,7 +36,7 @@ import klish_replace_macro, klish_insert_pipe, klish_ins_def_cmd
 if __name__ == "__main__":
 
     if len(sys.argv) == 1 or sys.argv[1] == "--help":
-        print "Usage:", sys.argv[0], "working-dir macrodir nested-macro-levels [--debug]"
+        print("Usage:", sys.argv[0], "working-dir macrodir nested-macro-levels [--debug]")
         sys.exit(0)
 
     dirpath = sys.argv[1]
@@ -48,11 +48,11 @@ if __name__ == "__main__":
     else:
         debug = False
 
-    print "Replacing the macros ..."
+    print("Replacing the macros ...")
     klish_replace_macro.replace_macros (dirpath, macro_dir_path, nested_levels, debug)
-    print "Inserting the pipe parameters ..."
+    print("Inserting the pipe parameters ...")
     klish_insert_pipe.insert_pipe (dirpath, debug)
-    print "Insert the end, exit commands ..."
+    print("Insert the end, exit commands ...")
     klish_ins_def_cmd.ins_def_cmd (dirpath, dirpath, debug)
 
 

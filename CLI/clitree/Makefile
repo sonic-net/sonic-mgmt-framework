@@ -18,23 +18,33 @@
 
 .PHONY: install
 
-TGT_DIR ?= $(SONIC_CLI_ROOT)/target
+TOPDIR               := ../..
+# TGT_DIR is the directory wher all prepreocssed cli model, actioner and
+# renderer scripts and temlates will be dumped. Can be overidden from caller.
+TGT_DIR              ?= $(SONIC_CLI_ROOT)/target
+CLI_XML_FILES        := $(shell find $(TOPDIR)/CLI/clitree/cli-xml -name '*.xml' | sort)
+CLI_XML_MACRO_FILES  := $(shell find $(TOPDIR)/CLI/clitree/macro -name '*.xml' | sort)
+cli_done             := ${TGT_DIR}/command-tree/.done
+cli_guide            := ${TGT_DIR}/command-tree/industry_standard_cli_reference_guide.md
 
-all:
+all: $(cli_done)
+
+$(cli_done): $(CLI_XML_FILES) $(CLI_XML_MACRO_FILES)
 	mkdir -p ${TGT_DIR}/command-tree ${TGT_DIR}/cli-macro ${TGT_DIR}/render-templates ${TGT_DIR}/scripts
 	cp -r cli-xml/include ${TGT_DIR}/command-tree
 	cp cli-xml/*.xml ${TGT_DIR}/command-tree
 	cp macro/*.xml ${TGT_DIR}/cli-macro
 	(cd scripts;./klish_platform_features_process.sh ../../clicfg ${TGT_DIR})
-	python scripts/klish_preproc_cmdtree.py ${TGT_DIR}/command-tree ${TGT_DIR}/cli-macro 3
+	python scripts/klish_preproc_cmdtree.py ${TGT_DIR}/command-tree ${TGT_DIR}/cli-macro 6 
 	cp ./../actioner/*.py ${TGT_DIR}/.
 	cp ../renderer/scripts/*.py ${TGT_DIR}/scripts
-	cp ../renderer/templates/* ${TGT_DIR}/render-templates
+	cp -r ../renderer/templates/* ${TGT_DIR}/render-templates
 	cp scripts/sonic-clish.xsd ${TGT_DIR}/command-tree
 	(cd ${TGT_DIR}/command-tree ; xmllint --noout --schema sonic-clish.xsd ${TGT_DIR}/command-tree/*.xml && \
             xmllint --noout --schema sonic-clish.xsd ${TGT_DIR}/command-tree/include/*.xml) || exit 1
-	rm -rf ${TGT_DIR}/cli-macro
+	rm -rf {TGT_DIR}/cli-macro
 	rm -rf scripts/*.pyc
+	touch $@
 
 clean:
 	rm -rf ${TGT_DIR}

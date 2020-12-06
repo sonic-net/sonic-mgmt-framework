@@ -30,7 +30,7 @@ limitations under the License.
          help="Show platform information"
      >
          <ACTION>
-        python $SONIC_CLI_ROOT/sonic-cli-pfm.py get_openconfig_platform_components platform_show.j2 ${__full_line}
+        python3 $SONIC_CLI_ROOT/sonic-cli-pfm.py get_openconfig_platform_components platform_show.j2 ${__full_line}
         </ACTION>
     </COMMAND>
 
@@ -40,7 +40,7 @@ limitations under the License.
          help="Show platoform eeprom information"
                  >
          <ACTION>
-        python $SONIC_CLI_ROOT/sonic-cli-pfm.py get_openconfig_platform_components platform_show.j2 ${__full_line}
+        python3 $SONIC_CLI_ROOT/sonic-cli-pfm.py get_openconfig_platform_components platform_show.j2 ${__full_line}
         </ACTION>
     </COMMAND>
 

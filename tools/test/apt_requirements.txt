@@ -1,0 +1,2 @@
+libcurl3-gnutls
+libcjson-dev

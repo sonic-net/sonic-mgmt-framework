@@ -1,0 +1,5 @@
+5c5,6
+< 	clish/plugin/private.h
+---
+> 	clish/plugin/private.h \
+> 	clish/plugin/mgmt_clish_utils.c

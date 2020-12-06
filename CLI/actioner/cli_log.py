@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 ################################################################################
 #                                                                              #
 #  Copyright 2019 Broadcom. The term Broadcom refers to Broadcom Inc. and/or   #
@@ -42,7 +43,7 @@ def log_error(msg):
 
 
 def __write_log(severity, msg):
-    if not isinstance(msg, basestring):
+    if not isinstance(msg, str):
         msg = str(msg)
 
     syslog.syslog(severity, msg)
@@ -51,9 +52,9 @@ def __write_log(severity, msg):
         caller_frame = inspect.stack()[2][0]
         frame_info = inspect.getframeinfo(caller_frame)
         for line in msg.split('\n'):
-            print('[{}:{}/{}] {}:: {}'.format(
+            print(('[{}:{}/{}] {}:: {}'.format(
                 os.path.basename(frame_info.filename),
                 frame_info.lineno,
                 frame_info.function,
                 __severity_str[severity],
-                line))
+                line)))
