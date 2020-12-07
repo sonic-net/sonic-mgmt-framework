@@ -24,6 +24,7 @@ import (
 	"net/http"
 	"path"
 	"regexp"
+	"runtime"
 	"strings"
 	"time"
 
@@ -61,6 +62,7 @@ type RouterConfig struct {
 // ServeHTTP resolves and invokes the handler for http request r.
 // RESTCONF paths are served from the routeTree; rest from mux router.
 func (router *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	defer doRecover(w, r)
 	path := cleanPath(r.URL.EscapedPath())
 	r = setContextValue(r, routerObjContextKey, router)
 
@@ -114,6 +116,20 @@ func cleanPath(p string) string {
 // isServeFromTree checks if a path will be served from routeTree.
 func isServeFromTree(path string) bool {
 	return strings.HasPrefix(path, "/restconf/")
+}
+
+// doRecover recovers from panics, logs Error messages
+// Runtime error is a special keyword used by rsyslogD rules to display message on console
+func doRecover(w http.ResponseWriter, r *http.Request) {
+	if err := recover(); err != nil && err != http.ErrAbortHandler {
+		buf := make([]byte, 64<<10)
+		buf = buf[:runtime.Stack(buf, false)]
+		glog.Errorf("Runtime error: panic serving REST request \"%s %s\", Client addr: %s",
+			r.Method, r.URL.Path, r.RemoteAddr)
+		glog.Errorf("Panic data: %v\n%s", err, buf)
+		retErr := httpError(http.StatusInternalServerError, "unexpected error in server")
+		writeErrorResponse(w, r, retErr)
+	}
 }
 
 // routeMatchInfo holds the matched route information in

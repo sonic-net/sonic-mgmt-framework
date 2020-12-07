@@ -53,7 +53,7 @@ func validateRequestJSON(jsn []byte, rc *RequestContext) ([]byte, error) {
 
 	err = json.Unmarshal(jsn, v)
 	if err != nil {
-		glog.Errorf("[%s] json decoding error; %v", rc.ID, err)
+		glog.Warningf("[%s] json decoding error; %v", rc.ID, err)
 		return nil, httpBadRequest("Invalid json")
 	}
 
@@ -75,7 +75,7 @@ func validateRequestJSON(jsn []byte, rc *RequestContext) ([]byte, error) {
 			err = validate.Struct(v)
 		}
 		if err != nil {
-			glog.Errorf("[%s] validation failed: %v", rc.ID, err)
+			glog.Warningf("[%s] validation failed: %v", rc.ID, err)
 			return nil, httpBadRequest("Content not as per schema")
 		}
 	} else {
@@ -86,7 +86,7 @@ func validateRequestJSON(jsn []byte, rc *RequestContext) ([]byte, error) {
 	// extra fields if any..
 	newBody, err := json.Marshal(v)
 	if err != nil {
-		glog.Errorf("[%s] Failed to marshall; %v", rc.ID, err)
+		glog.Warningf("[%s] Failed to marshall; %v", rc.ID, err)
 		return nil, httpServerError("Internal error")
 	}
 

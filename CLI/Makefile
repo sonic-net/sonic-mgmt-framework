@@ -21,6 +21,7 @@ SHELL = /bin/bash
 .SHELLFLAGS += -e
 
 TOPDIR  ?= $(abspath ..)
+CLIDEPS ?= packages
 SUBDIRS := clitree renderer klish 
 export SONIC_CLI_ROOT=$(TOPDIR)/build
 TGT_DIR := $(SONIC_CLI_ROOT)/target
@@ -35,7 +36,7 @@ LINTER          := $(TOOLS_DIR)/test/pylint.sh
 
 .PHONY: clean
 
-all: $(PYLINT_DONE)
+all: $(CLIDEPS) $(PYLINT_DONE)
 	for dir in $(SUBDIRS); do \
     	$(MAKE) -C $$dir -f Makefile $@; \
 	done
