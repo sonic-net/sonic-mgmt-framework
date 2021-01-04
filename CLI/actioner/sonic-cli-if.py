@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 ###########################################################################
 #
 # Copyright 2019 Dell, Inc.
@@ -70,7 +70,7 @@ def generate_body(func, args):
     elif func.__name__ == 'delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config_prefix_length':
        keypath = [args[0], 0, args[1]]
     elif func.__name__ == 'get_openconfig_interfaces_interfaces_interface':
-	keypath = [args[0]]
+        keypath = [args[0]]
     elif func.__name__ == 'get_openconfig_interfaces_interfaces':
         keypath = []
     else:
@@ -84,7 +84,7 @@ def getId(item):
     ifName = state_dict['name']
 
     if ifName.startswith(prfx):
-        ifId = int(ifName[len(prfx):])
+        ifId = ifName[len(prfx):]
         return ifId
     return ifName
 
@@ -134,17 +134,17 @@ def run(func, args):
 
                      errDict = {}
                      for dict in errList:
-                         for k, v in dict.iteritems():
+                         for k, v in dict.items():
                               errDict[k] = v
 
                      if "error-message" in errDict:
-                         print "%Error: " + errDict["error-message"]
+                         print("%Error: " + errDict["error-message"])
                          return
-                     print "%Error: Transaction Failure"
+                     print("%Error: Transaction Failure")
                      return
-            print "%Error: Transaction Failure"
+            print("%Error: Transaction Failure")
         else:
-            print "Failed"
+            print("Failed")
 
 if __name__ == '__main__':
 

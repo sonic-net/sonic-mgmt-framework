@@ -1,0 +1,37 @@
+43a44,46
+> 	this->test = NULL;
+>         this->hidden = BOOL_FALSE;
+>         this->enabled = BOOL_FALSE;
+305a309,340
+> 
+> /*--------------------------------------------------------- */
+> char *clish_command__get_test(const clish_command_t *this)
+> {
+>         return this->test;
+> }
+> 
+> /*--------------------------------------------------------- */
+> void clish_command__set_hidden(clish_command_t * this, bool_t hidden)
+> {
+>         this->hidden = hidden;
+> }
+> 
+> /*--------------------------------------------------------- */
+> bool_t clish_command__get_hidden(const clish_command_t * this)
+> {
+>         return this->hidden;
+> }
+> 
+> 
+> /*--------------------------------------------------------- */
+> void clish_command__set_enabled(clish_command_t * this, bool_t enabled)
+> {
+>         this->enabled = enabled;
+> }
+> 
+> /*--------------------------------------------------------- */
+> bool_t clish_command__get_enabled(const clish_command_t * this)
+> {
+>     return BOOL_TRUE;
+> }
+> 

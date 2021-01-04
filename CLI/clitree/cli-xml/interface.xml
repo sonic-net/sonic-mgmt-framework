@@ -65,14 +65,14 @@ limitations under the License.
 	 </PARAM>
 	 <ACTION>
 	    if test "${if-subcommands}" = "status"; then&#xA;
-		python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces show_interface_status.j2 ${__full_line}&#xA;
+		python3 $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces show_interface_status.j2 ${__full_line}&#xA;
 	    elif test "${if-subcommands}" = "counters"; then&#xA;
-	        python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces show_interface_counters.j2 ${__full_line}&#xA;
+	        python3 $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces show_interface_counters.j2 ${__full_line}&#xA;
 	    else&#xA;
                 if test "${phy-if-id}" = ""; then&#xA;
-                    python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces show_interface.j2 ${__full_line}&#xA;
+                    python3 $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces show_interface.j2 ${__full_line}&#xA;
                 else&#xA;
-                    python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces_interface Ethernet${phy-if-id} show_interface_id.j2 ${__full_line}&#xA;
+                    python3 $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces_interface Ethernet${phy-if-id} show_interface_id.j2 ${__full_line}&#xA;
 		fi&#xA;
 	    fi
          </ACTION>
@@ -123,12 +123,12 @@ limitations under the License.
         <COMMAND
             name="shutdown"
             help="Disable the interface">
-	    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_enabled ${iface} False </ACTION>
+	    <ACTION>python3 $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_enabled ${iface} False </ACTION>
         </COMMAND>
         <COMMAND
             name="no shutdown"
             help="Enable the interface">
-	    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_enabled ${iface} True </ACTION>
+	    <ACTION>python3 $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_enabled ${iface} True </ACTION>
         </COMMAND>
         <COMMAND
             name="description"
@@ -137,12 +137,12 @@ limitations under the License.
                 name="desc"
                 help="Textual description of the interface"
                 ptype="STRING" />
-	    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_description ${iface} ${desc} </ACTION>
+	    <ACTION>python3 $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_description ${iface} ${desc} </ACTION>
         </COMMAND>
         <COMMAND
             name="no description"
             help="Remove description" >
-	    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_description ${iface} "" </ACTION>
+	    <ACTION>python3 $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_description ${iface} "" </ACTION>
         </COMMAND>
         <COMMAND
             name="mtu"
@@ -151,12 +151,12 @@ limitations under the License.
                 name="mtu"
                 help="MTU of the interface"
                 ptype="RANGE_MTU" />
-	    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_mtu ${iface} ${mtu} </ACTION>
+	    <ACTION>python3 $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_mtu ${iface} ${mtu} </ACTION>
         </COMMAND>
 	<COMMAND
             name="no mtu"
             help="Remove MTU">
-            <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_mtu ${iface} 9100 </ACTION>
+            <ACTION>python3 $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_mtu ${iface} 9100 </ACTION>
         </COMMAND>
     </VIEW>
     </CLISH_MODULE>

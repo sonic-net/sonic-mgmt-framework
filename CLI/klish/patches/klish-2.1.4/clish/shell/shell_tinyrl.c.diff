@@ -1,0 +1,356 @@
+14a15
+> #include <unistd.h>
+19a21
+> #include "clish/plugin/clish_api.h"
+27a30,34
+> 	char hostname[HOSTNAME_STR_LEN];
+> 	char system_prompt[PROMPT_STR_LEN];
+> 	char *system_name, *new_system_name;
+> 	char *savePtr = NULL;
+> 	int result;
+34a42,45
+> 	memset(hostname, 0, sizeof(hostname));
+> 	memset(system_prompt, 0, sizeof(system_prompt));
+> 	result = gethostname(hostname, sizeof(hostname));
+> 	
+58c69
+< 		clish_shell_help(shell, tinyrl__get_line(this));
+---
+> 		clish_shell_help(shell, tinyrl__get_line(this), context);
+61a73
+> 
+73c85
+< static clish_pargv_status_e clish_shell_tinyrl_expand(tinyrl_t *this)
+---
+> static clish_pargv_status_t clish_shell_tinyrl_expand(tinyrl_t *this)
+75c87
+< 	clish_pargv_status_e status = CLISH_LINE_OK;
+---
+> 	clish_pargv_status_t status = CLISH_LINE_OK;
+111a124
+> 
+147a161,176
+> /*-------------------------------------------------------- */
+> /*
+>  * This is a CLISH specific completion function.
+>  * Perform completion of the entered word in case it is partial
+>  */
+> static void clish_shell_tinyrl_complete_ignore_error(tinyrl_t *this)
+> {
+> 
+> 	/* first of all perform any history expansion */
+>  	(void)clish_shell_tinyrl_expand(this);
+> 
+> 	/* perform normal completion */
+> 	tinyrl_complete_ignore_error(this);
+> 	return;
+> }
+> 
+156c185
+< 	clish_pargv_status_e arg_status;
+---
+> 	clish_pargv_status_t arg_status;
+165a195,199
+> 	} else if (tinyrl_is_cursor_in_middle(this)) {
+> 		/* if we are in the middle of a word then simply enter a space */
+> 		/* anyhow, line will be validated during ENTER */
+> 		/* Ex : Press space while cursor after "show ipv6" of "show ipv6route" */
+> 		result = BOOL_TRUE;
+170c204
+< 		arg_status = clish_shell_parse(shell, line, &cmd, &pargv);
+---
+> 		arg_status = clish_shell_parse(shell, line, &cmd, &pargv, context, NULL);
+187a222,223
+> 				result = BOOL_TRUE;
+> 				break;
+210,211c246,248
+< 		result = tinyrl_insert_text(this, " ");
+< 	/* keep compiler happy */
+---
+>  		result = tinyrl_insert_text(this, " ");
+> 
+>  	/* keep compiler happy */
+216a254,289
+> /*--------------------------------------------------------------*/
+> static unsigned find_command_error(clish_shell_t *this,
+>          const char *line)
+> {
+> 	const clish_command_t *cmd;
+> 	clish_shell_iterator_t iter;
+> 	clish_context_t local_context;
+> 	unsigned int end = 0;
+> 	unsigned int cmdlen = 0;
+> 	char *text = NULL;
+> 	
+> 	if ((!this)|| (!line))
+> 		return 0;
+> 	    
+> 	text = lub_string_dup(line);
+> 	cmdlen = strlen(text);
+> 	end =  cmdlen;
+> 
+> 	if(isspace(text[end - 1])) {
+> 		end--;
+> 		text[end] = '\0';
+> 	}
+> 
+> 	for( end--; end>0;end--) {
+> 		text[end] = '\0';
+> 		clish_shell_iterator_init(&iter, CLISH_NSPACE_HELP);
+> 		clish_context_init(&local_context, this);
+> 	
+> 		if ((cmd = clish_shell_find_next_completion(this, text, &iter))) {
+> 			break;
+> 		}
+> 	}
+> 	lub_string_free(text);
+> 	return end;
+> }
+>  
+225a299,306
+> 	char custom_errmsg[50];
+> 	clish_ptype_method_e method;
+> 	const clish_ptype_t *ptype = NULL;
+> 	const clish_param_t *failed_param = NULL;
+> 	int cnt = 0;
+> 	int cmderrlen = 0;
+> 	int promtlen = 0;
+> 	int loopindex=0;
+230a312,314
+> 	/* Renew prompt */
+> 	clish_shell_renew_prompt(shell);
+> 
+237a322,325
+> 	clish_shell_tinyrl_complete_ignore_error(this);
+> 	line = tinyrl__get_line(this);
+> 
+> 
+239c327
+< 	cmd = clish_shell_resolve_command(shell, line);
+---
+> 	cmd = clish_shell_resolve_command(shell, line, context);
+243,244d330
+< 		case TINYRL_MATCH:
+< 		case TINYRL_MATCH_WITH_EXTENSIONS:
+251c337
+< 			cmd = clish_shell_resolve_command(shell, line);
+---
+> 			cmd = clish_shell_resolve_command(shell, line, context);
+258a345,382
+> 
+> 		case TINYRL_MATCH:
+>            result = tinyrl_insert_text(this, " ");
+>            //Try to auto-complete if there is any unique match
+>            status = clish_shell_tinyrl_complete(this);
+>            if(status == TINYRL_COMPLETED_MATCH)
+>            {
+>                /* re-fetch the line as it may have changed
+>                 * due to auto-completion
+>                 */
+>                line = tinyrl__get_line(this);
+>                /* get the command to parse? */
+>                cmd = clish_shell_resolve_command(shell, line, context);
+>                /*
+>                 * We have had a match but it is not a command
+>                 * so add a space so as not to confuse the user
+>                 */
+>                if (!cmd)
+>                    result = tinyrl_insert_text(this, " ");
+>            }
+>            else
+>            {
+>                tinyrl_crlf(this);
+>                tinyrl_printf(this,"%% Error: Ambiguous command.");
+>                tinyrl_crlf(this);
+>                tinyrl_done(this);
+>            }
+>            break;
+>               case TINYRL_MATCH_WITH_EXTENSIONS:
+>               case TINYRL_AMBIGUOUS:
+>               case TINYRL_COMPLETED_AMBIGUOUS:
+>                       tinyrl_crlf(this);
+>                       tinyrl_printf(this,"%% Error: Ambiguous command.");
+>                       tinyrl_crlf(this);
+>                       tinyrl_done(this);
+>                       break;
+> 
+> 
+259a384,390
+>                         cmderrlen = find_command_error(shell, line);
+>                         promtlen = strlen(tinyrl__get_prompt(this));
+>                         fprintf(stderr, "\r\n");
+>                         for( loopindex=0; loopindex<(cmderrlen+promtlen); loopindex++)
+>                         fprintf(stderr, " ");
+>                         fprintf(stderr, "^",cmderrlen,promtlen);
+> 
+264c395,400
+< 				errmsg = "Unknown command";
+---
+> 				errmsg = "%% Error: Invalid input detected at \"^\" marker.";
+> 			} else {
+> 				tinyrl_crlf(this);
+> 				tinyrl_printf(this,"%% Error: Invalid input detected at \"^\" marker.");
+> 				tinyrl_crlf(this);
+> 				tinyrl_done(this);
+270,271c406,408
+< 		clish_pargv_status_e arg_status;
+< 		tinyrl_multi_crlf(this);
+---
+> 		clish_pargv_status_t arg_status;
+>                 unsigned err_len=0;
+>                 unsigned chooselen =0;
+274c411,412
+< 			line, &context->cmd, &context->pargv);
+---
+> 			line, &context->cmd, &context->pargv, context, &err_len);
+> 
+277a416
+> 			tinyrl_multi_crlf(this);
+281c420
+< 			errmsg = "Bad history entry";
+---
+> 			errmsg = "Bad history entry.";
+284c423,430
+< 			errmsg = "Illegal command line";
+---
+> 			cmderrlen = find_command_error(shell, line);
+> 			promtlen = strlen(tinyrl__get_prompt(this));
+> 			chooselen = ((cmderrlen > err_len) ? cmderrlen : (err_len));
+> 			fprintf(stderr, "\r\n");
+> 			for( loopindex=0; loopindex<(chooselen+promtlen); loopindex++)
+> 			fprintf(stderr, " ");
+> 			fprintf(stderr, "^");
+> 			errmsg = "Invalid input detected at \"^\" marker.";
+287c433,461
+< 			errmsg = "Illegal parameter";
+---
+> 			promtlen = strlen(tinyrl__get_prompt(this));
+> 			cmderrlen = find_command_error(shell, line);
+> 			chooselen = ((cmderrlen > err_len) ? cmderrlen : (err_len));
+> 			fprintf(stderr, "\r\n");
+> 			for(loopindex=0; loopindex<(chooselen+promtlen); loopindex++)
+> 			fprintf(stderr, " ");
+> 			fprintf(stderr, "^");
+> 			errmsg = "Invalid input detected at \"^\" marker.";
+> 			cnt = clish_pargv__get_count(context->pargv);
+> 			failed_param = clish_pargv__get_param(context->pargv,
+> 							      (cnt)?(cnt-1):0);
+> 			if(failed_param) {
+>  				/*Check the failure is due to
+> 				  out of range case */
+> 				ptype = clish_param__get_ptype(failed_param);
+> 				if(ptype) {
+> 					method = clish_ptype__get_method(ptype);
+> 					if(method == CLISH_PTYPE_METHOD_INTEGER ||
+> 					   method == CLISH_PTYPE_METHOD_UNSIGNEDINTEGER) {
+> 						snprintf(custom_errmsg,
+> 							 sizeof(custom_errmsg),
+> 							 "Value out of range(%s).",
+> 							 clish_ptype__get_range(ptype));
+> 						errmsg = custom_errmsg;
+> 					}
+> 				}
+> 				clish_pargv_delete(context->pargv);
+> 				context->pargv = NULL;
+> 			}
+290c464
+< 			errmsg = "The command is not completed";
+---
+> 			errmsg = "The command is not completed.";
+293c467
+< 			errmsg = "Unknown problem";
+---
+> 			errmsg = "Unknown problem.";
+298,301c472,476
+< 	if (errmsg) {
+< 		if (tinyrl__get_isatty(this) || !shell->current_file) {
+< 			fprintf(stderr, "Syntax error: %s\n", errmsg);
+< 			tinyrl_reset_line_state(this);
+---
+>     if (errmsg) {
+>         if (tinyrl__get_isatty(this) || !shell->current_file) {
+>             tinyrl_crlf(this);
+>             fprintf(stderr, "%% Error: %s\n", errmsg);
+>             tinyrl_done(this);
+310a486
+> 
+363a540
+>     clish_context_t local_context;
+374a552,553
+> 
+> 	/* Search for COMMAND completions */
+376c555,563
+< 	while ((cmd = clish_shell_find_next_completion(this, text, &iter)))
+---
+>     	clish_context_init(&local_context, this);
+> 	while ((cmd = clish_shell_find_next_completion(this, text, &iter))) {
+>         	clish_context__set_cmd(&local_context, cmd);
+> 		if(clish_shell_command_test(cmd, &local_context) == BOOL_FALSE)
+> 			continue;
+> 		if(clish_command__get_hidden(cmd) == BOOL_TRUE)
+> 			continue;
+>         	if(clish_command__get_enabled(cmd) == BOOL_FALSE)
+> 			continue;
+378c565
+< 
+---
+> 	}
+380c567
+< 	cmd = clish_shell_resolve_command(this, text);
+---
+> 	cmd = clish_shell_resolve_command(this, text, context);
+462a650,656
+> bool_t clish_shell_tinyrl_key_enter_test(tinyrl_t *tinyrl, int key)
+> {
+>     bool_t res;
+>     res = clish_shell_tinyrl_key_enter(tinyrl, key);
+>     return res;
+> }
+> /*-------------------------------------------------------- */
+477a672
+> 	time_t timestamp;
+515,518c710,713
+< 		history = tinyrl__get_history(this->tinyrl);
+< 		tinyrl_history_add(history, str);
+< 	}
+< 	free(str);
+---
+>                 history = tinyrl__get_history(this->tinyrl);
+>                 tinyrl_history_add(history, str);
+>         }
+> 	context.commandstr = str;
+526a722
+> 			free(str);
+530a727,728
+> 	context.commandstr = NULL;
+> 	free(str);
+556c754
+< FILE * clish_shell__get_ostream(const clish_shell_t * this)
+---
+> void clish_shell__set_interactive(clish_shell_t * this, bool_t interactive)
+558c756,757
+< 	return tinyrl__get_ostream(this->tinyrl);
+---
+> 	assert(this);
+> 	this->interactive = interactive;
+560a760,765
+> /*-------------------------------------------------------- */
+> bool_t clish_shell__get_interactive(const clish_shell_t * this)
+> {
+> 	assert(this);
+> 	return this->interactive;
+> }
+575a781,787
+> /*-------------------------------------------------------- */
+> void clish_shell__set_timeout(clish_shell_t *this, int timeout)
+> {
+> 	assert(this);
+> 	this->idle_timeout = timeout;
+> }
+> 
+600,602c812
+< CLISH_SET(shell, unsigned int, idle_timeout);
+< CLISH_SET(shell, bool_t, interactive);
+< CLISH_GET(shell, bool_t, interactive);
+---
+> /*-------------------------------------------------------- */

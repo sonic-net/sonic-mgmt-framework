@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 ###########################################################################
 #
 # Copyright 2019 Dell, Inc.
@@ -26,15 +26,15 @@ from scripts.render_cli import show_cli_output
 blocked_fields = {'parent':0, 'used_power':0, 'allocated_power':0, 'temperature':0}
 
 def filter_json_value(value):
-    for key,val in value.items():
+    for key,val in list(value.items()):
         if key in blocked_fields:
             del value[key]
         else:
-	    temp = key.split('_')
-	    alt_key = ''
-	    for i in temp:
-		alt_key = alt_key + i.capitalize() + ' '
-	    value[alt_key]=value.pop(key)
+            temp = key.split('_')
+            alt_key = ''
+            for i in temp:
+                alt_key = alt_key + i.capitalize() + ' '
+            value[alt_key]=value.pop(key)
 
     return value
 
@@ -52,16 +52,16 @@ def run(func, args):
             return
         else:
             value =  api_response['openconfig-platform:components']['component'][0]['state']
-	    if value is None:
+            if value is None:
                 return
-	    if 'oper-status' in value:
-		temp = value['oper-status'].split(':')
-		if temp[len(temp) - 1] is not None:
-	            value['oper-status'] = temp[len(temp) - 1]
+            if 'oper-status' in value:
+                temp = value['oper-status'].split(':')
+                if temp[len(temp) - 1] is not None:
+                    value['oper-status'] = temp[len(temp) - 1]
             show_cli_output(sys.argv[2],filter_json_value(value))
 
     else:
-        print(response.error_message())
+        print((response.error_message()))
         return 1
 
 if __name__ == '__main__':

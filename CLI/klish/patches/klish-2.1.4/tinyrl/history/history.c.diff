@@ -1,0 +1,29 @@
+14a15
+> #include "clish/plugin/mgmt_clish_utils.h"
+138,146c139,140
+< 	for (i = 0; i < this->length; i++) {
+< 		tinyrl_history_entry_t *entry = this->entries[i];
+< 		if (0 == strcmp(line, tinyrl_history_entry__get_line(entry))) {
+< 			free_entries(this, i, i);
+< 			remove_entries(this, i, i);
+< 			result = BOOL_TRUE;
+< 			break;
+< 		}
+< 	}
+---
+> 	/* We don't want to remove duplicates from the history,
+> 	   hence returning false immediately*/
+203a198,200
+> 	char *masked_line = NULL;
+> 	mask_password(line, &masked_line);
+> 	if (!masked_line) return;
+205c202
+< 		add_n_replace(this, line);
+---
+> 		add_n_replace(this, (const char*)masked_line);
+207c204
+< 		add_n_grow(this, line);
+---
+> 		add_n_grow(this, (const char*)masked_line);
+208a206
+> 	if(masked_line) free(masked_line);

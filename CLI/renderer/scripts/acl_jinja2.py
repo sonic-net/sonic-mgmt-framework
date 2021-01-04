@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from jinja2 import Template
 import os
 acl_out = {'openconfig_aclacl': {'acl_sets': {'acl_set': [{'acl_entries': {'acl_entry': [{'actions': {'config': {'forwarding_action': 'DROP',
@@ -45,7 +45,7 @@ acl_out = {'openconfig_aclacl': {'acl_sets': {'acl_set': [{'acl_entries': {'acl_
 
 
 
-#!/usr/bin/env/python
+#!/usr/bin/env/python3
 
 from jinja2 import Environment, FileSystemLoader
 
@@ -57,7 +57,7 @@ def acl_show():
     # Notice the use of trim_blocks, which greatly helps control whitespace.
     j2_env = Environment(loader=FileSystemLoader(THIS_DIR),
                          trim_blocks=True)
-    print (j2_env.get_template('acl_show.j2').render(acl_out=acl_out))
+    print((j2_env.get_template('acl_show.j2').render(acl_out=acl_out)))
 
 if __name__ == '__main__':
     acl_show()

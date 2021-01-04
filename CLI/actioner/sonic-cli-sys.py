@@ -1,4 +1,4 @@
-#:!/usr/bin/python
+#:!/usr/bin/python3
 ###########################################################################
 #
 # Copyright 2019 Dell, Inc.
@@ -34,11 +34,11 @@ urllib3.disable_warnings()
 plugins = dict()
 
 def util_capitalize(value):
-    for key,val in value.items():
+    for key,val in list(value.items()):
         temp = key.split('_')
         alt_key = ''
         for i in temp:
-        	alt_key = alt_key + i.capitalize() + ' '
+                alt_key = alt_key + i.capitalize() + ' '
         value[alt_key]=value.pop(key)
     return value
 
@@ -104,33 +104,33 @@ def run(func, args):
             print ("Success")
         else:
             response = api_response.to_dict()
-            if 'openconfig_systemstate' in response.keys():
+            if 'openconfig_systemstate' in list(response.keys()):
                 value = response['openconfig_systemstate']
                 if value is None:
                     return
                 show_cli_output(sys.argv[2], system_state_key_change(value))
 
-            elif 'openconfig_systemmemory' in response.keys():
+            elif 'openconfig_systemmemory' in list(response.keys()):
                 value = response['openconfig_systemmemory']
                 if value is None:
                     return
-		show_cli_output(sys.argv[2], memory_key_change(value['state']))
-            elif 'openconfig_systemcpus' in response.keys():
+                show_cli_output(sys.argv[2], memory_key_change(value['state']))
+            elif 'openconfig_systemcpus' in list(response.keys()):
                 value = response['openconfig_systemcpus']
                 if value is None:
                     return
                 show_cli_output(sys.argv[2], value['cpu'])
-            elif 'openconfig_systemprocesses' in response.keys():
+            elif 'openconfig_systemprocesses' in list(response.keys()):
                 value = response['openconfig_systemprocesses']
-		if 'pid' not in sys.argv:
+                if 'pid' not in sys.argv:
                     if value is None:
-                    	return
-	    	    show_cli_output(sys.argv[2],value['process'])
-		else:
-		    for proc in value['process']:
-			if proc['pid'] == int(sys.argv[3]):
-			    show_cli_output(sys.argv[2],util_capitalize(proc['state']))
-			    return
+                        return
+                    show_cli_output(sys.argv[2],value['process'])
+                else:
+                    for proc in value['process']:
+                        if proc['pid'] == int(sys.argv[3]):
+                            show_cli_output(sys.argv[2],util_capitalize(proc['state']))
+                            return
             else:
                 print("Failed")
     except ApiException as e:
@@ -143,17 +143,17 @@ def run(func, args):
 
                      errDict = {}
                      for dict in errList:
-                         for k, v in dict.iteritems():
+                         for k, v in dict.items():
                               errDict[k] = v
 
                      if "error-message" in errDict:
-                         print "%Error: " + errDict["error-message"]
+                         print("%Error: " + errDict["error-message"])
                          return
-                     print "%Error: Application Failure"
+                     print("%Error: Application Failure")
                      return
-            print "%Error: Application Failure"
+            print("%Error: Application Failure")
         else:
-            print "Failed"
+            print("Failed")
 
 if __name__ == '__main__':
 

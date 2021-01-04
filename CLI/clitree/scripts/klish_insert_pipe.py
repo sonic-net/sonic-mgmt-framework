@@ -24,6 +24,7 @@
 import sys
 import os
 import re
+import traceback
 from lxml import etree
 import xml.etree.ElementTree as ET
 
@@ -69,8 +70,8 @@ def align_and_save(temp_file_name, output_file_name):
         root.write(output_file_name, pretty_print=True, xml_declaration=True, encoding=root.docinfo.encoding)
     except:
         error = parser.error_log[0]
-        print "Error parsing ", os.path.basename(outputfile.name), error.message
-        print "Error writing ", out_file_name, sys.exc_info()[0]
+        print("Error parsing ", os.path.basename(outputfile.name), error.message)
+        print("Error writing ", out_file_name, sys.exc_info()[0])
         sys.exit(102)
 
 
@@ -89,7 +90,7 @@ def addpipe(command):
           etree.SubElement(command, "{"+XI_NS_HREF+"}include", href = PIPE_XML)
 
       if DBG_FLAG == True:
-          print "Adding Pipe for cmd: ", splitstr
+          print("Adding Pipe for cmd: ", splitstr)
    return command
 
 
@@ -116,7 +117,7 @@ def process_input_file(input_file_name, tempfile):
                 root = tree.getroot()
                 #root.set("xmlns:" + "xi", XI_NS_HREF)
                 if DBG_FLAG == True:
-                        print "Root Tag: ",root.tag
+                        print("Root Tag: ",root.tag)
                 for command in root.findall(COMMAND_XPATH_EXPR):
                         if len(command) != 0:
                                 command = addpipe(command)
@@ -126,10 +127,13 @@ def process_input_file(input_file_name, tempfile):
 
                 tree.write(tempfile, xml_declaration=True, encoding=tree.docinfo.encoding, pretty_print=True)
     except IOError as e:
-        print "Cannot open file: ", e.filename, ":", e.strerror
+        traceback.print_exc(file=sys.stdout)
+        print("Cannot open file: ", e.filename, ":", e.strerror)
         sys.exit(100)
-    except :
-        print "process_input_file:Unknown error: ", sys.exc_info()[0]
+    except:
+        traceback.print_exc(file=sys.stdout)
+        traceback.print_exc(limit=1, file=sys.stdout)
+        print("process_input_file:Unknown error: ", sys.exc_info()[0])
         sys.exit(100)
 
 def insert_pipe (dirpath, debug):
@@ -142,10 +146,10 @@ def insert_pipe (dirpath, debug):
     try:
         os.mkdir(tmp_dirpath)
     except OSError:
-        print 'The directory', tmp_dirpath, 'already exists. Using it.'
+        print('The directory', tmp_dirpath, 'already exists. Using it.')
     except:
         error = parser.error_log[0]
-        print "Unknown error", error.message
+        print("Unknown error", error.message)
         sys.exit (98)
     temp_file_name = tmp_dirpath + "out.xml"
 
@@ -156,18 +160,18 @@ def insert_pipe (dirpath, debug):
         fname = dirpath + fname
         if not os.path.isfile (fname):
             if DBG_FLAG == True:
-                print 'Skipping', fname, 'since it is not a file'
+                print('Skipping', fname, 'since it is not a file')
             continue
         if DBG_FLAG == True:
-            print 'Parsing ', fname
+            print('Parsing ', fname)
         if fname.endswith(".xml", re.I):
             try:
                 temp_file = open(temp_file_name, "w")
             except IOError as e:
-                print e.filename, ":", e.strerror
+                print(e.filename, ":", e.strerror)
                 sys.exit(99)
             if DBG_FLAG == True:
-                print fname
+                print(fname)
             process_input_file(fname, temp_file)
             temp_file.close()
             align_and_save(temp_file_name, fname)
@@ -184,7 +188,7 @@ def insert_pipe (dirpath, debug):
 if __name__ == "__main__":
 
     if len(sys.argv) == 1 or sys.argv[1] == "--help":
-        print "Usage:", sys.argv[0], "working-dir [--debug]"
+        print("Usage:", sys.argv[0], "working-dir [--debug]")
         sys.exit(0)
 
     if len(sys.argv) == 3 and sys.argv[2] == "--debug":

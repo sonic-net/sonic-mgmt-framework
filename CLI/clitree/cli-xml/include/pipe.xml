@@ -30,25 +30,6 @@ limitations under the License.
         ptype="STRING"
         mode="switch">
 
-        <PARAM name="display-xml"
-            help="Display in XML format"
-            ptype="SUBCOMMAND"
-            mode="subcommand"
-            test='"${__cmd}" != "show diff" -a "${__cmd}" != "do show diff"'>
-            <PARAM name="1_xpath"
-                value="xpath"
-                help="Show only text that does match a xpath expression"
-                ptype="SUBCOMMAND"
-                mode="subcommand"
-                optional="true"
-                >
-                <PARAM name="1_LINE"
-                    help="Xpath expression"
-                    ptype="STRING">
-                </PARAM>
-            </PARAM>
-        </PARAM>
-
         <PARAM name="except"
             help="Show only text that does not match a pattern"
             ptype="SUBCOMMAND"

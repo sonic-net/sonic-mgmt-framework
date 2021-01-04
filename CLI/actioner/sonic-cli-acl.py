@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 ###########################################################################
 #
 # Copyright 2019 Dell, Inc.
@@ -73,11 +73,11 @@ def generate_body(func, args):
 
     # Configure ACL rule specific to an ACL table
     elif func.__name__ == 'patch_list_openconfig_acl_acl_acl_sets_acl_set_acl_entries_acl_entry' :
-       	keypath = [ args[0], args[1] ]
+        keypath = [ args[0], args[1] ]
         forwarding_action = "ACCEPT" if args[3] == 'permit' else 'DROP'
         proto_number = {"icmp":"IP_ICMP","tcp":"IP_TCP","udp":"IP_UDP","6":"IP_TCP","17":"IP_UDP","1":"IP_ICMP",
                        "2":"IP_IGMP","103":"IP_PIM","46":"IP_RSVP","47":"IP_GRE","51":"IP_AUTH","115":"IP_L2TP"}
-        if args[4] not in proto_number.keys():
+        if args[4] not in list(proto_number.keys()):
             print("%Error: Invalid protocol number")
             exit(1)
         else:
@@ -222,29 +222,29 @@ def run(func, args):
             print ("Success")
         else:
             response = api_response.to_dict()
-            if 'openconfig_aclacl_entry' in response.keys():
+            if 'openconfig_aclacl_entry' in list(response.keys()):
                 value = response['openconfig_aclacl_entry']
                 if value is None:
                     print("Success")
                 else:
                     print ("Failed")
-            elif 'openconfig_aclacl_set' in response.keys():
+            elif 'openconfig_aclacl_set' in list(response.keys()):
                 value = response['openconfig_aclacl_set']
                 if value is None:
                     print("Success")
                 else:
                     print("Failed")
-            elif 'openconfig_aclacl_entries' in response.keys():
+            elif 'openconfig_aclacl_entries' in list(response.keys()):
                 value = response['openconfig_aclacl_entries']
                 if value is None:
                     return
                 show_cli_output(args[2], value)
-            elif 'openconfig_aclacl_sets' in response.keys():
+            elif 'openconfig_aclacl_sets' in list(response.keys()):
                 value = response['openconfig_aclacl_sets']
                 if value is None:
                     return
                 show_cli_output(args[0], value)
-            elif 'openconfig_aclinterfaces' in response.keys():
+            elif 'openconfig_aclinterfaces' in list(response.keys()):
                 value = response['openconfig_aclinterfaces']
                 if value is None:
                     return
@@ -263,15 +263,15 @@ def run(func, args):
 
                      errDict = {}
                      for dict in errList:
-                         for k, v in dict.iteritems():
+                         for k, v in dict.items():
                               errDict[k] = v
 
                      if "error-message" in errDict:
-                         print "%Error: " + errDict["error-message"]
+                         print("%Error: " + errDict["error-message"])
                          return
-                     print "%Error: Transaction Failure"
+                     print("%Error: Transaction Failure")
                      return
-            print "%Error: Transaction Failure"
+            print("%Error: Transaction Failure")
 
 
 if __name__ == '__main__':

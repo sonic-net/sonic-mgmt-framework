@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 ################################################################################
 #                                                                              #
 #  Copyright 2019 Broadcom. The term Broadcom refers to Broadcom Inc. and/or   #
@@ -122,7 +123,7 @@ class Path(object):
         self.template = template
         self.params = kwargs
         self.path = template
-        for k, v in kwargs.items():
+        for k, v in list(kwargs.items()):
             self.path = self.path.replace('{%s}' % k, quote(v, safe=''))
 
     def __str__(self):

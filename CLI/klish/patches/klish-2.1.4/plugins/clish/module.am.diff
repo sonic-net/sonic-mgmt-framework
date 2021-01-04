@@ -1,0 +1,4 @@
+20a21,23
+> 	plugins/clish/rest_cl.cpp \
+> 	plugins/clish/call_pyobj.c \
+> 	plugins/clish/nos_extn.c \
