@@ -1,0 +1,39 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+pool:
+  vmImage: ubuntu-20.04
+
+trigger:
+  branches:
+    include:
+    - master
+
+pr:
+  branches:
+    include:
+    - master
+
+stages:
+- stage: Build
+  jobs:
+  - job:
+    displayName: "build"
+    timeoutInMinutes: 60
+    steps:
+    - checkout: self
+      clean: true
+      submodules: recursive
+      displayName: 'Checkout code'
+    - script: |
+        echo Hello
+        # the following is copied from jenkins
+        # set -ex
+        # ./scripts/common/sonic-mgmt-framework-build/build.sh
+        # ./scripts/common/sonic-mgmt-framework-build/test.sh
+    - publish: $(System.DefaultWorkingDirectory)/target/
+      artifact: sonic-mgmt-framework
+      displayName: "Archive artifacts"
+
