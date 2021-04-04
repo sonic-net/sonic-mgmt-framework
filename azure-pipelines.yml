@@ -3,9 +3,6 @@
 # Add steps that build, run tests, deploy, and more:
 # https://aka.ms/yaml
 
-pool:
-  vmImage: ubuntu-20.04
-
 trigger:
   branches:
     include:
@@ -16,24 +13,87 @@ pr:
     include:
     - master
 
+resources:
+  repositories:
+  - repository: sonic-mgmt-common
+    type: github
+    name: Azure/sonic-mgmt-common
+    endpoint: build
+
 stages:
 - stage: Build
   jobs:
   - job:
     displayName: "build"
     timeoutInMinutes: 60
+
+    pool:
+      vmImage: ubuntu-20.04
+
+    container:
+      image: sonicdev-microsoft.azurecr.io:443/sonic-slave-buster:latest
+
     steps:
     - checkout: self
       clean: true
       submodules: recursive
       displayName: 'Checkout code'
+
+    - checkout: sonic-mgmt-common
+      clean: true
+      submodules: recursive
+      displayName: 'Checkout code'
+
+    - task: DownloadPipelineArtifact@2
+      inputs:
+        source: specific
+        project: build
+        pipeline: 1
+        artifact: sonic-buildimage.vs
+        runVersion: 'latestFromBranch'
+        runBranch: 'refs/heads/master'
+      displayName: "Download sonic buildimage"
+
     - script: |
-        echo Hello
-        # the following is copied from jenkins
-        # set -ex
-        # ./scripts/common/sonic-mgmt-framework-build/build.sh
-        # ./scripts/common/sonic-mgmt-framework-build/test.sh
-    - publish: $(System.DefaultWorkingDirectory)/target/
+        # REDIS
+        sudo apt-get install -y redis-server
+        sudo sed -ri 's/^# unixsocket/unixsocket/' /etc/redis/redis.conf
+        sudo sed -ri 's/^unixsocketperm .../unixsocketperm 777/' /etc/redis/redis.conf
+        sudo sed -ri 's/redis-server.sock/redis.sock/' /etc/redis/redis.conf
+        sudo service redis-server start
+
+        # LIBYANG
+        sudo dpkg -i ../target/debs/buster/libyang*1.0.73*.deb
+
+        # Install from "requirement" files in sonic-mgmt-framework/tools/test directory.
+        pushd sonic-mgmt-framework/tools/test
+
+        [[ ! -f apt_requirements.txt ]] || \
+            sed 's/#.*//' apt_requirements.txt | xargs -r sudo apt-get install -y
+
+        [[ ! -f python2_requirements.txt ]] || \
+            sudo pip install --no-cache-dir -r python2_requirements.txt
+
+        [[ ! -f python3_requirements.txt ]] || \
+            sudo pip3 install --no-cache-dir -r python3_requirements.txt
+
+        popd
+
+        pushd sonic-mgmt-common
+
+        NO_TEST_BINS=1 dpkg-buildpackage -rfakeroot -b -us -uc -j$(nproc)
+
+      displayName: "Install dependency"
+
+    - script: |
+        set -ex
+        ls -l
+
+        pushd sonic-mgmt-framework
+
+        dpkg-buildpackage -rfakeroot -us -uc -b -j$(nproc) && cp ../*.deb $(Build.ArtifactStagingDirectory)/
+      displayName: "Build"
+
+    - publish: $(Build.ArtifactStagingDirectory)/
       artifact: sonic-mgmt-framework
       displayName: "Archive artifacts"
-
