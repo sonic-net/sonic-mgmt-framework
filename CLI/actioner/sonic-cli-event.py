@@ -142,7 +142,7 @@ def run(func, args):
         if api_response.ok():
             response = api_response.content
             if response is None:
-                print "Success"
+                print("Success")
             else:
                 if 'sonic-event:output' in response:
                     if response['sonic-event:output']['EVENT']['EVENT_LIST']:
