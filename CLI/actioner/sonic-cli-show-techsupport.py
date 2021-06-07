@@ -37,7 +37,8 @@ def run(func, args):
 
     response = api_response.content
     if ((response is None) or
-       (response['sonic-show-techsupport:output'] is None)):
+        (not ('sonic-show-techsupport:output' in response)) or
+        (response['sonic-show-techsupport:output'] is None)):
         print("%Error: Command Failure: Unknown failure type")
         return
 

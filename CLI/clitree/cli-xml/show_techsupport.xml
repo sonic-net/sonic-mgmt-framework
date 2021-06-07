@@ -49,7 +49,7 @@ limitations under the License.
             </PARAM>
         </PARAM>
         <ACTION>
-            python $SONIC_CLI_ROOT/sonic-cli-show-techsupport.py
+            python3 $SONIC_CLI_ROOT/sonic-cli-show-techsupport.py
             rpc_sonic_show_techsupport_sonic_show_techsupport_info
             ${date}
         </ACTION>
