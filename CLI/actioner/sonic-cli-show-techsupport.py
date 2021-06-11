@@ -31,15 +31,19 @@ def run(func, args):
     try:
         api_response = invoke(func, args)
 
-    except:
-        print("%Error: An exception occurred while attempting to gather the "
-              "requested information via a remote procedure call. ")
+    except ValueError as err_msg:
+        print("%Error: An exception occurred while attempting to gather "
+              "the requested information via a remote procedure "
+              "call: {}".format(err_msg))
 
     response = api_response.content
     if ((response is None) or
         (not ('sonic-show-techsupport:output' in response)) or
         (response['sonic-show-techsupport:output'] is None)):
-        print("%Error: Command Failure: Unknown failure type")
+        if ('ietf-restconf:errors' in response):
+            print(response['ietf-restconf:errors']['error'][0]['error-message'])
+        else:
+            print("%Error: Command Failure: Unknown failure type")
         return
 
     output_msg_object = response['sonic-show-techsupport:output']
