@@ -36,6 +36,12 @@ def run(func, args):
               "the requested information via a remote procedure "
               "call: {}".format(err_msg))
 
+    if not api_response.ok():
+        # Print the message for a failing return code
+        print("CLI transformer error: ")
+        print("    status code: {}".format(response.status_code))
+        return
+
     response = api_response.content
     if ((response is None) or
         (not ('sonic-show-techsupport:output' in response)) or
@@ -47,14 +53,19 @@ def run(func, args):
         return
 
     output_msg_object = response['sonic-show-techsupport:output']
-    if ((output_msg_object['output-filename'] is None) or
-       (len(output_msg_object['output-filename']) is 0)):
+
+    if ((output_msg_object['output-status'] is None) or
+        (len(output_msg_object['output-status']) is 0)):
         print("%Error: Command Failure: Unknown failure type")
         return
 
-    if not api_response.ok():
-        # Print the message for a failing return code
-        print(output_msg_object['output-filename'])
+    if not (output_msg_object['output-status'] == "Success"):
+        print("%Error: {}".format(output_msg_object['output-status']))
+        return
+
+    if ((output_msg_object['output-filename'] is None) or
+        (len(output_msg_object['output-filename']) is 0)):
+        print("%Error: Command Failure: Unknown failure type")
         return
 
     # No error code flagged: Normal case handling
