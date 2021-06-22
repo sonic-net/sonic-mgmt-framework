@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 ###########################################################################
 #
 # Copyright 2019 Dell, Inc.
@@ -19,8 +20,7 @@ from rpipe_utils import pipestr
 import cli_client as cc
 import cli_log as log
 from scripts.render_cli import show_cli_output
-import collections
-from natsort import natsorted, ns
+from natsort import natsorted
 
 def recent_interval(interval):
     if interval == "5min":
@@ -137,7 +137,7 @@ def invoke_api(func, args):
 def run(func, args):
     try:
         api_response = invoke_api(func, args)
-        if api_response == None:
+        if api_response is None:
             return
         if api_response.ok():
             response = api_response.content
@@ -180,8 +180,8 @@ def run(func, args):
                      'sonic-event:EVENT_STATS_LIST' in response:
                     show_cli_output('show_event_summary.j2', response)
 
-    except:
-        print("%ERROR: Transaction failure")
+    except ApiException as e:
+        print("%ERROR:Transaction failure.")
 
 if __name__ == '__main__':
     log.log_info("Loading sonic_cli_event.py module")
