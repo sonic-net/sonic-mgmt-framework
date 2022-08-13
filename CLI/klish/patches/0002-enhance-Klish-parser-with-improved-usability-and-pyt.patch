@@ -1,7 +1,7 @@
-From e629c76e73aa7b89490a8f8b52557fc22ec405d4 Mon Sep 17 00:00:00 2001
+From 0bdd0a1c0631c27cf21a60b2e3d6f1d17a950279 Mon Sep 17 00:00:00 2001
 From: Kwan <kwangsuk_kim@dell.com>
 Date: Mon, 4 Jan 2021 15:10:03 -0800
-Subject: [PATCH] enhance Klish parser with improved usability and python3
+Subject: [PATCH 2/2] enhance Klish parser with improved usability and python3
  support (#76)
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -83,7 +83,7 @@ Miscellaneous bug fixes - subcommands or param while pressing tab etc.
  clish/shell/shell_tinyrl.c          | 282 +++++++++++--
  clish/shell/shell_wdog.c            |   2 +
  clish/shell/shell_xml.c             |  42 +-
- configure.ac                        |   2 +
+ configure.ac                        |  26 ++
  lub/argv.h                          |   1 +
  lub/argv/argv.c                     |  21 +
  lub/string.h                        |   2 +
@@ -102,7 +102,7 @@ Miscellaneous bug fixes - subcommands or param while pressing tab etc.
  tinyrl/history/history.c            |  20 +-
  tinyrl/tinyrl.c                     |  74 ++++
  tinyrl/tinyrl.h                     |  12 +
- 48 files changed, 3276 insertions(+), 223 deletions(-)
+ 48 files changed, 3300 insertions(+), 223 deletions(-)
  create mode 100644 clish/param/mgmt_clish_extn_param.c
  create mode 100644 clish/plugin/clish_api.h
  create mode 100644 clish/plugin/mgmt_clish_utils.c
@@ -3951,7 +3951,7 @@ index 8467ec1..6a4b49e 100644
  	return res;
  }
 diff --git a/configure.ac b/configure.ac
-index 9d3e49f..42e46e6 100644
+index 9d3e49f..9666bb7 100644
 --- a/configure.ac
 +++ b/configure.ac
 @@ -25,6 +25,8 @@ AC_PROG_CC
@@ -3963,6 +3963,38 @@ index 9d3e49f..42e46e6 100644
  AC_CONFIG_HEADERS([config.h])
  AM_INIT_AUTOMAKE(subdir-objects)
  AM_PROG_CC_C_O
+@@ -107,6 +109,31 @@ if test x$use_lua != xno; then
+     AX_LUA_LIBS()
+ fi
+ 
++################################
++# Get Python headers
++################################
++AM_PATH_PYTHON([3])
++AX_PYTHON_DEVEL([>= '3'])
++
++CPPFLAGS="${CPPFLAGS} ${PYTHON_CPPFLAGS}"
++LDFLAGS="${LDFLAGS} ${PYTHON_LIBS}"
++
++################################
++# Get Curl headers
++################################
++PKG_CHECK_MODULES([CURL], [libcurl])
++
++CPPFLAGS="${CPPFLAGS} ${CURL_CFLAGS}"
++LDFLAGS="${LDFLAGS} ${CURL_LIBS}"
++
++################################
++# Get cjson headers
++################################
++PKG_CHECK_MODULES([CJSON], [libcjson])
++
++CPPFLAGS="${CPPFLAGS} ${CJSON_CFLAGS}"
++LDFLAGS="${LDFLAGS} ${CJSON_LIBS}"
++
+ ################################
+ # Check for the roxml library
+ ################################
 diff --git a/lub/argv.h b/lub/argv.h
 index 7e0c7cc..7da2bc4 100644
 --- a/lub/argv.h
