@@ -1,4 +1,0 @@
-5a6
-> #include <syslog.h>
-20a22
-> 		syslog(LOG_WARNING, "Idle timeout. The session will be closed.");

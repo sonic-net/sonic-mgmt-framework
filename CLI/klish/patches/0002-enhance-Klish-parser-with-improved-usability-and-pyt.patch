@@ -1,0 +1,5197 @@
+From e629c76e73aa7b89490a8f8b52557fc22ec405d4 Mon Sep 17 00:00:00 2001
+From: Kwan <kwangsuk_kim@dell.com>
+Date: Mon, 4 Jan 2021 15:10:03 -0800
+Subject: [PATCH] enhance Klish parser with improved usability and python3
+ support (#76)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Klish enhancements for sonic-mgmt-framework to improve usability and python3.7 support in Buster
+
+Add two built-in methods for performance enhancement as part of mgmt-framework CLI enhancement:
+CLI built-in functions "clish_pyobj" and "clish_restcl" can be use to reduce time taken to execute a command by eliminating the sub-shell interpreter overhead.
+
+The “clish_restcl” method uses libcurl to make REST client call from actioner. The GET operation is not supported as we currently don't handle rendering using jinja templates.
+e.g.
+oper=PATCH url=/restconf/data/openconfig-interfaces:interfaces/interface=Vlan${vlan-id}/config body={"openconfig-interfaces:config": {"name": "Vlan${vlan-id}"}}
+
+The “clish_pyobj” uses embedding Python to execute the Python scripts to make REST client call via Request package.
+e.g.
+sonic_cli_if patch_openconfig_interfaces_interfaces_interface_config Vlan${vlan-id}
+
+New PTYPE attribute support - ext_pattern and ext_help with regexp_select method
+Similar to the pattern attribute with select method in Opensource Klish, the ext_pattern with regexp_select can be used for auto completion.
+e.g.
+<PTYPE
+name="PHY_INTERFACE"
+method="regexp_select"
+ext_pattern="Ethernet(port)"
+pattern="&ETH_ALL_INTF;"
+help="" />
+An interface name can be specified as “interface Ethernet 1” or “interface Eth1”.
+
+sonic-cli(config)# interface Eth1
+sonic-cli(conf-if-Ethernet1)#
+Another usacase is that, if multiple options in the same PTYPE are defined to support all possible interface options, the ext_help can be used along with ext_help attributes to provide multiple help string for corresponding options.
+e.g.
+
+<PTYPE
+name="ALL_INTERFACE"
+method="regexp_select"
+ext_pattern="Ethernet(Port) PortChannel(1-128) Vlan(1-4093) Loopback(0..16383)"
+ext_help="(Ethernet interface type) (PortChannel interface type) (Vlan interface type) (Loopback interface type)"
+pattern="&ETH_ALL_INTF;|&VLAN_ALL_INTF;|&PO_ALL_INTF;|&LOOPB_INTF;"
+help="Interface Type - Ranges"
+/>
+idle session timeout - CLI session timeout set to 10 minute (600s) to close the session once expired
+Interrupt handler to abort the execution of current command
+Allow param value with special characters, e.g. “#?\sonic&”
+Quoted sting support , e.g. sonic-cli(conf-if-Ethernet1)# description “Azure leaf-#1 NY-datacenter”
+hidden command support in klish parser
+Patching hook log syslog message to audit command execution through CLI
+Add Pylint support
+Fix pipe command
+Miscellaneous bug fixes - subcommands or param while pressing tab etc.
+---
+ bin/clish.c                         |  15 +-
+ clish/command.h                     |   5 +
+ clish/command/command.c             |  35 ++
+ clish/command/private.h             |   3 +
+ clish/nspace.h                      |   1 +
+ clish/param.h                       |  51 ++-
+ clish/param/mgmt_clish_extn_param.c |  23 +
+ clish/param/module.am               |   3 +-
+ clish/param/param.c                 | 161 ++++++-
+ clish/param/private.h               |   4 +
+ clish/pargv.h                       |   1 +
+ clish/plugin/clish_api.h            |  23 +
+ clish/plugin/mgmt_clish_utils.c     | 177 ++++++++
+ clish/plugin/mgmt_clish_utils.h     |  59 +++
+ clish/plugin/module.am              |   3 +-
+ clish/ptype.h                       |  43 +-
+ clish/ptype/private.h               |  18 +
+ clish/ptype/ptype.c                 | 625 ++++++++++++++++++++++++++--
+ clish/shell.h                       |   7 +-
+ clish/shell/private.h               |  11 +-
+ clish/shell/shell_command.c         | 116 +++++-
+ clish/shell/shell_execute.c         | 259 ++++++++++--
+ clish/shell/shell_help.c            |  84 +++-
+ clish/shell/shell_new.c             |  10 +-
+ clish/shell/shell_parse.c           | 430 +++++++++++++++++--
+ clish/shell/shell_ptype.c           |   7 +-
+ clish/shell/shell_tinyrl.c          | 282 +++++++++++--
+ clish/shell/shell_wdog.c            |   2 +
+ clish/shell/shell_xml.c             |  42 +-
+ configure.ac                        |   2 +
+ lub/argv.h                          |   1 +
+ lub/argv/argv.c                     |  21 +
+ lub/string.h                        |   2 +
+ lub/string/string.c                 |  26 +-
+ mgmt_clish_extn_param.h             |  23 +
+ plugins/clish/builtin_init.c        |   6 +
+ plugins/clish/call_pyobj.c          | 260 ++++++++++++
+ plugins/clish/hook_log.c            |   5 +-
+ plugins/clish/logging.h             |  18 +
+ plugins/clish/module.am             |   3 +
+ plugins/clish/nos_extn.c            | 125 ++++++
+ plugins/clish/nos_extn.h            |  24 ++
+ plugins/clish/private.h             |   3 +
+ plugins/clish/rest_cl.cpp           | 364 ++++++++++++++++
+ plugins/clish/sym_script.c          |  10 +
+ tinyrl/history/history.c            |  20 +-
+ tinyrl/tinyrl.c                     |  74 ++++
+ tinyrl/tinyrl.h                     |  12 +
+ 48 files changed, 3276 insertions(+), 223 deletions(-)
+ create mode 100644 clish/param/mgmt_clish_extn_param.c
+ create mode 100644 clish/plugin/clish_api.h
+ create mode 100644 clish/plugin/mgmt_clish_utils.c
+ create mode 100644 clish/plugin/mgmt_clish_utils.h
+ create mode 100644 mgmt_clish_extn_param.h
+ create mode 100644 plugins/clish/call_pyobj.c
+ create mode 100644 plugins/clish/logging.h
+ create mode 100644 plugins/clish/nos_extn.c
+ create mode 100644 plugins/clish/nos_extn.h
+ create mode 100644 plugins/clish/rest_cl.cpp
+
+diff --git a/bin/clish.c b/bin/clish.c
+index 7073c18..a240687 100644
+--- a/bin/clish.c
++++ b/bin/clish.c
+@@ -39,6 +39,8 @@
+ #include "lub/conv.h"
+ #include "clish/shell.h"
+ 
++#include <stdbool.h>
++
+ #define QUOTE(t) #t
+ /* #define version(v) printf("%s\n", QUOTE(v)) */
+ #define version(v) printf("%s\n", v)
+@@ -46,6 +48,12 @@
+ static void sighandler(int signo);
+ static void help(int status, const char *argv0);
+ 
++bool _nos_use_alt_name = false;
++
++bool nos_use_alt_name() {
++    return _nos_use_alt_name;
++}
++
+ /*--------------------------------------------------------- */
+ int main(int argc, char **argv)
+ {
+@@ -86,6 +94,11 @@ int main(int argc, char **argv)
+ 	struct sigaction sigpipe_act;
+ 	sigset_t sigpipe_set;
+ 
++    char *mode = getenv("SONIC_CLI_IFACE_MODE");
++    if (mode) {
++        _nos_use_alt_name = (strcmp(mode, "standard") == 0);
++    }
++
+ 	static const char *shortopts = "hvs:ledx:w:i:bqu8oO:kKt:c:f:z:p:";
+ #ifdef HAVE_GETOPT_LONG
+ 	static const struct option longopts[] = {
+@@ -304,7 +317,7 @@ int main(int argc, char **argv)
+ 		clish_shell__set_canon_out(shell, canon_out);
+ 	/* Set idle timeout */
+ 	if (istimeout)
+-		clish_shell__set_idle_timeout(shell, timeout);
++		clish_shell__set_timeout(shell, timeout);
+ 	/* Set history settings */
+ 	clish_shell__stifle_history(shell, histsize);
+ 	if (histfile)
+diff --git a/clish/command.h b/clish/command.h
+index 05ec2ad..47e4935 100644
+--- a/clish/command.h
++++ b/clish/command.h
+@@ -76,5 +76,10 @@ int clish_command__get_depth(const clish_command_t * instance);
+ clish_view_restore_e clish_command__get_restore(const clish_command_t * instance);
+ const clish_command_t * clish_command__get_orig(const clish_command_t * instance);
+ const clish_command_t * clish_command__get_cmd(const clish_command_t * instance);
++char *clish_command__get_test(const clish_command_t *instance);
++void clish_command__set_hidden(clish_command_t * instance, bool_t hidden);
++bool_t clish_command__get_hidden(const clish_command_t * instance);
++void clish_command__set_enabled(clish_command_t * instance, bool_t enabled);
++bool_t clish_command__get_enabled(const clish_command_t * instance);
+ 
+ #endif				/* _clish_command_h */
+diff --git a/clish/command/command.c b/clish/command/command.c
+index c2307d0..0fa36c1 100644
+--- a/clish/command/command.c
++++ b/clish/command/command.c
+@@ -41,6 +41,9 @@ clish_command_init(clish_command_t *this, const char *name, const char *text)
+ 	this->dynamic = BOOL_FALSE;
+ 	this->internal = BOOL_FALSE;
+ 	this->access = NULL;
++	this->test = NULL;
++	this->hidden = BOOL_FALSE;
++	this->enabled = BOOL_FALSE;
+ }
+ 
+ /*--------------------------------------------------------- */
+@@ -303,3 +306,35 @@ const clish_command_t * clish_command__get_cmd(const clish_command_t * this)
+ 		return clish_command__get_cmd(this->link);
+ 	return NULL;
+ }
++
++/*--------------------------------------------------------- */
++char *clish_command__get_test(const clish_command_t *this)
++{
++	return this->test;
++}
++
++/*--------------------------------------------------------- */
++void clish_command__set_hidden(clish_command_t * this, bool_t hidden)
++{
++	this->hidden = hidden;
++}
++
++/*--------------------------------------------------------- */
++bool_t clish_command__get_hidden(const clish_command_t * this)
++{
++	return this->hidden;
++}
++
++
++/*--------------------------------------------------------- */
++void clish_command__set_enabled(clish_command_t * this, bool_t enabled)
++{
++	this->enabled = enabled;
++}
++
++/*--------------------------------------------------------- */
++bool_t clish_command__get_enabled(const clish_command_t * this)
++{
++	return BOOL_TRUE;
++}
++
+diff --git a/clish/command/private.h b/clish/command/private.h
+index 44d7646..48b5833 100644
+--- a/clish/command/private.h
++++ b/clish/command/private.h
+@@ -24,4 +24,7 @@ struct clish_command_s {
+ 	clish_view_t *pview;
+ 	bool_t dynamic; /* Is command dynamically created */
+ 	bool_t internal; /* Is command internal? Like the "startup" */
++      char *test;
++      bool_t hidden;
++      bool_t enabled;
+ };
+diff --git a/clish/nspace.h b/clish/nspace.h
+index 26089c3..f5d99bd 100644
+--- a/clish/nspace.h
++++ b/clish/nspace.h
+@@ -15,6 +15,7 @@ typedef enum {
+ 	CLISH_NSPACE_COMPLETION,
+ 	CLISH_NSPACE_CHELP
+ } clish_nspace_visibility_e;
++typedef clish_nspace_visibility_e clish_nspace_visibility_t;
+ 
+ #include <regex.h>
+ 
+diff --git a/clish/param.h b/clish/param.h
+index bc37853..c7268e7 100644
+--- a/clish/param.h
++++ b/clish/param.h
+@@ -1,9 +1,17 @@
+ /*
+  * param.h
+- * Parameter instances are assocated with a command line and used to validate the
+- * the arguments which a user is inputing for a command.
+  */
++/**
++\ingroup clish
++\defgroup clish_param param
++@{
+ 
++\brief This class represents an instance of a parameter type.
++
++Parameter instances are assocated with a command line and used to validate the
++the arguments which a user is inputing for a command.
++
++*/
+ #ifndef _clish_param_h
+ #define _clish_param_h
+ 
+@@ -14,24 +22,41 @@ typedef struct clish_param_s clish_param_t;
+ #include "clish/ptype.h"
+ #include "clish/pargv.h"
+ #include "clish/var.h"
++#include "mgmt_clish_extn_param.h"
+ 
+-/* The means by which the param is interpreted */
++/**
++ * The means by which the param is interpreted.
++ */
+ typedef enum {
+-	/* A common parameter */
++    /**
++     * A common parameter.
++    */
+ 	CLISH_PARAM_COMMON,
+-	/* A swich parameter. Choose the only one of nested parameters. */
++    /**
++     * A swich parameter.
++     * Choose the only one of nested parameters.
++     */
+ 	CLISH_PARAM_SWITCH,
+-	/* A subcomand. Identified by it's name. */
++    /**
++     * A subcomand.
++     * Identified by it's name.
++     */
+ 	CLISH_PARAM_SUBCOMMAND
+ } clish_param_mode_e;
+ 
+-/* Class param */
+-
++/*=====================================
++ * PARAM INTERFACE
++ *===================================== */
++/*-----------------
++ * meta functions
++ *----------------- */
+ clish_param_t *clish_param_new(const char *name,
+ 	const char *text, const char *ptype_name);
+-
++/*-----------------
++ * methods
++ *----------------- */
+ void clish_param_delete(clish_param_t * instance);
+-void clish_param_help(const clish_param_t * instance, clish_help_t *help);
++void clish_param_help(const clish_param_t * instance, clish_help_t *help, const char *pval);
+ void clish_param_help_arrow(const clish_param_t * instance, size_t offset);
+ char *clish_param_validate(const clish_param_t * instance, const char *text);
+ void clish_param_dump(const clish_param_t * instance);
+@@ -63,7 +88,12 @@ _CLISH_SET(param, bool_t, order);
+ _CLISH_GET(param, bool_t, order);
+ _CLISH_SET(param, bool_t, hidden);
+ _CLISH_GET(param, bool_t, hidden);
++_CLISH_SET(param, bool_t, enabled);
++_CLISH_GET(param, bool_t, enabled);
+ _CLISH_GET(param, unsigned int, param_count);
++/*-----------------
++ * attributes
++ *----------------- */
+ 
+ clish_param_t *clish_param__get_param(const clish_param_t * instance,
+ 	unsigned int index);
+@@ -83,3 +113,4 @@ const char *clish_paramv_find_default(const clish_paramv_t * instance,
+ 	const char *name);
+ 
+ #endif				/* _clish_param_h */
++/** @} clish_param */
+diff --git a/clish/param/mgmt_clish_extn_param.c b/clish/param/mgmt_clish_extn_param.c
+new file mode 100644
+index 0000000..55e8664
+--- /dev/null
++++ b/clish/param/mgmt_clish_extn_param.c
+@@ -0,0 +1,23 @@
++/*
++ * filename: mgmt_clish_extn_param.c
++ * (c) Copyright 2020 Dell EMC All Rights Reserved.
++ *
++ * APIs to set and get the new attributes added to the klish PARAM option
++ */
++
++/** OPENSOURCELICENSE */
++#include "clish/param/private.h"
++#include "lub/string.h"
++#include "assert.h"
++#include "string.h"
++
++/* SET */
++CLISH_SET_STR(param, viewname);
++CLISH_SET_STR(param, viewid);
++CLISH_SET(param, bool_t, recursive);
++
++/* GET */
++CLISH_GET_STR(param, viewname);
++CLISH_GET_STR(param, viewid);
++CLISH_GET(param, bool_t, recursive);
++
+diff --git a/clish/param/module.am b/clish/param/module.am
+index 6a3ccaa..4f76718 100644
+--- a/clish/param/module.am
++++ b/clish/param/module.am
+@@ -2,4 +2,5 @@ libclish_la_SOURCES += \
+ 	clish/param/param.c \
+ 	clish/param/paramv.c \
+ 	clish/param/param_dump.c \
+-	clish/param/private.h
++	clish/param/private.h \
++	clish/param/mgmt_clish_extn_param.c
+diff --git a/clish/param/param.c b/clish/param/param.c
+index 3c6bfee..e2ae1a8 100644
+--- a/clish/param/param.c
++++ b/clish/param/param.c
+@@ -6,13 +6,14 @@
+ #include "private.h"
+ #include "lub/string.h"
+ #include "clish/types.h"
+-
+ #include <assert.h>
+ #include <stdlib.h>
+ #include <stdio.h>
+ #include <string.h>
+ 
+-/*--------------------------------------------------------- */
++/*---------------------------------------------------------
++ * PRIVATE METHODS
++ *--------------------------------------------------------- */
+ static void clish_param_init(clish_param_t *this, const char *name,
+ 	const char *text, const char *ptype_name)
+ {
+@@ -31,8 +32,12 @@ static void clish_param_init(clish_param_t *this, const char *name,
+ 	this->test = NULL;
+ 	this->completion = NULL;
+ 	this->access = NULL;
++	this->viewname = NULL;
++	this->viewid = NULL;
++	this->recursive = BOOL_FALSE;
+ 
+ 	this->paramv = clish_paramv_new();
++	this->enabled = BOOL_FALSE;
+ }
+ 
+ /*--------------------------------------------------------- */
+@@ -47,11 +52,18 @@ static void clish_param_fini(clish_param_t * this)
+ 	lub_string_free(this->test);
+ 	lub_string_free(this->completion);
+ 	lub_string_free(this->access);
++	lub_string_free(this->viewname);
++	lub_string_free(this->viewid);
+ 
++	this->viewname = NULL;
++	this->viewid = NULL;
++	
+ 	clish_paramv_delete(this->paramv);
+ }
+ 
+-/*--------------------------------------------------------- */
++/*---------------------------------------------------------
++ * PUBLIC META FUNCTIONS
++ *--------------------------------------------------------- */
+ clish_param_t *clish_param_new(const char *name, const char *text,
+ 	const char *ptype_name)
+ {
+@@ -62,7 +74,9 @@ clish_param_t *clish_param_new(const char *name, const char *text,
+ 	return this;
+ }
+ 
+-/*--------------------------------------------------------- */
++/*---------------------------------------------------------
++ * PUBLIC METHODS
++ *--------------------------------------------------------- */
+ void clish_param_delete(clish_param_t * this)
+ {
+ 	clish_param_fini(this);
+@@ -75,22 +89,31 @@ void clish_param_insert_param(clish_param_t * this, clish_param_t * param)
+ 	return clish_paramv_insert(this->paramv, param);
+ }
+ 
++/*---------------------------------------------------------
++ * PUBLIC ATTRIBUTES
++ *--------------------------------------------------------- */
++
+ /*--------------------------------------------------------- */
+ char *clish_param_validate(const clish_param_t * this, const char *text)
+ {
+-	if (CLISH_PARAM_SUBCOMMAND == clish_param__get_mode(this)) {
++	if (CLISH_PARAM_SUBCOMMAND == clish_param__get_mode(this) &&
++		CLISH_PTYPE_METHOD_REGEXP_SELECT != clish_ptype__get_method(this->ptype)) {
+ 		if (lub_string_nocasecmp(clish_param__get_value(this), text))
+ 			return NULL;
+-	}
++    }
+ 	return clish_ptype_translate(this->ptype, text);
+ }
+ 
+ /*--------------------------------------------------------- */
+-void clish_param_help(const clish_param_t * this, clish_help_t *help)
++void clish_param_help(const clish_param_t * this, clish_help_t *help, 
++                       const char *pval)
+ {
+ 	const char *range = clish_ptype__get_range(this->ptype);
+-	const char *name;
++	const char *name = NULL;
+ 	char *str = NULL;
++	char *ext_help = NULL;
++	help_type_t usename = USE_NAME;
++	clish_ptype_method_e method = clish_ptype__get_method(this->ptype);
+ 
+ 	if (CLISH_PARAM_SWITCH == clish_param__get_mode(this)) {
+ 		unsigned rec_paramc = clish_param__get_param_count(this);
+@@ -101,26 +124,122 @@ void clish_param_help(const clish_param_t * this, clish_help_t *help)
+ 			cparam = clish_param__get_param(this, i);
+ 			if (!cparam)
+ 				break;
+-			clish_param_help(cparam, help);
++			clish_param_help(cparam, help, pval);
+ 		}
++		lub_string_free((char*)range);
+ 		return;
+ 	}
+ 
+-	if (CLISH_PARAM_SUBCOMMAND == clish_param__get_mode(this))
+-		name = clish_param__get_value(this);
+-	else
++	if (CLISH_PARAM_SUBCOMMAND == clish_param__get_mode(this)) {
++		if (method != CLISH_PTYPE_METHOD_REGEXP_SELECT)
++			name = clish_param__get_value(this);
++	} else {
+ 		if (!(name = clish_ptype__get_text(this->ptype)))
+ 			name = clish_ptype__get_name(this->ptype);
++	}
++
++	if (method == CLISH_PTYPE_METHOD_REGEXP_SELECT) {
++		clish_ptype_t *ptype = this->ptype;
++		usename = clish_ptype__get_usename(ptype);
++		int i = 0, cnt = clish_ptype_regexp_select__get_argv_count(ptype);
++		const char *pname = NULL;
++		char *val_str = NULL;
++		for (;i < cnt; i++) {
++			pname = clish_ptype_regexp_select__get_name(ptype, i);
++			if (!pval || !pname || !strncasecmp(pname, pval, strlen(pval))) {
++                if (!pval && !pname)
++                    usename = USE_VALUE;
++				if (usename == USE_NAME) {
++					if (i)
++						lub_string_cat(&str, "\n  ");
++						lub_string_cat(&str, pname);
++				} else if (usename == USE_VALUE) {
++                    val_str = clish_ptype_regexp_select__get_value(ptype, i);
++                    if (val_str) {
++                         lub_string_cat(&str, "<");
++                         lub_string_cat(&str, val_str);
++                         lub_string_cat(&str, ">");
++                    }
++                    /* Free the heap memory returned by allocation func 
++                     * clish_ptype_regexp_select__get_value (..)  after
++                     * data present at that memory location has been 
++                     * concantenated with str to avoid resource leak.
++                     */
++                    if(val_str != NULL) {
++                        lub_string_free(val_str);
++                        val_str = NULL;
++                    }
++				} else {
++					if (!pval) {
++						lub_argv_add(help->name, pname);
++						lub_argv_add(help->help, clish_ptype_regexp_select__get_ext_help(ptype, i));
++						if (pname) {
++							lub_string_free((char*)pname);
++							pname = NULL;
++						}
++						continue;
++					} else {
++						lub_string_cat(&str, pname);
++						lub_string_cat(&ext_help, clish_ptype_regexp_select__get_ext_help(ptype, i));
++					}
++				}
++				break;
++            }
++            /* Variable pname going out of scope,free memory to avoid resource leaks.*/
++            if(pname != NULL) {
++                lub_string_free((char*)pname);
++                pname = NULL;
++            }
++		}
++		/* Variable pname going out of scope,free memory to avoid resource leaks.*/
++		if(pname != NULL) {
++		    lub_string_free((char*)pname);
++		    pname = NULL;
++		}
++	} else {
++		if (range) {
++			lub_string_cat(&str, "<");
++			lub_string_cat(&str, range);
++			lub_string_cat(&str, ">");
++		} else {
++			lub_string_cat(&str, name);
++		}
++	}
++
++	switch (method) {
++		case CLISH_PTYPE_METHOD_SELECT:
++			{
++				clish_ptype_t *ptype = this->ptype;
++				if (clish_ptype_select__get_help(ptype, help, pval) != 0) {
++					lub_argv_add(help->name, str);
++					lub_argv_add(help->help, this->text);
++				}
++			}
++			break;
++		case CLISH_PTYPE_METHOD_REGEXP_SELECT:
++			{
++				if (usename != USE_RANGE) {
++					if (str) {
++						lub_argv_add(help->name, str);
++						lub_argv_add(help->help, this->text);
++					}
++				} else if (pval) {
++					lub_argv_add(help->name, str);
++					lub_argv_add(help->help, ext_help);
++				}
++			}
++			break;
++		default:
++			{
++				lub_argv_add(help->name, str);
++				lub_argv_add(help->help, this->text);
++			}
++			break;
++	}
+ 
+-	lub_string_cat(&str, this->text);
+-	if (range) {
+-		lub_string_cat(&str, " (");
+-		lub_string_cat(&str, range);
+-		lub_string_cat(&str, ")");
++	if(str) {
++		lub_string_free(str);
+ 	}
+-	lub_argv_add(help->name, name);
+-	lub_argv_add(help->help, str);
+-	lub_string_free(str);
+ 	lub_argv_add(help->detail, NULL);
+ }
+ 
+@@ -156,6 +275,8 @@ CLISH_SET(param, bool_t, order);
+ CLISH_GET(param, bool_t, order);
+ CLISH_SET(param, bool_t, hidden);
+ CLISH_GET(param, bool_t, hidden);
++CLISH_SET(param, bool_t, enabled);
++CLISH_GET(param, bool_t, enabled);
+ 
+ /*--------------------------------------------------------- */
+ _CLISH_GET_STR(param, value)
+diff --git a/clish/param/private.h b/clish/param/private.h
+index 3e36c5c..8c5d613 100644
+--- a/clish/param/private.h
++++ b/clish/param/private.h
+@@ -27,4 +27,8 @@ struct clish_param_s {
+ 	char *test; /* The condition to enable param */
+ 	char *completion; /* Possible completions */
+ 	char *access;
++	char *viewname;
++	char *viewid;
++	bool_t recursive;
++	bool_t enabled;
+ };
+diff --git a/clish/pargv.h b/clish/pargv.h
+index b577d55..87ed047 100644
+--- a/clish/pargv.h
++++ b/clish/pargv.h
+@@ -14,6 +14,7 @@ typedef enum {
+ 	CLISH_BAD_HISTORY
+ } clish_pargv_status_e;
+ 
++typedef clish_pargv_status_e clish_pargv_status_t;
+ typedef struct clish_pargv_s clish_pargv_t;
+ typedef struct clish_parg_s clish_parg_t;
+ 
+diff --git a/clish/plugin/clish_api.h b/clish/plugin/clish_api.h
+new file mode 100644
+index 0000000..dc7df8c
+--- /dev/null
++++ b/clish/plugin/clish_api.h
+@@ -0,0 +1,23 @@
++/*
++ * filename: clish_api.h
++ * (c) Copyright 2020 Dell EMC All Rights Reserved.
++ *
++ * Dell EMC extension over klish to implement an API for parsing XML input
++ * CLISH library extension header file
++ */
++#ifndef __clish_api_H__
++#define __clish_api_H__
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++#define HOSTNAME_STR_LEN 65
++#define PROMPT_STR_LEN 150
++#define CLISH_DO_CMD "do"
++
++#ifdef __cplusplus
++}
++#endif
++
++#endif
+diff --git a/clish/plugin/mgmt_clish_utils.c b/clish/plugin/mgmt_clish_utils.c
+new file mode 100644
+index 0000000..93bb3be
+--- /dev/null
++++ b/clish/plugin/mgmt_clish_utils.c
+@@ -0,0 +1,177 @@
++/*
++ * filename: mgmt_clish_utils.c
++ * (c) Copyright 2020 Dell EMC All Rights Reserved.
++ */
++
++#include "clish/shell/private.h"
++#include "lub/string.h"
++#include "lub/dump.h"
++#include <ctype.h>
++#include <Python.h>
++#include <libxml/tree.h>
++#include <libxml/parser.h>
++#include <libxml/xpath.h>
++#include <libxml/xpathInternals.h>
++
++#include "string.h"
++#include "stdlib.h"
++#include "signal.h"
++
++int interruptRecvd = 0;
++
++/* Ctrl-C information is shared from C context to python context
++ * via pipe. C context writes dummy data in pipe and python context
++ * reads from the pipe.
++ */
++int ctrlc_rd_fd = 0, ctrlc_wr_fd = 0;
++
++/*-------------------------------------------------------- */
++void clish_interrupt_handler(int signum)
++{
++    interruptRecvd = 1;
++    /* Write some data in Ctrl-C pipe to exit render gracefully */
++    write(ctrlc_wr_fd, "q", 1);
++}
++
++bool_t is_ctrlc_pressed(void)
++{
++    bool_t result = BOOL_FALSE;
++
++    if(interruptRecvd)
++        result = BOOL_TRUE;
++
++    return result;
++}
++
++void flush_ctrlc_pipe(void)
++{
++    fd_set fds;
++    char tmp_buf[100] = {0};
++    struct timeval timeout = {0}; // Timeout 0 is polling
++    ssize_t size = 0;
++    int ret = 0;
++
++    // Reset interrupt recieved flag
++    interruptRecvd = 0;
++    // Flush pipe contents
++    while(BOOL_TRUE) {
++        FD_ZERO (&fds);
++        FD_SET(ctrlc_rd_fd, &fds);
++        ret = select(ctrlc_rd_fd + 1, &fds, NULL, NULL, &timeout);
++        if(ret == 0) break; // If returned fds count is 0, pipe is empty.
++        if(FD_ISSET(ctrlc_rd_fd, &fds) == 0)
++            continue;
++        size = read(ctrlc_rd_fd, tmp_buf, 100);
++        if (size == -1) {
++            if (errno == EINTR) // We may have got signal. Just go back
++                continue;
++        }
++    }
++}
++
++
++/*
++ *
++ */
++static char *obscure_string= "*****";
++
++#define MAX_KEYWORDS 4
++/* Entries with only 0 as encryption identifier may not strictly have one - used as placeholder */
++static const char * keywords[2*MAX_KEYWORDS] = {
++    "password", "079",
++    "key", "079",
++    "auth-password", "079",
++    "priv-password", "079"
++};
++
++/* URL patterns contain: prefix string
++   ASSUMPTION: should contain phrase as per pattern:  <protocol prefix><userid>:<password>@<remainder of phrase>
++ */
++#define COLON_DELIM 0x3A
++#define ATSIGN_DELIM 0x40
++#define MAX_URL_PATTERN 6
++static char *url_pattern[MAX_URL_PATTERN] = {"scp://", 
++    "ftp://", "sftp://", "http://", "https://", "tftp://"};
++
++
++void mask_password(const char *line, char **masked_line)
++{
++    int pos = 0, index, length;
++    bool_t match;
++    char *word = NULL, *ctxt = NULL, *url=NULL, *passwd= NULL, *remainder= NULL, *line_tmp = NULL;
++
++    if(*masked_line){
++        lub_string_free(*masked_line);
++    }
++
++    lub_string_cat(&line_tmp, line);
++    word = strtok_r(line_tmp, " ", &ctxt);
++    /* tokenize string - space delimited */
++    while(word) {
++        if(pos != 0) {
++            lub_string_cat(masked_line, " ");
++        }
++        match= BOOL_FALSE;
++
++        for (index=0; index<MAX_URL_PATTERN; index++) {
++            if (strncmp(word, url_pattern[index], strlen(url_pattern[index])) == 0) {
++                url= word;
++                url+= strlen(url_pattern[index]);
++                passwd= strchr(url, COLON_DELIM);
++                if (passwd != NULL) {
++                    passwd++;
++                    length= (unsigned int)(passwd - word);  /* URL pattern up to start of passwd */
++                    lub_string_catn(masked_line, word, (size_t)length);
++                    lub_string_cat(masked_line, obscure_string);  /* obscure password */
++                    /* since a password can have '@', obscure up to last '@' */
++                    remainder= strrchr(passwd, ATSIGN_DELIM);
++                    lub_string_cat(masked_line, remainder); /* put in remainder of URL pattern after password */
++                    word = strtok_r(NULL, " ", &ctxt);
++                    match= BOOL_TRUE;
++                }
++                /* Even if no password to obscure, can match only URL pattern */
++                break;
++            }
++        }
++
++        if (match == BOOL_FALSE) {
++            for (index = 0; index < MAX_KEYWORDS; index++) {
++                if (strcmp(word, keywords[2*index]) == 0) {
++                    lub_string_cat(masked_line, word);
++                    word = strtok_r(NULL, " ", &ctxt);
++                    if (word) {
++                        /* may have encryption identifier for text that follows, e.g. 0, 7, 9 */
++                        if (((strlen(word) == 1) && (strstr(keywords[2*index+1], word) != NULL)) ||
++                            /* handle exception for 'enable password [0 | sha-256 | sha-512] command */
++                            ((strcmp(keywords[2*index],"password") == 0) &&
++                             ((strcmp(word, "sha-512") == 0) || (strcmp(word, "sha-256") == 0))))
++                        {
++                            lub_string_cat(masked_line, " ");
++                            lub_string_cat(masked_line, word);
++                            word = strtok_r(NULL, " ", &ctxt);
++                        }
++                        if(word) {
++                            lub_string_cat(masked_line, " ");
++                            lub_string_cat(masked_line, obscure_string);
++                            word = strtok_r(NULL, " ", &ctxt);
++                        }
++                    }
++                    match= BOOL_TRUE;
++                    /* Even if no password/key to obscure, can match only one keyword */
++                    break;
++                }
++            }
++        }
++
++        if (match == BOOL_FALSE) {
++            lub_string_cat(masked_line, word);
++            word = strtok_r(NULL, " ", &ctxt);
++        }
++        ++pos;
++    }
++
++    // Cleanup
++    if(line_tmp)
++        lub_string_free(line_tmp);
++}
++
+diff --git a/clish/plugin/mgmt_clish_utils.h b/clish/plugin/mgmt_clish_utils.h
+new file mode 100644
+index 0000000..1b26f8e
+--- /dev/null
++++ b/clish/plugin/mgmt_clish_utils.h
+@@ -0,0 +1,59 @@
++/*
++ * filename: mgmt_clish_utils.h
++ * (c) Copyright 2020 Dell EMC All Rights Reserved.
++ */
++#ifndef __mgmt_clish_utils_H__
++#define __mgmt_clish_utils_H__
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++#include "clish/shell.h"
++#include "clish/shell/private.h"
++
++#include "time.h"
++extern int interruptRecvd;
++
++/**
++* @brief Sugnal handler for clish
++*
++* @param signum signal number received
++*/
++void clish_interrupt_handler(int signum);
++
++/**
++* @brief This function returns status of whether Ctrl-C is pressed or not
++*
++* @return - true(Ctrl-C occurred), false(Ctrl-C not occurred)
++*/
++bool_t is_ctrlc_pressed(void);
++
++/**
++* @brief This function empties the Ctrl-C pipe
++*
++* @return - None
++*/
++void flush_ctrlc_pipe(void);
++
++/**
++* @brief This function  masks password/key value with *****
++* Commands which have password/keysupport-assist :
++ * username <user> password <pass> role <type>}
++ * radius-server key <key>
++ * tacacs-server key <key> 
++ * snmp-server user <user> [encrypted] auth [md5|sha] auth-password <key> priv [aes-128 |
++ *  des] priv-password <key>
++*
++* @param [in] command line : CLI command string
++* @param [out] masked line : CLI command string with masked password/key
++*
++*/
++
++void mask_password(const char *line, char **masked_line);
++
++#ifdef __cplusplus
++}
++#endif
++
++#endif
+diff --git a/clish/plugin/module.am b/clish/plugin/module.am
+index 636da8c..d59856f 100644
+--- a/clish/plugin/module.am
++++ b/clish/plugin/module.am
+@@ -2,4 +2,5 @@ libclish_la_SOURCES += \
+ 	clish/plugin/plugin.c \
+ 	clish/plugin/sym.c \
+ 	clish/plugin/plugin_dump.c \
+-	clish/plugin/private.h
++	clish/plugin/private.h \
++	clish/plugin/mgmt_clish_utils.c
+diff --git a/clish/ptype.h b/clish/ptype.h
+index 4175e40..485b292 100644
+--- a/clish/ptype.h
++++ b/clish/ptype.h
+@@ -6,14 +6,16 @@
+ #ifndef _clish_ptype_h
+ #define _clish_ptype_h
+ 
+-typedef struct clish_ptype_s clish_ptype_t;
+ 
+ #include "lub/types.h"
+ #include "clish/macros.h"
+ #include "lub/argv.h"
+ #include "clish/action.h"
+-
++#include "types.h"
+ #include <stddef.h>
++#include <stdbool.h>
++
++typedef struct clish_ptype_s clish_ptype_t;
+ 
+ /* The means by which the pattern is interpreted and validated. */
+ typedef enum {
+@@ -31,6 +33,7 @@ typedef enum {
+ 	/* User-defined code in ACTION */
+ 	CLISH_PTYPE_METHOD_CODE,
+ 	/* Used to detect errors */
++	CLISH_PTYPE_METHOD_REGEXP_SELECT, /* dell-emc */
+ 	CLISH_PTYPE_METHOD_MAX
+ 
+ } clish_ptype_method_e;
+@@ -43,10 +46,19 @@ typedef enum {
+ 	CLISH_PTYPE_PRE_TOUPPER,
+ 	/* before validation convert to lowercase. */
+ 	CLISH_PTYPE_PRE_TOLOWER,
++	/* for checking the mode attribute */
++        CLISH_PTYPE_PRE_MODE,
+ 	/* Used to detect errors */
+ 	CLISH_PTYPE_PRE_MAX
+ } clish_ptype_preprocess_e;
+ 
++enum help_type_s {
++    USE_NAME,
++    USE_VALUE,
++    USE_RANGE
++};
++typedef enum help_type_s help_type_t;
++
+ int clish_ptype_compare(const void *first, const void *second);
+ const char *clish_ptype__get_method_name(clish_ptype_method_e method);
+ clish_ptype_method_e clish_ptype_method_resolve(const char *method_name);
+@@ -54,7 +66,8 @@ const char *clish_ptype__get_preprocess_name(clish_ptype_preprocess_e preprocess
+ clish_ptype_preprocess_e clish_ptype_preprocess_resolve(const char *preprocess_name);
+ clish_ptype_t *clish_ptype_new(const char *name, const char *text,
+ 	const char *pattern, clish_ptype_method_e method,
+-	clish_ptype_preprocess_e preprocess);
++	clish_ptype_preprocess_e preprocess, const char *ext_pattern, const char *ext_help,
++        const char *alt_ext_pattern, const char *alt_pattern);
+ 
+ void clish_ptype_free(void *instance);
+ /**
+@@ -65,7 +78,7 @@ void clish_ptype_free(void *instance);
+  *   may not be identical to that passed in. e.g. it may have been
+  *   a case-modified "select" or a preprocessed value.
+  */
+-char *clish_ptype_validate(clish_ptype_t * instance, const char *text);
++char *clish_ptype_validate(clish_ptype_t * instance, const char *text, bool_t isHelp);
+ /**
+  * This is the translation method for the specified type. The text is
+  * first validated then translated into the form which should be used
+@@ -81,7 +94,7 @@ char *clish_ptype_translate(clish_ptype_t * instance, const char *text);
+  * This is used to perform parameter auto-completion
+  */
+ void clish_ptype_word_generator(clish_ptype_t * instance,
+-	lub_argv_t *matches, const char *text);
++	lub_argv_t *matches, const char *text, const char *penultimate_text);
+ void clish_ptype_dump(clish_ptype_t * instance);
+ 
+ _CLISH_GET_STR(ptype, name);
+@@ -92,6 +105,24 @@ _CLISH_GET_STR(ptype, range);
+ _CLISH_GET(ptype, clish_action_t *, action);
+ 
+ void clish_ptype__set_pattern(clish_ptype_t * instance,
+-	const char *pattern, clish_ptype_method_e method);
++	const char *pattern, clish_ptype_method_e method, const char *alt_pattern);
++
++int get_index(char *str);
++help_type_t clish_ptype__get_usename(const clish_ptype_t * instance);
++clish_ptype_method_e clish_ptype__get_method(const clish_ptype_t * instance);
++void clish_ptype__set_extpattern(clish_ptype_t * instance,
++                const char *ext_pattern, clish_ptype_method_e method, const char *ext_help,
++                const char *alt_ext_pattern);
++char *clish_ptype_regexp_select__get_value(const clish_ptype_t * instance, unsigned index);
++char *clish_ptype_regexp_select__get_ext_help(const clish_ptype_t * instance, unsigned index);
++lub_argv_t *clish_ptype_regexp_select__get_argv(const clish_ptype_t * instance);
++char *clish_ptype_regexp_select__get_argname(const clish_ptype_t * instance, unsigned index);
++char *clish_ptype_regexp_select__get_name(const clish_ptype_t * instance, unsigned index);
++int clish_ptype_regexp_select__get_argv_count(const clish_ptype_t * instance);
++char *clish_ptype_regexp_select__get_ext_help(const clish_ptype_t * instance, unsigned index);
++int clish_ptype_select__get_help(const clish_ptype_t *instance, clish_help_t *help, const char *pval);
++void clish_ptype__set_usename(clish_ptype_t * instance, help_type_t val);
++extern bool nos_use_alt_name(void);
++char *clish_ptype_method_select__get_name(const clish_ptype_t *instance,unsigned int index);
+ 
+ #endif	/* _clish_ptype_h */
+diff --git a/clish/ptype/private.h b/clish/ptype/private.h
+index 10cdbf4..be27e3f 100644
+--- a/clish/ptype/private.h
++++ b/clish/ptype/private.h
+@@ -3,6 +3,7 @@
+  */
+ #include "clish/pargv.h"
+ #include "lub/argv.h"
++#include "clish/ptype.h"
+ 
+ #include <sys/types.h>
+ #include <regex.h>
+@@ -16,6 +17,7 @@ struct clish_ptype_integer_s {
+ typedef struct clish_ptype_select_s clish_ptype_select_t;
+ struct clish_ptype_select_s {
+ 	lub_argv_t *items;
++      lub_argv_t *ext_help;
+ };
+ 
+ typedef struct clish_ptype_regex_s clish_ptype_regex_t;
+@@ -24,10 +26,25 @@ struct clish_ptype_regex_s {
+ 	regex_t re;
+ };
+ 
++typedef struct clish_ptype_regexp_select_s clish_ptype_regexp_select_t;
++struct clish_ptype_regexp_select_s {
++      regex_t regexp;
++      regex_t alt_regexp;
++      lub_argv_t *items;
++      lub_argv_t *ext_help;
++      lub_argv_t *alt_items;
++};
++
+ struct clish_ptype_s {
+ 	char *name;
+ 	char *text;
+ 	char *pattern;
++
++      char *ext_pattern;
++      char *ext_help;
++      char *alt_ext_pattern;
++      char *alt_pattern;
++      help_type_t usename;
+ 	char *range;
+ 	clish_ptype_method_e method;
+ 	clish_ptype_preprocess_e preprocess;
+@@ -36,6 +53,7 @@ struct clish_ptype_s {
+ 		clish_ptype_regex_t regex;
+ 		clish_ptype_integer_t integer;
+ 		clish_ptype_select_t select;
++              clish_ptype_regexp_select_t regexp_select;
+ 	} u;
+ 	clish_action_t *action;
+ };
+diff --git a/clish/ptype/ptype.c b/clish/ptype/ptype.c
+index f877d56..c64fcc8 100644
+--- a/clish/ptype/ptype.c
++++ b/clish/ptype/ptype.c
+@@ -5,6 +5,7 @@
+ #include "lub/string.h"
+ #include "lub/ctype.h"
+ #include "lub/argv.h"
++#include "lub/argv/private.h"
+ #include "lub/conv.h"
+ 
+ #include <stdlib.h>
+@@ -12,6 +13,108 @@
+ #include <assert.h>
+ #include <limits.h>
+ #include <stdio.h>
++#include <ctype.h>
++#include <stdbool.h>
++#include <sys/types.h>
++#include <dirent.h>
++#include <regex.h>
++
++/*--------------------------------------------------------- */
++char *clish_ptype_regexp_select__get_ext_help(const clish_ptype_t * this,
++        unsigned index)
++{
++    return (char*)lub_argv__get_arg(this->u.regexp_select.ext_help, index);
++}
++
++/*--------------------------------------------------------- */
++char *clish_ptype_select__get_ext_help(const clish_ptype_t *this,
++                unsigned index)
++{
++        return (char*)lub_argv__get_arg(this->u.select.ext_help, index);
++}
++
++/*--------------------------------------------------------- */
++static int ext_help_argv_count(const char *line)
++{
++	int i = 0, j = 0;
++	char *tmp = (char*)line;
++
++	for (tmp = strchr(tmp, '(');tmp;tmp = strchr(tmp, '(')) {
++		tmp++;
++		i++;
++	}
++	tmp = (char*) line;
++
++	for (tmp=strchr(tmp, ')');tmp;tmp = strchr(tmp, ')')) {
++		tmp++;
++		j++;
++	}
++	if (i != j)
++		return -1;
++	else
++	return i;
++}
++
++/*--------------------------------------------------------- */
++void ext_help_argv_init(lub_argv_t * this, const char *ext_help, size_t offset)
++{
++	lub_arg_t *arg;
++	const char *lbrk;
++	const char *rbrk;
++	const char *value;
++	size_t value_len;
++	char *tmp;
++
++	this->argv = NULL;
++	this->argc = 0;
++
++	if (!ext_help)
++		return;
++
++	/* first of all count the words in the line */
++	this->argc = ext_help_argv_count(ext_help);
++	if (0 >= this->argc)
++		return;
++
++	/* allocate space to hold the vector */
++	arg = this->argv = malloc(sizeof(lub_arg_t) * this->argc);
++	assert(arg);
++	lbrk = strchr(ext_help, '(');
++	rbrk = strchr(ext_help, ')');
++	value = ext_help;
++	tmp =(char*) value;
++	value_len = strlen(ext_help);
++
++	/* then fill out the array with the words */
++	for (;lbrk; lbrk = strchr(tmp, '('),rbrk = strchr(tmp, ')')) {
++		if (lbrk) {
++			value = lbrk + 1;
++			if (rbrk)
++				value_len = (size_t) (rbrk - value);
++		}
++		if (value_len) {
++			(*arg).arg = lub_string_dupn(value, value_len);
++			(*arg).offset = offset;
++			(*arg).quoted = BOOL_FALSE;
++			offset += value_len;
++			if(rbrk)
++				tmp = (char*)rbrk + 1;
++				arg++;
++		}
++	}
++}
++
++/*--------------------------------------------------------- */
++static lub_argv_t *ext_help_argv_store(const char *line, size_t offset)
++{
++	lub_argv_t *this;
++
++	this = malloc(sizeof(lub_argv_t));
++	if (this)
++		ext_help_argv_init(this, line, offset);
++
++	return this;
++}
+ 
+ /*--------------------------------------------------------- */
+ int clish_ptype_compare(const void *first, const void *second)
+@@ -22,10 +125,54 @@ int clish_ptype_compare(const void *first, const void *second)
+ 	return strcmp(f->name, s->name);
+ }
+ 
++/*--------------------------------------------------------- */
++bool clish_ptype_regexp_select_check_match(const clish_ptype_t *this, const char *text)
++{
++	char *result = NULL;
++	int i = 0;
++	bool ret = false;
++
++	if(!this || !text)
++		return ret;
++
++	while ((result = clish_ptype_regexp_select__get_name(this, i++))) {
++		/* get the next item and check if it is a completion */
++		if (result == lub_string_nocasestr(result, text)) {
++			lub_string_free(result);
++			ret = true;
++			break;
++		}
++		lub_string_free(result);
++	}
++
++	return ret;
++}
++
++/*--------------------------------------------------------- */
++static void clish_ptype_regexp_select_get_match(const clish_ptype_t *this,
++	const char *text, lub_argv_t *matches)
++{
++	char *result = NULL;
++	int i = 0;
++
++	if(!this || !text || !matches)
++		return;
++
++	while ((result = clish_ptype_regexp_select__get_name(this, i++))) {
++		/* get the next item and check if it is a completion */
++		if (result == lub_string_nocasestr(result, text)){
++			lub_argv_add(matches, result);
++		}
++		lub_string_free(result);
++	}
++}
++
+ /*--------------------------------------------------------- */
+ static void clish_ptype_init(clish_ptype_t * this,
+ 	const char *name, const char *text, const char *pattern,
+-	clish_ptype_method_e method, clish_ptype_preprocess_e preprocess)
++	clish_ptype_method_e method, clish_ptype_preprocess_e preprocess,
++	const char *ext_pattern, const char *ext_help, const char *alt_ext_pattern,
++	const char *alt_pattern)
+ {
+ 	assert(this);
+ 	assert(name);
+@@ -34,11 +181,23 @@ static void clish_ptype_init(clish_ptype_t * this,
+ 	this->pattern = NULL;
+ 	this->preprocess = preprocess;
+ 	this->range = NULL;
++	this->ext_pattern = NULL;
++        this->ext_help = NULL;
++        this->alt_ext_pattern = NULL;
++        this->alt_pattern = NULL;
++	this->usename = BOOL_TRUE;
+ 	this->action = clish_action_new();
++	this->u.select.ext_help = NULL;
++
++	if (ext_pattern || ext_help || alt_ext_pattern) {
++		/* set the pattern */
++		clish_ptype__set_extpattern(this, ext_pattern, method, ext_help,
++                                            alt_ext_pattern);
++	}
+ 
+-	if (pattern) {
++	if (pattern || alt_pattern) {
+ 		/* set the pattern for this type */
+-		clish_ptype__set_pattern(this, pattern, method);
++		clish_ptype__set_pattern(this, pattern, method, alt_pattern);
+ 	} else {
+ 		/* The method is regexp by default */
+ 		this->method = CLISH_PTYPE_METHOD_REGEXP;
+@@ -64,27 +223,51 @@ static void clish_ptype_fini(clish_ptype_t * this)
+ 		case CLISH_PTYPE_METHOD_SELECT:
+ 			lub_argv_delete(this->u.select.items);
+ 			break;
++		case CLISH_PTYPE_METHOD_REGEXP_SELECT:
++			regfree(&this->u.regexp_select.regexp);
++			lub_argv_delete(clish_ptype_regexp_select__get_argv(this));
++			if(this->alt_pattern)
++				regfree(&this->u.regexp_select.alt_regexp);
++			if (this->u.regexp_select.ext_help)
++				lub_argv_delete(this->u.regexp_select.ext_help);
++			break;
+ 		default:
+ 			break;
+ 		}
+ 	}
+ 
+ 	lub_string_free(this->name);
++	this->name = NULL;
+ 	lub_string_free(this->text);
++	this->text = NULL;
+ 	lub_string_free(this->pattern);
++	this->pattern = NULL;
+ 	lub_string_free(this->range);
++	this->range = NULL;
++	lub_string_free(this->ext_pattern);
++	this->ext_pattern = NULL;
++	lub_string_free(this->ext_help);
++	this->ext_help = NULL;
++        lub_string_free(this->alt_ext_pattern);
++        this->alt_ext_pattern = NULL;
++        lub_string_free(this->alt_pattern);
++        this->alt_pattern = NULL;
+ 	clish_action_delete(this->action);
++
+ }
+ 
+ /*--------------------------------------------------------- */
+ clish_ptype_t *clish_ptype_new(const char *name,
+ 	const char *help, const char *pattern,
+-	clish_ptype_method_e method, clish_ptype_preprocess_e preprocess)
++	clish_ptype_method_e method, clish_ptype_preprocess_e preprocess,
++	const char *ext_pattern, const char *ext_help, const char *alt_ext_pattern,
++	const char *alt_pattern)
+ {
+ 	clish_ptype_t *this = malloc(sizeof(clish_ptype_t));
+ 
+ 	if (this)
+-		clish_ptype_init(this, name, help, pattern, method, preprocess);
++		clish_ptype_init(this, name, help, pattern, method, preprocess, 
++                                 ext_pattern, ext_help, alt_ext_pattern, alt_pattern);
+ 	return this;
+ }
+ 
+@@ -115,6 +298,14 @@ static char *clish_ptype_select__get_name(const clish_ptype_t *this,
+ 	return res;
+ }
+ 
++/*--------------------------------------------------------- */
++char *clish_ptype_method_select__get_name(const clish_ptype_t *this, unsigned int index)
++{
++
++        return clish_ptype_select__get_name(this,index);
++
++}
++
+ /*--------------------------------------------------------- */
+ static char *clish_ptype_select__get_value(const clish_ptype_t *this,
+ 	unsigned int index)
+@@ -141,6 +332,45 @@ static char *clish_ptype_select__get_value(const clish_ptype_t *this,
+ 	return res;
+ }
+ 
++/*--------------------------------------------------------- */
++char *clish_ptype_regexp_select__get_name(const clish_ptype_t * this,
++	unsigned index)
++{
++	char *result = NULL;
++	const char *arg = lub_argv__get_arg(clish_ptype_regexp_select__get_argv(this), index);
++	if (arg) {
++		size_t name_len = strlen(arg);
++		const char *lbrk = strchr(arg, '(');
++		if (lbrk)
++			name_len = (size_t) (lbrk - arg);
++		if (name_len)
++			result = lub_string_dupn(arg, name_len);
++	}
++	return result;
++}
++
++/*--------------------------------------------------------- */
++char *clish_ptype_regexp_select__get_value(const clish_ptype_t * this,
++	unsigned index)
++{
++	char *result = NULL;
++	const char *arg = lub_argv__get_arg(clish_ptype_regexp_select__get_argv(this), index);
++	if (arg) {
++		const char *lbrk = strchr(arg, '(');
++		const char *rbrk = strchr(arg, ')');
++		const char *value = arg;
++		size_t value_len = strlen(arg);
++		if (lbrk) {
++			value = lbrk + 1;
++			if (rbrk)
++				value_len = (size_t) (rbrk - value);
++		}
++		if (value_len)
++			result = lub_string_dupn(value, value_len);
++	}
++	return result;
++}
++
+ /*--------------------------------------------------------- */
+ static void clish_ptype__set_range(clish_ptype_t * this)
+ {
+@@ -188,6 +418,33 @@ static void clish_ptype__set_range(clish_ptype_t * this)
+ 		break;
+ 	}
+ 	/*------------------------------------------------- */
++	case CLISH_PTYPE_METHOD_REGEXP_SELECT:
++	{
++		/* Setup the selection values to the help text */
++		unsigned int i, cnt;
++		cnt = lub_argv__get_count(clish_ptype_regexp_select__get_argv(this));
++		for (i = 0; i < cnt; i++) {
++			char *name = clish_ptype_regexp_select__get_name(this, i);
++			char *text = clish_ptype_regexp_select__get_value(this, i);
++
++			if (name) {
++				if (i < cnt-1)
++					snprintf(tmp, sizeof(tmp),"%s/", name);
++				else
++					snprintf(tmp, sizeof(tmp), "%s", name);
++			} else if (text)
++				snprintf(tmp, sizeof(tmp),"%s", text);
++
++			tmp[sizeof(tmp) - 1] = '\0';
++			lub_string_cat(&this->range, tmp);
++			if (name)
++				lub_string_free(name);
++			if (text)
++				lub_string_free(text);
++		}
++		break;
++	}
++	/*------------------------------------------------- */
+ 	default:
+ 		break;
+ 	/*------------------------------------------------- */
+@@ -200,7 +457,8 @@ static const char *method_names[] = {
+ 	"integer",
+ 	"unsignedInteger",
+ 	"select",
+-	"code"
++	"code",
++	"regexp_select"
+ };
+ 
+ /*--------------------------------------------------------- */
+@@ -211,6 +469,12 @@ const char *clish_ptype__get_method_name(clish_ptype_method_e method)
+ 	return method_names[method];
+ }
+ 
++/*--------------------------------------------------------- */
++clish_ptype_method_e clish_ptype__get_method(const clish_ptype_t * this)
++{
++	return (clish_ptype_method_e) (this->method);
++}
++
+ /*--------------------------------------------------------- */
+ /* Return value of CLISH_PTYPE_METHOD_MAX indicates an illegal method */
+ clish_ptype_method_e clish_ptype_method_resolve(const char *name)
+@@ -231,7 +495,8 @@ clish_ptype_method_e clish_ptype_method_resolve(const char *name)
+ static const char *preprocess_names[] = {
+ 	"none",
+ 	"toupper",
+-	"tolower"
++	"tolower",
++        "mode"
+ };
+ 
+ /*--------------------------------------------------------- */
+@@ -261,37 +526,60 @@ clish_ptype_preprocess_e clish_ptype_preprocess_resolve(const char *name)
+ 
+ /*--------------------------------------------------------- */
+ void clish_ptype_word_generator(clish_ptype_t * this,
+-	lub_argv_t *matches, const char *text)
++	lub_argv_t *matches, const char *text,  const char *penultimate_text)
+ {
+ 	char *result = NULL;
+ 	unsigned int i = 0;
++	bool ret = false;
+ 
+ 	/* Only METHOD_SELECT has completions */
+-	if (this->method != CLISH_PTYPE_METHOD_SELECT)
++	if (this->method != CLISH_PTYPE_METHOD_SELECT &&
++		this->method != CLISH_PTYPE_METHOD_REGEXP_SELECT)
+ 		return;
+ 
+ 	/* First of all simply try to validate the result */
+-	result = clish_ptype_validate(this, text);
+-	if (result) {
+-		lub_argv_add(matches, result);
+-		lub_string_free(result);
+-		return;
+-	}
+-
+-	/* Iterate possible completion */
+-	while ((result = clish_ptype_select__get_name(this, i++))) {
+-		/* get the next item and check if it is a completion */
+-		if (result == lub_string_nocasestr(result, text))
++	if(this->method == CLISH_PTYPE_METHOD_SELECT)
++	{
++		result = clish_ptype_validate(this, text, BOOL_TRUE);
++		if (result) {
+ 			lub_argv_add(matches, result);
+-		lub_string_free(result);
++			lub_string_free(result);
++			return;
++		}
++
++		/* Iterate possible completion */
++		while ((result = clish_ptype_select__get_name(this, i++))) {
++			/* get the next item and check if it is a completion */
++			if (result == lub_string_nocasestr(result, text))
++				lub_argv_add(matches, result);
++			lub_string_free(result);
++		}
++	} else {
++		/*  Only for case like  "interface vl",On tab, we need
++		 *  clish_ptype_word_generator to get list of completion
++		 *  matches.For all case like "interface vlan " and
++                 *  "interface vlan 1" and "interface vlan vl", On <tab>,
++                 *  auto-completion is not needed.
++                 *  For these cases, clish_ptype_regexp_select_check_match
++                 *  called with penultimate text will return true.
++                 *  This ensures we never attempt to call
++                 *  clish_ptype_regexp_select_get_match.
++                 */
++                ret = clish_ptype_regexp_select_check_match(this, penultimate_text);
++                if(ret)
++                        return;
++
++                clish_ptype_regexp_select_get_match(this, text, matches);
+ 	}
++
+ }
+ 
+ /*--------------------------------------------------------- */
+ static char *clish_ptype_validate_or_translate(clish_ptype_t * this,
+-	const char *text, bool_t translate)
++	const char *text, bool_t translate, bool_t isHelp)
+ {
+ 	char *result = lub_string_dup(text);
++        bool is_alt_regex_required = false; 
+ 	assert(this->pattern);
+ 
+ 	switch (this->preprocess) {
+@@ -318,6 +606,13 @@ static char *clish_ptype_validate_or_translate(clish_ptype_t * this,
+ 		}
+ 		break;
+ 	}
++        /*----------------------------------------- */
++        case CLISH_PTYPE_PRE_MODE:
++        {
++                if(nos_use_alt_name() && (this->alt_pattern)) 
++                        is_alt_regex_required = true;
++                break;
++        }
+ 	/*----------------------------------------- */
+ 	default:
+ 		break;
+@@ -343,6 +638,125 @@ static char *clish_ptype_validate_or_translate(clish_ptype_t * this,
+ 			result = NULL;
+ 		}
+ 		break;
++	/*------------------------------------------------- */
++        case CLISH_PTYPE_METHOD_REGEXP_SELECT:
++        {
++        	unsigned i;
++
++		if(isHelp){
++			for (i = 0; i < lub_argv__get_count(clish_ptype_regexp_select__get_argv(this)); i++) {
++				char *name = clish_ptype_regexp_select__get_name(this, i);
++				char *value = clish_ptype_regexp_select__get_value(this, i);
++				int tmp = 0;
++
++                		if (name) tmp = lub_string_nocasecmp(result, name);
++                               	lub_string_free((BOOL_TRUE == translate) ? name : value);
++                                if (0 == tmp) {
++                                        lub_string_free(result);
++                                        result = ((BOOL_TRUE == translate) ? value : name);
++                                        break;
++                                } else {
++                                        lub_string_free((BOOL_TRUE == translate) ? value : name);
++                                }
++			}
++                        if (i == lub_argv__get_count(clish_ptype_regexp_select__get_argv(this))) {
++                                // failed to find a match
++                                lub_string_free(result);
++                                result = NULL;
++                        }
++                } else {
++                       	/* test the regular expression against the string */
++                        /* lint -e64 Type mismatch (arg. no. 4) */
++                        /*
++                         * lint seems to equate regmatch_t[] as being of type regmatch_t !
++                         */
++
++                        if (is_alt_regex_required) {
++                            if (0 != regexec(&this->u.regexp_select.alt_regexp, result, 0, NULL, 0)) {
++                                lub_string_free(result);
++                                result = NULL;                        
++                            }
++                        } else { 
++                            if (0 != regexec(&this->u.regexp_select.regexp, result, 0, NULL, 0)) {
++                          	lub_string_free(result);
++                                result = NULL;
++                            }
++                        }
++                        if (result) {
++                        	int index = -1, j;
++                                bool_t matched = BOOL_FALSE;
++                                char *new_result = NULL, *tmp = NULL;
++                                /* Loop through possible help string options,
++                                 * such as ethernet, vlan and portchannel
++                                 * if given CLI matches first two character
++                                 * like po 10 then start at array index 3 and
++                                 * skip if any space lies between po and 10.
++                                 * If given CLI is like p 10 then start at
++				 * array index 2 and skip if any space lies
++                                 * between p and 10.
++                                 */
++                                for (j = 0; j < lub_argv__get_count(clish_ptype_regexp_select__get_argv(this)); j++) {
++                                	char *name = clish_ptype_regexp_select__get_name(this, j);
++                                       	/* In the below piece of code, we try to expand the name.
++                                           If user has eth1, it needs to be converted to ethernet1.
++                                           Similarly,if user gives "ethernet 1", the space need to be
++                                           stripped */
++                                	if (name) {
++                                                   /*User could have entered short form eth.So check if
++                                                   the entered string is substring of the name after
++                                                   stripping the port number portion */
++                                                index = get_index(result);
++					       	if (!strncasecmp(name, result, index)) {
++							tmp = result + index;
++                                                        matched = BOOL_TRUE;
++                                                }
++                                                if (matched == BOOL_TRUE) {
++                                                	while (isspace(*tmp))
++                                                        	tmp++;
++                                                                new_result = lub_string_dup(name);
++                                                                lub_string_cat(&new_result, tmp);
++								lub_string_free(result);
++                                                                result = new_result;
++                                			/* Variable name going out of scope will leaks the storage it
++                                 			 * points to. So free memory pointed by it
++                                 			 * to avoid resource leak.
++                                 			 */
++                                				if(name != NULL) {
++                                    					lub_string_free(name);
++                                    					name = NULL;
++                                				}
++                                                                break;
++                                                }
++                                        } else {
++                                                matched = BOOL_TRUE;
++                            			/* Variable name going out of scope will leaks the storage it
++                             			 * points to. So free memory pointed by it
++                             			 * to avoid resource leak.  */
++                            			if(name != NULL) {
++                                			lub_string_free(name);
++                                			name = NULL;
++                            			}
++                                                break;
++                                        }
++                        		/* Variable name going out of scope will leaks the storage it
++                         		 * points to. So free memory pointed by it
++                         		 * to avoid resource leak.
++                         		 */
++                        		if(name != NULL) {
++                            			lub_string_free(name);
++                            			name = NULL;
++                        		}
++                                }
++                                if (matched == BOOL_FALSE) {
++                                	lub_string_free(result);
++                                        result = NULL;
++                                }
++                        }
++                }
++                /*lint +e64 */
++                break;
++	}
++
+ 	/*------------------------------------------------- */
+ 	case CLISH_PTYPE_METHOD_INTEGER:
+ 	{
+@@ -434,15 +848,15 @@ static char *clish_ptype_validate_or_translate(clish_ptype_t * this,
+ }
+ 
+ /*--------------------------------------------------------- */
+-char *clish_ptype_validate(clish_ptype_t * this, const char *text)
++char *clish_ptype_validate(clish_ptype_t * this, const char *text, bool_t isHelp)
+ {
+-	return clish_ptype_validate_or_translate(this, text, BOOL_FALSE);
++	return clish_ptype_validate_or_translate(this, text, BOOL_FALSE, BOOL_TRUE);
+ }
+ 
+ /*--------------------------------------------------------- */
+ char *clish_ptype_translate(clish_ptype_t * this, const char *text)
+ {
+-	return clish_ptype_validate_or_translate(this, text, BOOL_TRUE);
++	return clish_ptype_validate_or_translate(this, text, BOOL_TRUE, BOOL_FALSE);
+ }
+ 
+ CLISH_GET_STR(ptype, name);
+@@ -454,7 +868,7 @@ CLISH_GET(ptype, clish_action_t *, action);
+ 
+ /*--------------------------------------------------------- */
+ void clish_ptype__set_pattern(clish_ptype_t * this,
+-	const char *pattern, clish_ptype_method_e method)
++	const char *pattern, clish_ptype_method_e method, const char *alt_pattern)
+ {
+ 	assert(NULL == this->pattern);
+ 	this->method = method;
+@@ -498,9 +912,168 @@ void clish_ptype__set_pattern(clish_ptype_t * this,
+ 		this->u.select.items = lub_argv_new(this->pattern, 0);
+ 		break;
+ 	/*------------------------------------------------- */
++	case CLISH_PTYPE_METHOD_REGEXP_SELECT:
++                {
++                        int result;
++                        /* only the expression is allowed */
++                        lub_string_cat(&this->pattern, "^");
++                        lub_string_cat(&this->pattern, pattern);
++                        lub_string_cat(&this->pattern, "$");
++                        /* compile the regular expression for later use */
++                        result = regcomp(&(this->u.regexp_select.regexp), this->pattern,
++                                 REG_EXTENDED);
++                        assert(0 == result);
++
++                        if(alt_pattern){
++                                /* only the expression is allowed */
++                                lub_string_cat(&this->alt_pattern, "^");
++                                lub_string_cat(&this->alt_pattern, alt_pattern);
++                                lub_string_cat(&this->alt_pattern, "$");
++                                /* compile the regular expression for later use */
++                                result = regcomp(&(this->u.regexp_select.alt_regexp), this->alt_pattern,
++                                         REG_EXTENDED);
++                                assert(0 == result);
++                        }
++                        break;
++                }
++
++	/*------------------------------------------------- */
+ 	default:
+ 		break;
+ 	}
+ 	/* now set up the range details */
+ 	clish_ptype__set_range(this);
+ }
++
++
++void clish_ptype__set_extpattern(clish_ptype_t * this,
++                const char *ext_pattern, clish_ptype_method_e method, 
++                const char *ext_help, const char *alt_ext_pattern)
++{
++        assert(NULL == this->pattern);
++        this->method = method;
++
++        switch (this->method) {
++                /*------------------------------------------------- */
++
++                case CLISH_PTYPE_METHOD_REGEXP_SELECT:
++                        this->u.regexp_select.items = NULL;
++                        this->u.regexp_select.ext_help = NULL;
++                        this->u.regexp_select.alt_items = NULL;
++                        if (ext_pattern) {
++                                this->ext_pattern = lub_string_dup(ext_pattern);
++                                /* store a vector of item descriptors */
++                                this->u.regexp_select.items = lub_argv_new(this->ext_pattern, 0);
++                        }
++                        if (ext_help) {
++                                this->ext_help =  lub_string_dup(ext_help);
++                                /* store a vector of item descriptors */
++                                this->u.regexp_select.ext_help = ext_help_argv_store(this->ext_help, 0);
++                        }
++                        if (alt_ext_pattern) {
++                                this->alt_ext_pattern = lub_string_dup(alt_ext_pattern);
++                                /* store a vector of item descriptors */
++                                this->u.regexp_select.alt_items = lub_argv_new(this->alt_ext_pattern, 0);
++                        }
++                        break;
++
++		case CLISH_PTYPE_METHOD_SELECT:
++                        if (ext_help) {
++                                this->ext_help =  lub_string_dup(ext_help);
++                                /* store a vector of item descriptors */
++                                this->u.select.ext_help = ext_help_argv_store(this->ext_help, 0);
++                        }
++                        break;
++        default:
++            break;
++        }
++}
++
++/*--------------------------------------------------------- */
++help_type_t clish_ptype__get_usename(const clish_ptype_t * this)
++{
++        return this->usename;
++}
++/*--------------------------------------------------------- */
++void clish_ptype__set_usename(clish_ptype_t * this, help_type_t val)
++{
++        this->usename = val;
++}
++
++/*--------------------------------------------------------- */
++lub_argv_t *clish_ptype_regexp_select__get_argv(const clish_ptype_t * this)
++{
++        if (!this)
++            return NULL;
++        if ((this->preprocess == CLISH_PTYPE_PRE_MODE) && nos_use_alt_name())
++            return (this->u.regexp_select.alt_items);
++        else
++            return (this->u.regexp_select.items);
++}
++
++/*--------------------------------------------------------- */
++int clish_ptype_regexp_select__get_argv_count(const clish_ptype_t * this)
++{
++    return (lub_argv__get_count(clish_ptype_regexp_select__get_argv(this)));
++}
++
++/*--------------------------------------------------------- */
++char *clish_ptype_regexp_select__get_argname(const clish_ptype_t * this,
++	unsigned index)
++{
++        if (!this)
++        	return NULL;
++	return (clish_ptype_regexp_select__get_name(this, index));
++}
++
++/*--------------------------------------------------------- */
++int clish_ptype_select__get_help(const clish_ptype_t *this, clish_help_t *help, const char *pval)
++{
++        if(NULL != this->u.select.ext_help) {
++                unsigned i;
++                char *name, *ext_help;
++                if(pval) {
++                        for (i = 0; i < lub_argv__get_count(this->u.select.ext_help);
++                                        i++) {
++                                name = clish_ptype_select__get_name(this, i);
++                                if(NULL == name) {
++                                        continue;
++                                }
++                                if(strncmp(pval, name, strlen(pval)) == 0) {
++                                        ext_help = clish_ptype_select__get_ext_help(this, i);
++                                        lub_argv_add(help->name, name);
++                                        lub_argv_add(help->help, ext_help);
++                                }
++                /*Overwriting pointer name while looping will
++                 * leak the storage that name pointed to. So
++                 * free the memory before overriding to avoid
++                 * resource leak.
++                 */
++                 lub_string_free(name);
++                 name = NULL;
++                        }
++                } else {
++                        for (i = 0; i < lub_argv__get_count(this->u.select.ext_help);
++                                        i++) {
++                                name = clish_ptype_select__get_name(this, i);
++                                if(NULL == name) {
++                                        continue;
++                                }
++                                ext_help = clish_ptype_select__get_ext_help(this, i);
++                                lub_argv_add(help->name, name);
++                                lub_argv_add(help->help, ext_help);
++                /*Overwriting pointer name while looping will 
++                 * leak the storage that name pointed to. So 
++                 * free the memory before overriding to avoid
++                 * resource leak.
++                 */
++                 lub_string_free(name);
++                 name = NULL;
++                        }
++                }
++
++                return 0;
++        }
++        return -1;
++}
++
+diff --git a/clish/shell.h b/clish/shell.h
+index 7b1b14a..069c890 100644
+--- a/clish/shell.h
++++ b/clish/shell.h
+@@ -97,10 +97,12 @@ clish_ptype_t *clish_shell_find_create_ptype(clish_shell_t *instance,
+ 	const char *text,
+ 	const char *pattern,
+ 	clish_ptype_method_e method,
+-	clish_ptype_preprocess_e preprocess);
++	clish_ptype_preprocess_e preprocess,
++	const char *ext_pattern, const char *ext_help,
++	const char *alt_ext_pattern, const char *alt_pattern);
+ clish_ptype_t *clish_shell_find_ptype(clish_shell_t *instance,
+ 	const char *name);
+-void clish_shell_help(clish_shell_t * instance, const char *line);
++void clish_shell_help(clish_shell_t * instance, const char *line, clish_context_t *context);
+ int clish_shell_exec_action(clish_context_t *context, char **out);
+ int clish_shell_execute(clish_context_t *context, char **out);
+ int clish_shell_forceline(clish_shell_t *instance, const char *line, char ** out);
+@@ -188,6 +190,7 @@ int clish_shell_wdog(clish_shell_t *instance);
+ int clish_shell__save_history(const clish_shell_t *instance, const char *fname);
+ int clish_shell__restore_history(clish_shell_t *instance, const char *fname);
+ void clish_shell__stifle_history(clish_shell_t *instance, unsigned int stifle);
++void clish_shell__set_timeout(clish_shell_t *instance, int timeout);
+ 
+ /* Plugin functions */
+ clish_plugin_t * clish_shell_create_plugin(clish_shell_t *instance,
+diff --git a/clish/shell/private.h b/clish/shell/private.h
+index e4e3231..f2f1435 100644
+--- a/clish/shell/private.h
++++ b/clish/shell/private.h
+@@ -11,6 +11,7 @@
+ #include "clish/plugin.h"
+ #include "clish/udata.h"
+ 
++#define IFACE_CMD "interface"
+ /* iterate around commands */
+ typedef struct {
+ 	const char *last_cmd;
+@@ -42,6 +43,7 @@ struct clish_context_s {
+ 	const clish_command_t *cmd;
+ 	clish_pargv_t *pargv;
+ 	const clish_action_t *action;
++	char *commandstr;
+ };
+ 
+ /* Shell structure */
+@@ -118,17 +120,19 @@ int clish_shell_pop_file(clish_shell_t * instance);
+ clish_view_t *clish_shell_find_view(clish_shell_t * instance, const char *name);
+ void clish_shell_insert_view(clish_shell_t * instance, clish_view_t * view);
+ clish_pargv_status_e clish_shell_parse(clish_shell_t * instance,
+-	const char *line, const clish_command_t ** cmd, clish_pargv_t ** pargv);
++	const char *line, const clish_command_t ** cmd, clish_pargv_t ** pargv, 
++	clish_context_t *orig_context, unsigned *err_len);
+ clish_pargv_status_e clish_shell_parse_pargv(clish_pargv_t *pargv,
+ 	const clish_command_t *cmd,
+ 	void *context,
+ 	clish_paramv_t *paramv,
+ 	const lub_argv_t *argv,
+-	unsigned *idx, clish_pargv_t *last, unsigned need_index);
++	unsigned *idx, clish_pargv_t *last, unsigned need_index,
++	unsigned *err_index,  unsigned *strmatchLen);
+ char *clish_shell_word_generator(clish_shell_t * instance,
+ 	const char *line, unsigned offset, unsigned state);
+ const clish_command_t *clish_shell_resolve_command(const clish_shell_t *
+-	instance, const char *line);
++	instance, const char *line, clish_context_t *context);
+ const clish_command_t *clish_shell_resolve_prefix(const clish_shell_t *
+ 	instance, const char *line);
+ void clish_shell_tinyrl_history(clish_shell_t * instance, unsigned int *limit);
+@@ -145,3 +149,4 @@ void clish_shell__init_pwd(clish_shell_pwd_t *pwd);
+ void clish_shell__fini_pwd(clish_shell_pwd_t *pwd);
+ int clish_shell_timeout_fn(tinyrl_t *tinyrl);
+ int clish_shell_keypress_fn(tinyrl_t *tinyrl, int key);
++bool_t clish_shell_command_test(const clish_command_t *cmd, void *context);
+diff --git a/clish/shell/shell_command.c b/clish/shell/shell_command.c
+index 8112910..02b5926 100644
+--- a/clish/shell/shell_command.c
++++ b/clish/shell/shell_command.c
+@@ -6,6 +6,9 @@
+ #include "private.h"
+ #include "lub/string.h"
+ #include "lub/argv.h"
++#include "lub/system.h"
++#include "clish/command.h"
++#include "clish/ptype.h"
+ 
+ /*-------------------------------------------------------- */
+ void clish_shell_iterator_init(clish_shell_iterator_t * iter,
+@@ -16,19 +19,50 @@ void clish_shell_iterator_init(clish_shell_iterator_t * iter,
+ }
+ 
+ /*--------------------------------------------------------- */
+-const clish_command_t *clish_shell_resolve_command(const clish_shell_t * this,
+-	const char *line)
++bool_t clish_shell_command_test(const clish_command_t *cmd, void *context)
+ {
+-	clish_command_t *cmd, *result;
+-
+-	/* Search the current view */
+-	result = clish_view_resolve_command(clish_shell__get_view(this), line, BOOL_TRUE);
+-	/* Search the global view */
+-	cmd = clish_view_resolve_command(this->global, line, BOOL_TRUE);
+-
+-	result = clish_command_choose_longest(result, cmd);
++        char *str = NULL;
++        char *teststr = NULL;
++        bool_t res;
++
++        if (!cmd)
++                return BOOL_FALSE;
++        teststr = clish_command__get_test(cmd);
++        if (!teststr)
++                return BOOL_TRUE;
++        str = clish_shell_expand(teststr, SHELL_VAR_ACTION, context);
++        if (!str)
++                return BOOL_FALSE;
++        res = lub_system_line_test(str);
++        lub_string_free(str);
++
++        return res;
++}
+ 
+-	return result;
++/*--------------------------------------------------------- */
++const clish_command_t *clish_shell_resolve_command(const clish_shell_t * this,
++	const char *line, clish_context_t *context)
++{
++	        clish_command_t *cmd, *result;
++        bool_t test_result = BOOL_TRUE;
++        clish_context_t local_context;
++
++        /* Search the current view */
++        result = clish_view_resolve_command(clish_shell__get_view(this), line, BOOL_TRUE);
++        /* Search the global view */
++        cmd = clish_view_resolve_command(this->global, line, BOOL_TRUE);
++
++        result = clish_command_choose_longest(result, cmd);
++
++        if(result) {
++                clish_context_init(&local_context, (clish_shell_t *)this);
++                clish_context__set_cmd(&local_context, result);
++                test_result = clish_shell_command_test(result, &local_context);
++                if(test_result == BOOL_FALSE)
++                        result = NULL;
++        }
++
++        return result;
+ }
+ 
+ /*--------------------------------------------------------- */
+@@ -89,10 +123,39 @@ void clish_shell_param_generator(clish_shell_t *this, lub_argv_t *matches,
+ 		clish_pargv_t *completion = clish_pargv_new();
+ 		unsigned completion_index = 0;
+ 		const clish_param_t *param = NULL;
+-
++		const char *penultimate_text = NULL;
+ 		/* if there is some text for the parameter then adjust the index */
+-		if ((0 != index) && (text[0] != '\0'))
+-			index--;
++		if ((0 != index) && (text[0] != '\0')) {
++                        index--;
++                        /* text is the string after last space.
++                           If user enters "interface ethernet"
++                           "interface ethernet 1/", text will be "ethernet".
++                           and "1/" respectively.The penultimate_text for these
++                           cases will be string before the text which is
++                           "interface" and "ethernet" respectively.
++                         */
++                        penultimate_text = lub_string_dup(lub_argv__get_arg(argv,
++                                                lub_argv__get_count(argv)-2));
++                } else {
++                        /* If user enters "interface ethernet " or "interface ",
++                           text will be a NULL string.The penultimate_text for
++                           these cases will be the string before the last space,
++                           which is "ethernet" and "interface" for the above
++                           examples respectively */
++                        penultimate_text = lub_string_dup(lub_argv__get_arg(argv,
++                                                lub_argv__get_count(argv)-1));
++
++			/*If a command is matched, then pressing tab without current 
++			command complete, it should not show the next available param. 
++			Example: Pressing tab after "show interface", shows interface,
++			interface-naming, breakout and etc.
++			But expected output is interface and interface-naming.(Breakout and etc are params.) 
++			No need to print the next available param for "interface " nowitself. */
++			if (!(lub_string_nocasecmp(line, clish_command__get_name(cmd)))) {
++				idx--;
++			}
++                }
++
+ 
+ 		/* Parse command line to get completion pargv's */
+ 		/* Prepare context */
+@@ -102,22 +165,28 @@ void clish_shell_param_generator(clish_shell_t *this, lub_argv_t *matches,
+ 
+ 		clish_shell_parse_pargv(pargv, cmd, &context,
+ 			clish_command__get_paramv(cmd),
+-			argv, &idx, completion, index + idx);
++			argv, &idx, completion, index + idx, NULL, NULL);
+ 		lub_argv_delete(argv);
+ 
+ 		while ((param = clish_pargv__get_param(completion,
+ 			completion_index++))) {
+-			const char *result;
++			const char *result = NULL;
+ 			/* The param is args so it has no completion */
+ 			if (param == clish_command__get_args(cmd))
+ 				continue;
+ 			/* The switch has no completion string */
+ 			if (CLISH_PARAM_SWITCH == clish_param__get_mode(param))
+ 				continue;
++			if (BOOL_TRUE == clish_param__get_hidden(param))
++				continue;
+ 			/* The subcommand is identified by it's value */
+ 			if (CLISH_PARAM_SUBCOMMAND ==
+ 				clish_param__get_mode(param)) {
+-				result = clish_param__get_value(param);
++
++				const clish_ptype_t *ptype = clish_param__get_ptype(param);
++                		if (CLISH_PTYPE_METHOD_REGEXP_SELECT != 
++						clish_ptype__get_method(ptype))
++					result = clish_param__get_value(param);
+ 				if (result)
+ 					lub_argv_add(matches, result);
+ 			}
+@@ -137,11 +206,20 @@ void clish_shell_param_generator(clish_shell_t *this, lub_argv_t *matches,
+ 				}
+ 			}
+ 			/* The common PARAM. Let ptype do the work */
+-			if ((ptype = clish_param__get_ptype(param)))
+-				clish_ptype_word_generator(ptype, matches, text);
++			if ((ptype = clish_param__get_ptype(param))) {
++                		if (CLISH_PTYPE_METHOD_REGEXP_SELECT != clish_ptype__get_method(ptype))
++                                	clish_ptype_word_generator(ptype, matches, text, NULL);
++                		else {
++                                	clish_ptype_word_generator(ptype, matches, text, penultimate_text);
++                		}
++
++			}
+ 		}
+ 		clish_pargv_delete(completion);
+ 		clish_pargv_delete(pargv);
++		if(penultimate_text)
++                        lub_string_free((char *)penultimate_text);
++
+ 	}
+ 
+ 	lub_string_free(text);
+diff --git a/clish/shell/shell_execute.c b/clish/shell/shell_execute.c
+index 7ccca0f..7757f41 100644
+--- a/clish/shell/shell_execute.c
++++ b/clish/shell/shell_execute.c
+@@ -18,6 +18,53 @@
+ #include <sys/uio.h>
+ #include <signal.h>
+ #include <fcntl.h>
++#include <ctype.h>
++
++#define CONFIG_VIEW        "configure-view"
++
++static const clish_parg_t* clish_shell__get_parg(const clish_context_t *context);
++
++int get_index(char *str)
++{
++        int i = 0;
++        int len = 0;
++        len = strlen(str);
++        while (i < len)
++        {
++                if (isdigit(*(str+i)))
++                        break;
++                i++;
++        }
++        return i;
++}
++
++/*-------------------------------------------------------- */
++const clish_parg_t* clish_shell__get_parg(const clish_context_t *context)
++{
++        const clish_pargv_t *pargv;
++        if (context) {
++                if ((pargv = clish_context__get_pargv(context))) {
++                        int i;
++                        clish_ptype_t *ptype = NULL;
++                        clish_parg_t *parg = NULL;
++
++                        for (i = 0; i < clish_pargv__get_count((clish_pargv_t *)pargv); i++) {
++                                parg = clish_pargv__get_parg((clish_pargv_t *)pargv, i);
++                                if (parg) {
++                                        /*
++                                         *  Return the parg only for CLISH_PTYPE_REGEXP_SELECT ptype
++                                         */
++                                        ptype = (clish_ptype_t *)clish_parg__get_ptype(parg);
++                                        if (CLISH_PTYPE_METHOD_REGEXP_SELECT ==
++                                                        clish_ptype__get_method(ptype)) {
++                                                return parg;
++                                        }
++                                }
++                        }
++                }
++        }
++        return NULL;
++}
+ 
+ /* Empty signal handler to ignore signal but don't use SIG_IGN. */
+ static void sigignore(int signo)
+@@ -157,25 +204,63 @@ int clish_shell_execute(clish_context_t *context, char **out)
+ 		clish_shell_unlock(lock_fd);
+ 
+ 	/* Move into the new view */
+-	if (!result) {
+-		char *viewname = clish_shell_expand(clish_command__get_viewname(cmd), SHELL_VAR_NONE, context);
+-		if (viewname) {
+-			/* Search for the view */
+-			clish_view_t *view = clish_shell_find_view(this, viewname);
+-			if (!view)
+-				fprintf(stderr, "System error: Can't "
+-					"change view to %s\n", viewname);
+-			lub_string_free(viewname);
+-			/* Save the PWD */
+-			if (view) {
+-				char *line = clish_shell__get_line(context);
+-				clish_shell__set_pwd(this, line, view,
+-					clish_command__get_viewid(cmd), context);
+-				lub_string_free(line);
+-			}
+-		}
+-	}
+-
++        if (!result) {
++                int cnt, i;
++                char *viewname;
++                char *configureviewname = CONFIG_VIEW;
++                char *exec_view_name = "enable-view";
++                const char *cmdview, *cmdviewid, *paramview = NULL, *paramviewid = NULL;
++                const clish_param_t *param;
++                clish_pargv_t *pargv = clish_context__get_pargv(context);
++                const char *cur_cmd = NULL;
++                clish_view_t *parentview = clish_command__get_pview(cmd);
++
++                /* Check whether view and view id attributes are there in PARAM
++                 * If so, use the one from the PARAM. If not, use the COMMAND attributes
++                 */
++                cmdview= clish_command__get_viewname(cmd);
++                cmdviewid = clish_command__get_viewid(cmd);
++                cur_cmd = clish_command__get_name(cmd);
++                cnt = clish_pargv__get_count(pargv);
++                for (i = 0; i < cnt; i++) {
++                        const char *tempview, *tempviewid;
++                        param = clish_pargv__get_param(pargv, i);
++                        tempview   = clish_param__get_viewname(param);
++                        tempviewid = clish_param__get_viewid(param);
++                        if(tempview) {
++                                paramview = tempview;
++                        }
++                        if(tempviewid) {
++                                paramviewid = tempviewid;
++                        }
++                }
++
++                if(paramview) {
++                        cmdview= paramview;
++                }
++                if(paramviewid) {
++                        cmdviewid = paramviewid;
++                }
++
++                viewname = clish_shell_expand(cmdview, SHELL_VAR_NONE, context);
++
++                if (viewname) {
++                        /* Search for the view */
++                        clish_view_t *view = clish_shell_find_view(this, viewname);
++                        if (!view)
++                                fprintf(stderr, "System error: Can't "
++                                        "change view to %s\n", viewname);
++                        lub_string_free(viewname);
++
++                        /* Save the PWD */
++                        if (view) {
++                                char *line = clish_shell__get_line(context);
++                                clish_shell__set_pwd(this, line, view, (char*)cmdviewid, context);
++                                lub_string_free(line);
++                        }
++                }
++        }
++   	
+ 	/* Set appropriate timeout. Workaround: Don't turn on  watchdog
+ 	on the "set watchdog <timeout>" command itself. */
+ 	if (this->wdog_timeout && saved_wdog_timeout) {
+@@ -297,15 +382,38 @@ stdout_error:
+ 	return -1;
+ }
+ 
++static int clish_shell_exec_sym_api(const clish_sym_t *sym, clish_hook_action_fn_t *func,
++	       				clish_context_t *context, char *script, char **out)	
++{
++	int result = -1;
++	/* CLISH_SYM_API_SIMPLE */
++	if (clish_sym__get_api(sym) == CLISH_SYM_API_SIMPLE) {
++		result = ((clish_hook_action_fn_t *)func)(context, script, out);
++	/* CLISH_SYM_API_STDOUT and output is not needed */
++	} else if ((clish_sym__get_api(sym) == CLISH_SYM_API_STDOUT) && (!out)) {
++		result = ((clish_hook_oaction_fn_t *)func)(context, script);
++	/* CLISH_SYM_API_STDOUT and outpus is needed */
++	} else if (clish_sym__get_api(sym) == CLISH_SYM_API_STDOUT) {
++		result = clish_shell_exec_oaction((clish_hook_oaction_fn_t *)func,
++							context, script, out);
++	}
++	return result;
++}
++
+ /*----------------------------------------------------------- */
+ int clish_shell_exec_action(clish_context_t *context, char **out)
+ {
+ 	int result = -1;
+ 	const clish_sym_t *sym;
+ 	char *script;
+-	const void *func = NULL; /* We don't know the func API at this time */
++	clish_hook_action_fn_t *func = NULL;
++
+ 	const clish_action_t *action = clish_context__get_action(context);
+ 	clish_shell_t *shell = clish_context__get_shell(context);
++	clish_parg_t *parg = NULL;
++        clish_ptype_t *ptype = NULL;
++        clish_ptype_method_e method = CLISH_PTYPE_METHOD_REGEXP;
++
+ 	bool_t intr = clish_action__get_interrupt(action);
+ 	/* Signal vars */
+ 	struct sigaction old_sigint, old_sigquit, old_sighup;
+@@ -343,20 +451,101 @@ int clish_shell_exec_action(clish_context_t *context, char **out)
+ 		sigprocmask(SIG_BLOCK, &sigs, &old_sigs);
+ 	}
+ 
+-	/* Find out the function API */
+-	/* CLISH_SYM_API_SIMPLE */
+-	if (clish_sym__get_api(sym) == CLISH_SYM_API_SIMPLE) {
+-		result = ((clish_hook_action_fn_t *)func)(context, script, out);
+-
+-	/* CLISH_SYM_API_STDOUT and output is not needed */
+-	} else if ((clish_sym__get_api(sym) == CLISH_SYM_API_STDOUT) && (!out)) {
+-		result = ((clish_hook_oaction_fn_t *)func)(context, script);
+-
+-	/* CLISH_SYM_API_STDOUT and outpus is needed */
+-	} else if (clish_sym__get_api(sym) == CLISH_SYM_API_STDOUT) {
+-		result = clish_shell_exec_oaction((clish_hook_oaction_fn_t *)func,
+-			context, script, out);
+-	}
++	parg = (clish_parg_t*)clish_shell__get_parg(context);
++	if (!parg || !(ptype = (clish_ptype_t *)clish_parg__get_ptype(parg)))
++	{
++		result = clish_shell_exec_sym_api(sym, func, context, script, out);
++	} else {
++                method = clish_ptype__get_method(ptype);
++                if (method == CLISH_PTYPE_METHOD_REGEXP_SELECT)
++                {
++                        /* interface CLISH_PTYPE_REGEXP_SELECT type handling */
++                        char *res = NULL;
++                        char *ptr = NULL;
++                        int index = -1, j;
++                        bool_t matched = BOOL_FALSE;
++                        bool_t isEthernet = BOOL_FALSE;
++                        char *new_result = NULL;
++                        char *name = NULL;
++                        char *value = NULL;
++
++                        lub_argv_t *pargv = clish_ptype_regexp_select__get_argv(ptype);
++                        res = lub_string_dup(clish_parg__get_value(parg));
++                        /* Loop through possible help string options,
++                         * such as ethernet, vlan and portchannel
++                         * if given CLI matches first two character
++                         * like po 10 then start at array index 3 and
++                         * skip if any space lies between po and 10.
++                         * If given CLI is like p 10 then start at
++			                          * array index 2 and skip if any space lies
++                         * between p and 10.
++                         */
++                        for (j = 0; j < lub_argv__get_count(pargv); j++) {
++                                /* Overwriting ptr name while looping
++                                 * will leak dynamic memory that name
++                                 * points to. So free memory that name points to
++                                 * before overwriting.
++                                 */
++                                if(name != NULL) {
++                                        lub_string_free(name);
++                                        name = NULL;
++                                }
++                                if(value != NULL) {
++                                        lub_string_free(value);
++                                        value = NULL;
++                                }
++                                name = clish_ptype_regexp_select__get_argname(ptype, j);
++                                value = clish_ptype_regexp_select__get_value(ptype, j);
++                                if (name && strncasecmp(name, res, strlen(name))) {
++                                        index = get_index(res);
++                                        if (!strncasecmp(name, res, index)) {
++                                                ptr = res + index;
++                                                matched = BOOL_TRUE;
++                                        }
++                                        if (matched == BOOL_TRUE) {
++                                                while (isspace(*ptr))
++                                                        ptr++;
++                                                new_result = lub_string_dup(name);
++                                                lub_string_cat(&new_result, ptr);
++                                                lub_string_free(res);
++                                                res = new_result;
++                                                break;
++                                        }
++				} else {
++                                        /* CLI is given matches with complete help string
++                                         * such as ethernet, vlan, portchannel, so nothing
++                                         * do to here.
++                                         */
++                                        if (name)
++                                                ptr = res + strlen(name);
++                                        else
++                                                ptr = res + get_index(res);
++                                        matched = BOOL_TRUE;
++                                        break;
++                                }
++                        }
++                        if (matched == BOOL_FALSE) {
++                                lub_string_free(res);
++                                res = NULL;
++                        }
++
++			result = clish_shell_exec_sym_api(sym, func, context, script, out);
++                        isEthernet = BOOL_FALSE;
++                        lub_string_free(res);
++
++            		/* Free memory to avoid resource leak */
++            		if(name != NULL) {
++                		lub_string_free(name);
++                		name = NULL;
++            		}
++            		if(value != NULL) {
++                		lub_string_free(value);
++                		value = NULL;
++            		}
++                } else {
++			result = clish_shell_exec_sym_api(sym, func, context, script, out);
++                }
++        }
+ 
+ 	/* Restore SIGINT, SIGQUIT, SIGHUP */
+ 	if (!intr) {
+@@ -374,7 +563,7 @@ int clish_shell_exec_action(clish_context_t *context, char **out)
+ 	sigaction(SIGQUIT, &old_sigquit, NULL);
+ 	sigaction(SIGHUP, &old_sighup, NULL);
+ 
+-	lub_string_free(script);
++	if (script) lub_string_free(script);
+ 
+ 	return result;
+ }
+diff --git a/clish/shell/shell_help.c b/clish/shell/shell_help.c
+index 247f61a..f379a05 100644
+--- a/clish/shell/shell_help.c
++++ b/clish/shell/shell_help.c
+@@ -4,6 +4,7 @@
+ #include "private.h"
+ #include "clish/types.h"
+ #include "lub/string.h"
++//#include "clish/plugin/clish_api.h"
+ 
+ #include <stdio.h>
+ #include <string.h>
+@@ -14,16 +15,27 @@
+  * Provide a detailed list of the possible command completions
+  */
+ static void available_commands(clish_shell_t *this,
+-	clish_help_t *help, const char *line, size_t *max_width)
++	clish_help_t *help, const char *line, size_t *max_width,
++	clish_context_t *context)
+ {
+ 	const clish_command_t *cmd;
+ 	clish_shell_iterator_t iter;
++	clish_context_t local_context;
+ 
+ 	if (max_width)
+ 		*max_width = 0;
+ 	/* Search for COMMAND completions */
+ 	clish_shell_iterator_init(&iter, CLISH_NSPACE_HELP);
++	clish_context_init(&local_context, this);
+ 	while ((cmd = clish_shell_find_next_completion(this, line, &iter))) {
++		clish_context__set_cmd(&local_context, cmd);
++		if(clish_shell_command_test(cmd, &local_context) == BOOL_FALSE)
++			continue;
++
++		if (clish_command__get_hidden(cmd) == BOOL_TRUE)
++                        continue;
++		if (clish_command__get_enabled(cmd) == BOOL_FALSE)
++                        continue;
+ 		size_t width;
+ 		const char *name = clish_command__get_suffix(cmd);
+ 		if (max_width) {
+@@ -48,7 +60,7 @@ static int available_params(clish_shell_t *this,
+ 	clish_pargv_t *completion, *pargv;
+ 	unsigned i;
+ 	unsigned cnt = 0;
+-	clish_pargv_status_e status = CLISH_LINE_OK;
++	clish_pargv_status_t status = CLISH_LINE_OK;
+ 	clish_context_t context;
+ 
+ 	/* Empty line */
+@@ -71,17 +83,25 @@ static int available_params(clish_shell_t *this,
+ 
+ 	status = clish_shell_parse_pargv(pargv, cmd, &context,
+ 		clish_command__get_paramv(cmd),
+-		argv, &idx, completion, index);
++		argv, &idx, completion, index, NULL, NULL);
+ 	clish_pargv_delete(pargv);
+ 	cnt = clish_pargv__get_count(completion);
+ 
+ 	/* Calculate the longest name */
+ 	for (i = 0; i < cnt; i++) {
+ 		const clish_param_t *param;
++		const clish_parg_t *parg;
+ 		const char *name;
+ 		unsigned clen = 0;
+ 
+ 		param = clish_pargv__get_param(completion, i);
++		if (clish_param__get_hidden(param) == BOOL_TRUE)
++			continue;
++
++		if (clish_param__get_enabled(param) == BOOL_FALSE)
++			continue;
++
++		parg = clish_pargv__get_parg(completion, i);
+ 		if (CLISH_PARAM_SUBCOMMAND == clish_param__get_mode(param))
+ 			name = clish_param__get_value(param);
+ 		else
+@@ -90,7 +110,7 @@ static int available_params(clish_shell_t *this,
+ 			clen = strlen(name);
+ 		if (max_width && (clen > *max_width))
+ 			*max_width = clen;
+-		clish_param_help(param, help);
++		clish_param_help(param, help, clish_parg__get_value((parg)));
+ 	}
+ 	clish_pargv_delete(completion);
+ 	lub_argv_delete(argv);
+@@ -104,31 +124,64 @@ static int available_params(clish_shell_t *this,
+ }
+ 
+ /*--------------------------------------------------------- */
+-void clish_shell_help(clish_shell_t *this, const char *line)
++void sort_help_command (const lub_argv_t *name , const lub_argv_t *help, int complete_status) {
++        int count = 0;
++        int indexi,indexj;
++        char * temp = NULL;
++        const char *str1 = NULL;
++        const char *str2 = NULL;
++
++        count = lub_argv__get_count(name);
++        /* if the last element is <cr>, then don't sort that the last element */
++        if (!complete_status) {
++                count = count - 1;
++        }
++
++        for (indexi=0;indexi<count-1;indexi++) {
++                for (indexj=indexi+1;indexj<count;indexj++) {
++                        str1 = lub_argv__get_arg(name, indexi);
++                        str2 = lub_argv__get_arg(name, indexj);
++
++                        if ((str1 == NULL) || (str2 == NULL))
++                                continue;
++                        /* check two strings. if compared string is lowest letter, then swap */
++                        if(lub_string_nocasecmp(str1,str2) > 0) {
++                                /*swap the name to sort */
++                                lub_argv__swap_arg(name,indexi,indexj);
++                                /*swap the corresponding help string of command */
++                                lub_argv__swap_arg(help,indexi,indexj);
++                        }
++                }
++        }
++
++}
++
++/*--------------------------------------------------------- */
++void clish_shell_help(clish_shell_t *this, const char *line, clish_context_t *context)
+ {
+ 	clish_help_t help;
+ 	size_t max_width = 0;
+ 	const clish_command_t *cmd;
+ 	unsigned int i;
++	int complete_status = 0;
+ 
+ 	help.name = lub_argv_new(NULL, 0);
+ 	help.help = lub_argv_new(NULL, 0);
+ 	help.detail = lub_argv_new(NULL, 0);
+ 
+ 	/* Get COMMAND completions */
+-	available_commands(this, &help, line, &max_width);
++	available_commands(this, &help, line, &max_width, context);
+ 
+ 	/* Resolve a command */
+-	cmd = clish_shell_resolve_command(this, line);
++	cmd = clish_shell_resolve_command(this, line, context);
+ 	/* Search for PARAM completion */
+ 	if (cmd) {
+ 		size_t width = 0;
+-		int status;
+-		status = available_params(this, &help, cmd, line, &width);
++		complete_status = available_params(this, &help, cmd, line, &width);
+ 		if (width > max_width)
+ 			max_width = width;
+ 		/* Add <cr> if command is completed */
+-		if (!status) {
++		if (!complete_status) {
+ 			lub_argv_add(help.name, "<cr>");
+ 			lub_argv_add(help.help, NULL);
+ 			lub_argv_add(help.detail, NULL);
+@@ -136,10 +189,19 @@ void clish_shell_help(clish_shell_t *this, const char *line)
+ 	}
+ 	if (lub_argv__get_count(help.name) == 0)
+ 		goto end;
++    
++	for (i = 0; i < lub_argv__get_count(help.name); i++) {
++		if(max_width < strlen(lub_argv__get_arg(help.name, i)))
++			max_width = strlen(lub_argv__get_arg(help.name, i));
++	}
+ 
++	/* Sort the help command name and is help strings */
++	sort_help_command(help.name, help.help, complete_status);
+ 	/* Print help messages */
+ 	for (i = 0; i < lub_argv__get_count(help.name); i++) {
+-		fprintf(stderr, "  %-*s  %s\n", (int)max_width,
++		if(max_width < strlen(lub_argv__get_arg(help.name, i)))
++			max_width = strlen(lub_argv__get_arg(help.name, i));
++		fprintf(stderr, "  %-*s  %-s\n", (int)max_width,
+ 			lub_argv__get_arg(help.name, i),
+ 			lub_argv__get_arg(help.help, i) ?
+ 			lub_argv__get_arg(help.help, i) : "");
+diff --git a/clish/shell/shell_new.c b/clish/shell/shell_new.c
+index 0df13ae..944c73d 100644
+--- a/clish/shell/shell_new.c
++++ b/clish/shell/shell_new.c
+@@ -22,6 +22,7 @@ static void clish_shell_init(clish_shell_t * this,
+ 	clish_ptype_t *tmp_ptype = NULL;
+ 	int i;
+ 	char template[PATH_MAX];
++	char lock_file[PATH_MAX];
+ 
+ 	/* Initialise VIEW list */
+ 	this->view_tree = lub_list_new(clish_view_compare, clish_view_delete);
+@@ -49,6 +50,12 @@ static void clish_shell_init(clish_shell_t * this,
+ 		this->hooks_use[i] = BOOL_FALSE;
+ 	}
+ 
++	/* Create lock file */
++	snprintf(lock_file, sizeof(lock_file),
++		"%s.%u", CLISH_LOCK_PATH, getpid());
++	lock_file[sizeof(lock_file) - 1] = '\0';
++	this->lockfile = lub_string_dup(lock_file);
++
+ 	/* Set up defaults */
+ 	this->global = NULL;
+ 	this->startup = NULL;
+@@ -64,7 +71,6 @@ static void clish_shell_init(clish_shell_t * this,
+ 	this->pwdc = 0;
+ 	this->depth = -1; /* Current depth is undefined */
+ 	this->client = NULL;
+-	this->lockfile = lub_string_dup(CLISH_LOCK_PATH);
+ 	this->default_shebang = lub_string_dup("/bin/sh");
+ 	this->interactive = BOOL_TRUE; /* The interactive shell by default. */
+ 	this->log = BOOL_FALSE; /* Disable logging by default */
+@@ -86,7 +92,7 @@ static void clish_shell_init(clish_shell_t * this,
+ 		"__ptype_ARGS",
+ 		"Arguments", "[^\\\\]+",
+ 		CLISH_PTYPE_METHOD_REGEXP,
+-		CLISH_PTYPE_PRE_NONE);
++		CLISH_PTYPE_PRE_NONE, NULL, NULL, NULL, NULL);
+ 	assert(tmp_ptype);
+ 
+ 	/* Push non-NULL istream */
+diff --git a/clish/shell/shell_parse.c b/clish/shell/shell_parse.c
+index adb76ab..429a9e6 100644
+--- a/clish/shell/shell_parse.c
++++ b/clish/shell/shell_parse.c
+@@ -4,23 +4,28 @@
+ 
+ #include <string.h>
+ #include <assert.h>
++#include <stdbool.h>
+ 
+ #include "lub/string.h"
+ #include "lub/system.h"
+ #include "private.h"
++#include "clish/pargv.h"
+ 
+ /*----------------------------------------------------------- */
+ clish_pargv_status_e clish_shell_parse(
+ 	clish_shell_t *this, const char *line,
+-	const clish_command_t **ret_cmd, clish_pargv_t **pargv)
++	const clish_command_t **ret_cmd, clish_pargv_t **pargv,
++	clish_context_t *orig_context, unsigned *err_len)
+ {
+ 	clish_pargv_status_e result = CLISH_BAD_CMD;
+ 	clish_context_t context;
+ 	const clish_command_t *cmd;
+ 	lub_argv_t *argv = NULL;
+ 	unsigned int idx;
++        unsigned int errArg = 0;/* find the error param*/
++        unsigned int strMatchLen =0; /*find the exact position of error*/
+ 
+-	*ret_cmd = cmd = clish_shell_resolve_command(this, line);
++	*ret_cmd = cmd = clish_shell_resolve_command(this, line, orig_context);
+ 	if (!cmd)
+ 		return result;
+ 
+@@ -35,7 +40,25 @@ clish_pargv_status_e clish_shell_parse(
+ 	argv = lub_argv_new(line, 0);
+ 	result = clish_shell_parse_pargv(*pargv, cmd, &context,
+ 		clish_command__get_paramv(cmd),
+-		argv, &idx, NULL, 0);
++		argv, &idx, NULL, 0, &errArg, &strMatchLen);
++        
++        /*find the error param exact character*/
++        if ((CLISH_BAD_PARAM == result) || (CLISH_BAD_CMD == result)) {
++            int argcnt = lub_argv__get_count(argv);
++            int index =0;
++            int arglen = 0;
++            for (index=0;(index<errArg) && (errArg<argcnt);index++) 
++            {
++                const char *argval = lub_argv__get_arg(argv,index);
++                if( argval) {
++               	    arglen += strlen(argval);
++                        arglen ++;
++                }
++            }
++            if(err_len && arglen)
++                *err_len = arglen + strMatchLen;	
++        }
++
+ 	lub_argv_delete(argv);
+ 	if (CLISH_LINE_OK != result) {
+ 		clish_pargv_delete(*pargv);
+@@ -45,6 +68,70 @@ clish_pargv_status_e clish_shell_parse(
+ 	return result;
+ }
+ 
++/*--------------------------------------------------------- */
++static bool_t is_valid_regexp_select_iteration(const clish_param_t *param,
++        unsigned idx, unsigned need_index, unsigned is_switch, const char* arg)
++{
++	clish_ptype_t *ptype = clish_param__get_ptype(param);
++	bool_t res = BOOL_FALSE;
++
++	/* 
++	 * This is the case where user enter interface vlan ? to get help
++	 * option for the CLISH_PTYPE_METHOD_REGEXP_SELECT ptype.
++	 */
++	if (((idx + 1 == need_index) && 
++		CLISH_PTYPE_METHOD_REGEXP_SELECT == clish_ptype__get_method(ptype))) {
++		res = BOOL_TRUE;
++	} else if ((idx + 1 == need_index) && is_switch) {
++		/* 
++		 * When current PARAM is switch, check if we have a sub PARAM with method
++		 * CLISH_PTYPE_METHOD_REGEXP_SELECT inside the switch.If so, check if the current
++		 * matches the regexp_select pattern.If it matches we return true from this
++		 * function, indicating the caller to include the REGEXP_SELECT PARAM
++		 * to the available_param for help.Otherwise return false.
++		 * For CLI like "management route 1.1.1.0/24", we have a switch with a PARAM
++		 * with method REGEXP_SELECT.The switch also includes another PARAM
++		 * for nexthop IP.Now if user executes "management route 1.1.1.0/24 1.1.1.1 ?",
++		 * the last entered value "1.1.1.1" won't match with the regexp_select pattern
++		 * and hence we will return false from this function.The caller will hence
++		 * exclude the regexp_select PARAM from available_param
++		 */
++		unsigned i, rec_paramc = clish_param__get_param_count(param);
++		clish_param_t *cparam = NULL;
++		for (i = 0; i < rec_paramc; i++) {
++			cparam = clish_param__get_param(param, i);
++			if (!cparam)
++				break;
++
++			if (CLISH_PARAM_SUBCOMMAND == clish_param__get_mode(cparam) ||
++				CLISH_PARAM_COMMON == clish_param__get_mode(cparam)) {
++				const clish_ptype_t *ptype =
++						clish_param__get_ptype(cparam);
++				if (ptype && (CLISH_PTYPE_METHOD_REGEXP_SELECT ==
++					clish_ptype__get_method(ptype))) {
++					const char *name = NULL;
++					int j = 0, cnt =0;
++					cnt = clish_ptype_regexp_select__get_argv_count(ptype);
++					for (;j < cnt; j++) {
++						name = clish_ptype_regexp_select__get_name(ptype, j);
++						if ((arg) && (name && ((name == lub_string_nocasestr(name, arg))
++			
++									))) {
++							res = BOOL_TRUE;
++							lub_string_free((char *)name);
++							break;
++						}
++						if(name)
++							lub_string_free((char *)name);
++					}
++				}
++			}
++		}
++	}
++
++	return res;
++}
++
+ /*--------------------------------------------------------- */
+ static bool_t line_test(const clish_param_t *param, void *context)
+ {
+@@ -72,16 +159,18 @@ clish_pargv_status_e clish_shell_parse_pargv(clish_pargv_t *pargv,
+ 	void *context,
+ 	clish_paramv_t *paramv,
+ 	const lub_argv_t *argv,
+-	unsigned *idx, clish_pargv_t *last, unsigned need_index)
++	unsigned *idx, clish_pargv_t *last, unsigned need_index,
++	unsigned *errP, unsigned *strmatchLen)
+ {
+ 	unsigned argc = lub_argv__get_count(argv);
+ 	unsigned index = 0;
+ 	unsigned nopt_index = 0;
+ 	clish_param_t *nopt_param = NULL;
+ 	unsigned i;
+-	clish_pargv_status_e retval;
++	clish_pargv_status_t retval;
+ 	unsigned paramc = clish_paramv__get_count(paramv);
+ 	int up_level = 0; /* Is it a first level of param nesting? */
++	int recursive_start = 0;
+ 
+ 	assert(pargv);
+ 	assert(cmd);
+@@ -95,10 +184,18 @@ clish_pargv_status_e clish_shell_parse_pargv(clish_pargv_t *pargv,
+ 		clish_param_t *param = clish_paramv__get_param(paramv, index);
+ 		clish_param_t *cparam = NULL;
+ 		int is_switch = 0;
++		clish_ptype_t *ptype = NULL;
++		char *cmd_name = NULL;
+ 
+ 		if (!param)
+ 			return CLISH_BAD_PARAM;
+ 
++                if (idx && errP) {
++                    if(*idx <= argc) {
++                     *errP = *idx;
++                    }
++                }
++
+ 		/* Use real arg or PARAM's default value as argument */
+ 		if (*idx < argc)
+ 			arg = lub_argv__get_arg(argv, *idx);
+@@ -113,39 +210,150 @@ clish_pargv_status_e clish_shell_parse_pargv(clish_pargv_t *pargv,
+ 			continue;
+ 		}
+ 
++		ptype = clish_param__get_ptype(param);
++		cmd_name = (char*)clish_command__get_name(cmd);
+ 		/* Add param for help and completion */
+-		if (last && (*idx == need_index) &&
++		/* In order to show the help string for interface, we need to process  
++		 * *idx + 1 = need_index, this is true for some of the show command which uses 
++		 * CLISH_PTYPE_REGEXP_SELECT ptypes example 'do show ip ospf 4 interface vlan'.
++		 */
++		if (last && ((*idx == need_index)||
++			is_valid_regexp_select_iteration(param, *idx, need_index, is_switch, arg)) &&
+ 			(NULL == clish_pargv_find_arg(pargv, clish_param__get_name(param)))) {
+ 			if (is_switch) {
+ 				unsigned rec_paramc = clish_param__get_param_count(param);
++				bool keyword_match = false;
+ 				for (i = 0; i < rec_paramc; i++) {
+ 					cparam = clish_param__get_param(param, i);
+ 					if (!cparam)
+ 						break;
+ 					if (!line_test(cparam, context))
+ 						continue;
+-					if (CLISH_PARAM_SUBCOMMAND ==
+-						clish_param__get_mode(cparam)) {
++					ptype = clish_param__get_ptype(cparam);
++
++					if (CLISH_PARAM_SUBCOMMAND == clish_param__get_mode(cparam) || 
++						((CLISH_PARAM_COMMON == clish_param__get_mode(cparam)) &&
++						(CLISH_PTYPE_METHOD_REGEXP_SELECT ==
++						 clish_ptype__get_method(ptype)))) {
+ 						const char *pname =
+ 							clish_param__get_value(cparam);
+-						if (!arg || (arg && 
+-							(pname == lub_string_nocasestr(pname,
+-							arg))))
++					    clish_ptype_t *ptype = 
++								clish_param__get_ptype(cparam);
++						if ((CLISH_PTYPE_METHOD_REGEXP_SELECT != clish_ptype__get_method(ptype)) &&
++						(!arg || (arg && (pname == lub_string_nocasestr(pname, arg))))) {
++							clish_pargv_insert(last, cparam, arg);
++							if(arg) {
++								/*arg non NULL means partial keyword entered */
++								keyword_match = true;
++							}
++						} else if (CLISH_PTYPE_METHOD_REGEXP_SELECT ==
++							clish_ptype__get_method(ptype)) {
++							const char *name = NULL;
++							int j = 0, cnt =0;
++							cnt = clish_ptype_regexp_select__get_argv_count(ptype);
++							for (;j < cnt; j++) {
++								name = clish_ptype_regexp_select__get_name(ptype, j);
++								if ((!arg) || (name && (name == lub_string_nocasestr(name, arg)))) {
++									if (*idx + 1 == need_index || *idx == need_index) {
++										clish_pargv_insert(last, cparam, arg);
++										if(arg) {
++											/*arg non NULL means partial keyword entered */
++											keyword_match = true;
++										}
++									}
++									if (strncmp(cmd_name, IFACE_CMD, strlen(IFACE_CMD))) {
++                                                                        	/* Handling show and other non interface
++                                                                         	 * related config commands such as
++                                                                         	 * spanning-tree interface. */
++                                                                                if (*idx + 1 == need_index)
++                                                                                        clish_ptype__set_usename(ptype, USE_VALUE);
++                                                                                else if (cnt > 1)
++                                                                                        clish_ptype__set_usename(ptype, USE_RANGE);
++                                                                                else
++                                                                                        clish_ptype__set_usename(ptype, USE_NAME);
++									} else {
++                                                                                /* Interface specific commands handling */
++                                                                                if (*idx + 1 == need_index)
++                                                                                        clish_ptype__set_usename(ptype, USE_VALUE);
++                                                                                else
++                                                                                        clish_ptype__set_usename(ptype, USE_NAME);
++                                                                        }
++									break;
++								}
++
++								if (name) {
++								   	lub_string_free((char*)name);
++									name = NULL;
++								}
++							}
++							if (name) lub_string_free((char*)name);
++						}
++					} else {
++						if((*idx == need_index) && !keyword_match) {
++							/* The following clish_pargv_insert inserts a non-keyword PARAM
++							   which is part of a switch to the help list.Suppose there is a switch
++							   between non-keyword  "<ip-addr>" and regexp_select PARAM "vlan".
++							   On execution of "management route 1.1.1.0/24 vlan?" or
++							   "management route 1.1.1.0/24 vlan ?", we should not be
++							   inserting the non-keyword.*idx will be need_index-1 for
++							   "management route 1.1.1.0/24 vlan ?".So the check
++							   (*idx == need_index)" will take care of preventing the non-keyword
++							   from getting added for "vlan ?".For the case vlan?, the keyword_match
++							   flag will track if any keyword is added already.if added already
++							   skip adding the non-keyword.This solution expects that the keywords
++							   are added before the non-keywords in the switch */
+ 							clish_pargv_insert(last,
+ 								cparam, arg);
+-					} else {
+-						clish_pargv_insert(last,
+-							cparam, arg);
++						}
+ 					}
+ 				}
+ 			} else {
+-				if (CLISH_PARAM_SUBCOMMAND ==
+-					clish_param__get_mode(param)) {
++				if (CLISH_PARAM_SUBCOMMAND == clish_param__get_mode(param) ||
++						((CLISH_PARAM_COMMON == clish_param__get_mode(param)) &&
++						(CLISH_PTYPE_METHOD_REGEXP_SELECT ==
++						 clish_ptype__get_method(ptype)))) {
+ 					const char *pname =
+-					    clish_param__get_value(param);
+-					if (!arg || (arg &&
+-						(pname == lub_string_nocasestr(pname, arg))))
++						clish_param__get_value(param);
++					clish_ptype_t *ptype =
++						clish_param__get_ptype(param);
++					if ((CLISH_PTYPE_METHOD_REGEXP_SELECT != clish_ptype__get_method(ptype)) && 
++					(!arg || (arg && (pname == lub_string_nocasestr(pname, arg)))))
+ 						clish_pargv_insert(last, param, arg);
++					else if (CLISH_PTYPE_METHOD_REGEXP_SELECT ==
++						clish_ptype__get_method(ptype)) {
++						const char *name;
++						int j = 0, cnt =0;
++						cnt = clish_ptype_regexp_select__get_argv_count(ptype);
++						for (;j < cnt; j++) {
++							name = clish_ptype_regexp_select__get_name(ptype, j);
++							if ((!arg) || (name && ((name == lub_string_nocasestr(name, arg))))) {
++								clish_pargv_insert(last, param, arg);
++                                                                if (strncmp(cmd_name, IFACE_CMD, strlen(IFACE_CMD))) {
++                                                                        if (*idx + 1 == need_index)
++                                                                                clish_ptype__set_usename(ptype, USE_VALUE);
++                                                                        else if (cnt > 1)
++                                                                                clish_ptype__set_usename(ptype, USE_RANGE);
++                                                                        else
++                                                                                clish_ptype__set_usename(ptype, USE_NAME);
++                                                                } else {
++                                                                        if (*idx + 1 == need_index)
++                                                                                clish_ptype__set_usename(ptype, USE_VALUE);
++                                                                        else
++                                                                                clish_ptype__set_usename(ptype, USE_NAME);
++                                                                }
++								break;
++							}
++							if(name != NULL) {
++								lub_string_free((char*)name);
++								name = NULL;
++							}
++						}
++                        			/* handle resource leak */
++                        			if(name != NULL) {
++                            				lub_string_free((char*)name);
++                            				name = NULL;
++                        			}
++					}
+ 				} else {
+ 					clish_pargv_insert(last, param, arg);
+ 				}
+@@ -170,7 +378,7 @@ clish_pargv_status_e clish_shell_parse_pargv(clish_pargv_t *pargv,
+ 			}
+ 
+ 			/* Validate the current parameter. */
+-			if (clish_pargv_find_arg(pargv, clish_param__get_name(param))) {
++			if (clish_pargv_find_arg(pargv, clish_param__get_name(param))) { 
+ 				/* Duplicated parameter */
+ 				validated = NULL;
+ 			} else if (is_switch) {
+@@ -185,11 +393,171 @@ clish_pargv_status_e clish_shell_parse_pargv(clish_pargv_t *pargv,
+ 						rec_paramv = clish_param__get_paramv(cparam);
+ 						rec_paramc = clish_param__get_param_count(cparam);
+ 						break;
++					} else {
++						/*  For CLISH_PTYPE_REGEXP_SELECT method, we try to match the
++						 *  input arg against a PARAM. If it is not matching we try
++						 *  concatenating the next arg to this arg and try matching
++						 *  the concatenated string with the PARAM.
++						 */
++						if(!validated)
++						{
++							clish_ptype_method_e method =
++								clish_ptype__get_method(clish_param__get_ptype(cparam));
++							if(method == CLISH_PTYPE_METHOD_REGEXP_SELECT)
++							{
++								char  *arg2 = NULL, *arg_backup = (char*)arg;
++								
++								arg2 = lub_string_dup(arg);
++								if((*idx + 1) < argc)
++								{
++									(*idx)++;
++									arg = lub_argv__get_arg(argv, *idx);
++									lub_string_cat(&arg2, arg);
++									arg = arg2;
++									validated = arg ?
++									clish_param_validate(cparam, arg) : NULL;
++									if(!validated)
++									{
++										/*Not matching even after concatinating next arg
++										So revert to old arg itself to try matching to 
++										next param*/
++										(*idx)--;
++										arg = arg_backup;
++										lub_string_free(arg2);
++										arg2 = NULL;
++									}
++									else
++									{
++										rec_paramv = clish_param__get_paramv(cparam);
++										rec_paramc = clish_param__get_param_count(cparam);
++										lub_string_free(arg2);
++										break;
++									}
++								}
++
++								if(!validated) {
++									const char *name;
++									int j = 0, cnt =0;
++									cnt = clish_ptype_regexp_select__get_argv_count(clish_param__get_ptype(cparam));
++									for (;j < cnt; j++) {
++										name = clish_ptype_regexp_select__get_name(clish_param__get_ptype(cparam), j);
++										if ((arg) && (name && ((name == lub_string_nocasestr(name, arg))))) {
++											if(((*idx + 1) < argc)&& (errP)&&(strmatchLen)) {
++												*errP = (*idx + 1);
++												*strmatchLen = 0;
++											}
++											break;
++										} else if(arg && strmatchLen) {
++											int stmatch = lub_string_equal_part_nocase(name,arg,BOOL_TRUE);
++											if( stmatch > (*strmatchLen))
++												*strmatchLen = stmatch;
++										}
++										if(name != NULL) {
++											lub_string_free((char*)name);
++											name = NULL;
++										}
++									}
++								}
++
++								/* Handle resource leak */
++ 								if(arg2 != NULL) {
++ 									lub_string_free(arg2);
++ 									arg2 = NULL;
++								}
++							} else if(method == CLISH_PTYPE_METHOD_SELECT){
++						                int i=0;
++						                char *val = NULL;
++						                /* Iterate possible completion */
++						                while (cparam && (val = clish_ptype_method_select__get_name(clish_param__get_ptype(cparam), i++))) {
++						                        /* check for the name */
++									unsigned strmatch = lub_string_equal_part_nocase(val,arg,BOOL_TRUE);
++									if(strmatchLen && strmatch>*strmatchLen)
++										*strmatchLen = strmatch;
++                						}
++
++							} else if(arg && strmatchLen){
++								char *val = clish_param__get_value(cparam);
++								unsigned strmatch = lub_string_equal_part_nocase(val,arg,BOOL_TRUE);
++								if(strmatch>*strmatchLen)
++									*strmatchLen = strmatch;
++                                                        }
++						}
+ 					}
+ 				}
+ 			} else {
+ 				validated = arg ?
+ 					clish_param_validate(param, arg) : NULL;
++				/*  For CLISH_PTYPE_REGEXP_SELECT method, we try to match the
++				 *  input arg against a PARAM. If it is not matching we try
++				 *  concatenating the next arg to this arg and try matching
++				 *  the concatenated string with the PARAM.
++				 */
++				if(!validated)
++				{
++					clish_ptype_method_e method = clish_ptype__get_method(clish_param__get_ptype(param));
++					if(method == CLISH_PTYPE_METHOD_REGEXP_SELECT)
++					{
++						char  *arg2 = NULL;
++						
++						arg2 = lub_string_dup(arg);
++						if((*idx + 1) < argc)
++						{
++							(*idx)++;
++							arg = lub_argv__get_arg(argv, *idx);
++							lub_string_cat(&arg2, arg);
++							arg = arg2;
++							validated = arg ?
++							clish_param_validate(param, arg) : NULL;
++							if(!validated)
++							{
++								/*Not matching even after concatinating next arg
++								So revert to old arg itself to try matching to 
++								next param*/
++								(*idx)--;
++							}
++						}
++						if(!validated) {
++							const char *name;
++							int j = 0, cnt =0; 
++							cnt = clish_ptype_regexp_select__get_argv_count(clish_param__get_ptype(param));
++							for (;j < cnt; j++) {
++								name = clish_ptype_regexp_select__get_name(clish_param__get_ptype(param), j);
++								if ((arg) && (name && ((name == lub_string_nocasestr(name, arg))))) {
++									if(((*idx + 1) < argc)&& (errP) && strmatchLen) {
++										*errP = (*idx + 1);
++										*strmatchLen = 0; 
++									}
++									break;
++								} else if(arg && strmatchLen) {
++									int strmatch = lub_string_equal_part_nocase(name,arg,BOOL_TRUE);
++									if(strmatch>*strmatchLen)
++										*strmatchLen = strmatch;
++								}
++								if(name != NULL) {
++									lub_string_free((char*)name);
++									name = NULL;
++								}
++							}
++						}
++
++					} else if(method == CLISH_PTYPE_METHOD_SELECT){
++				                int i=0;
++				                char *val = NULL;
++				                /* Iterate possible completion */
++				                while (param && (val = clish_ptype_method_select__get_name(clish_param__get_ptype(param), i++))) {
++				                        /* check for the name */
++							unsigned strmatch = lub_string_equal_part_nocase(val,arg,BOOL_TRUE);
++							if(strmatchLen && strmatch>*strmatchLen) { *strmatchLen = strmatch; }
++							lub_string_free(val);
++                				}
++
++					} else if(arg && strmatchLen){
++						char *val = clish_param__get_value(param);
++						int strmatch = lub_string_equal_part_nocase(val,arg,BOOL_TRUE);
++						if(strmatch > *strmatchLen)
++							*strmatchLen = strmatch;
++                                        }
++				}
+ 			}
+ 
+ 			if (validated) {
+@@ -200,8 +568,11 @@ clish_pargv_status_e clish_shell_parse_pargv(clish_pargv_t *pargv,
+ 					clish_pargv_insert(pargv, cparam,
+ 						validated);
+ 				} else {
+-					clish_pargv_insert(pargv, param,
+-						validated);
++					if (clish_pargv_insert(pargv, param,
++						validated) < 0) {
++						lub_string_free(validated);
++						return CLISH_BAD_PARAM;
++					}
+ 				}
+ 				lub_string_free(validated);
+ 
+@@ -217,7 +588,7 @@ clish_pargv_status_e clish_shell_parse_pargv(clish_pargv_t *pargv,
+ 					if (rec_paramc) {
+ 						retval = clish_shell_parse_pargv(pargv, cmd,
+ 							context, rec_paramv,
+-							argv, idx, last, need_index);
++							argv, idx, last, need_index, errP, strmatchLen);
+ 						if (CLISH_LINE_OK != retval)
+ 							return retval;
+ 					}
+@@ -247,8 +618,11 @@ clish_pargv_status_e clish_shell_parse_pargv(clish_pargv_t *pargv,
+ 				else {
+ 					if (!arg)
+ 						break;
+-					else
++					else {
++						clish_pargv_insert(pargv, param,
++								   clish_param__get_name(param));
+ 						return CLISH_BAD_PARAM;
++					}
+ 				}
+ 			}
+ 		}
+@@ -272,7 +646,7 @@ clish_pargv_status_e clish_shell_parse_pargv(clish_pargv_t *pargv,
+ 	if (last && up_level &&
+ 			clish_command__get_args(cmd) &&
+ 			(clish_pargv__get_count(last) == 0) &&
+-			(*idx <= argc) && (index >= paramc)) {
++			(*idx <= argc) && (index >= paramc) && (need_index != 0)) {
+ 		clish_pargv_insert(last, clish_command__get_args(cmd), "");
+ 	}
+ 
+@@ -293,15 +667,11 @@ clish_pargv_status_e clish_shell_parse_pargv(clish_pargv_t *pargv,
+ 		 */
+ 		while (NULL != arg) {
+ 			bool_t quoted = lub_argv__get_quoted(argv, *idx);
+-			char *enc = NULL;
+ 			if (BOOL_TRUE == quoted) {
+ 				lub_string_cat(&args, "\"");
+ 			}
+ 			/* place the current argument in the string */
+-			/* Escape quote and backslash */
+-			enc = lub_string_encode(arg, lub_string_esc_quoted);
+-			lub_string_cat(&args, enc);
+-			lub_string_free(enc);
++			lub_string_cat(&args, arg);
+ 			if (BOOL_TRUE == quoted) {
+ 				lub_string_cat(&args, "\"");
+ 			}
+diff --git a/clish/shell/shell_ptype.c b/clish/shell/shell_ptype.c
+index ba2756a..69fe390 100644
+--- a/clish/shell/shell_ptype.c
++++ b/clish/shell/shell_ptype.c
+@@ -34,14 +34,17 @@ clish_ptype_t *clish_shell_find_ptype(clish_shell_t *this, const char *name)
+ /*--------------------------------------------------------- */
+ clish_ptype_t *clish_shell_find_create_ptype(clish_shell_t * this,
+ 	const char *name, const char *text, const char *pattern,
+-	clish_ptype_method_e method, clish_ptype_preprocess_e preprocess)
++	clish_ptype_method_e method, clish_ptype_preprocess_e preprocess,
++	const char *ext_pattern, const char *ext_help, const char *alt_ext_pattern,
++	const char *alt_pattern)
+ {
+ 	clish_ptype_t *ptype = clish_shell_find_ptype(this, name);
+ 
+ 	if (!ptype) {
+ 		/* Create a ptype */
+ 		ptype = clish_ptype_new(name, text, pattern,
+-			method, preprocess);
++			method, preprocess, ext_pattern, ext_help, 
++			alt_ext_pattern, alt_pattern);
+ 		assert(ptype);
+ 		lub_list_add(this->ptype_tree, ptype);
+ 	}
+diff --git a/clish/shell/shell_tinyrl.c b/clish/shell/shell_tinyrl.c
+index 8fcb96a..02c555f 100644
+--- a/clish/shell/shell_tinyrl.c
++++ b/clish/shell/shell_tinyrl.c
+@@ -12,11 +12,13 @@
+ #include <string.h>
+ #include <errno.h>
+ #include <ctype.h>
++#include <unistd.h>
+ 
+ #include "tinyrl/tinyrl.h"
+ #include "tinyrl/history.h"
+ 
+ #include "lub/string.h"
++#include "clish/plugin/clish_api.h"
+ 
+ /*-------------------------------------------------------- */
+ static void clish_shell_renew_prompt(clish_shell_t *this)
+@@ -25,6 +27,11 @@ static void clish_shell_renew_prompt(clish_shell_t *this)
+ 	char *prompt = NULL;
+ 	const clish_view_t *view;
+ 	char *str = NULL;
++	char hostname[HOSTNAME_STR_LEN];
++	char system_prompt[PROMPT_STR_LEN];
++	char *system_name, *new_system_name;
++	char *savePtr = NULL;
++	int result;
+ 
+ 	/* Create appropriate context */
+ 	clish_context_init(&prompt_context, this);
+@@ -32,6 +39,10 @@ static void clish_shell_renew_prompt(clish_shell_t *this)
+ 	/* Obtain the prompt */
+ 	view = clish_shell__get_view(this);
+ 	assert(view);
++	memset(hostname, 0, sizeof(hostname));
++	memset(system_prompt, 0, sizeof(system_prompt));
++	result = gethostname(hostname, sizeof(hostname));
++	
+ 	lub_string_cat(&str, "${_PROMPT_PREFIX}");
+ 	lub_string_cat(&str, clish_view__get_prompt(view));
+ 	lub_string_cat(&str, "${_PROMPT_SUFFIX}");
+@@ -55,10 +66,11 @@ static bool_t clish_shell_tinyrl_key_help(tinyrl_t *this, int key)
+ 		clish_context_t *context = tinyrl__get_context(this);
+ 		clish_shell_t *shell = clish_context__get_shell(context);
+ 		tinyrl_crlf(this);
+-		clish_shell_help(shell, tinyrl__get_line(this));
++		clish_shell_help(shell, tinyrl__get_line(this), context);
+ 		tinyrl_crlf(this);
+ 		tinyrl_reset_line_state(this);
+ 	}
++
+ 	/* keep the compiler happy */
+ 	key = key;
+ 
+@@ -70,9 +82,9 @@ static bool_t clish_shell_tinyrl_key_help(tinyrl_t *this, int key)
+ /*
+  * Expand the current line with any history substitutions
+  */
+-static clish_pargv_status_e clish_shell_tinyrl_expand(tinyrl_t *this)
++static clish_pargv_status_t clish_shell_tinyrl_expand(tinyrl_t *this)
+ {
+-	clish_pargv_status_e status = CLISH_LINE_OK;
++	clish_pargv_status_t status = CLISH_LINE_OK;
+ #if 0
+ 	int rtn;
+ 	char *buffer;
+@@ -109,6 +121,7 @@ static clish_pargv_status_e clish_shell_tinyrl_expand(tinyrl_t *this)
+ 	return status;
+ }
+ 
++
+ /*-------------------------------------------------------- */
+ /*
+  * This is a CLISH specific completion function.
+@@ -145,6 +158,22 @@ static tinyrl_match_e clish_shell_tinyrl_complete(tinyrl_t *this)
+ 	return status;
+ }
+ 
++/*-------------------------------------------------------- */
++/*
++ * This is a CLISH specific completion function.
++ * Perform completion of the entered word in case it is partial
++ */
++static void clish_shell_tinyrl_complete_ignore_error(tinyrl_t *this)
++{
++
++	/* first of all perform any history expansion */
++ 	(void)clish_shell_tinyrl_expand(this);
++
++	/* perform normal completion */
++	tinyrl_complete_ignore_error(this);
++	return;
++}
++
+ /*--------------------------------------------------------- */
+ static bool_t clish_shell_tinyrl_key_space(tinyrl_t *this, int key)
+ {
+@@ -153,7 +182,7 @@ static bool_t clish_shell_tinyrl_key_space(tinyrl_t *this, int key)
+ 	clish_context_t *context = tinyrl__get_context(this);
+ 	clish_shell_t *shell = clish_context__get_shell(context);
+ 	const char *line = tinyrl__get_line(this);
+-	clish_pargv_status_e arg_status;
++	clish_pargv_status_t arg_status;
+ 	const clish_command_t *cmd = NULL;
+ 	clish_pargv_t *pargv = NULL;
+ 
+@@ -163,11 +192,16 @@ static bool_t clish_shell_tinyrl_key_space(tinyrl_t *this, int key)
+ 	} else if (tinyrl_is_quoting(this)) {
+ 		/* if we are in the middle of a quote then simply enter a space */
+ 		result = BOOL_TRUE;
++	} else if (tinyrl_is_cursor_in_middle(this)) {
++		/* if we are in the middle of a word then simply enter a space */
++		/* anyhow, line will be validated during ENTER */
++		/* Ex : Press space while cursor after "show ipv6" of "show ipv6route" */
++		result = BOOL_TRUE;
+ 	} else {
+ 		/* Find out if current line is legal. It can be
+ 		 * fully completed or partially completed.
+ 		 */
+-		arg_status = clish_shell_parse(shell, line, &cmd, &pargv);
++		arg_status = clish_shell_parse(shell, line, &cmd, &pargv, context, NULL);
+ 		if (pargv)
+ 			clish_pargv_delete(pargv);
+ 		switch (arg_status) {
+@@ -185,6 +219,8 @@ static bool_t clish_shell_tinyrl_key_space(tinyrl_t *this, int key)
+ 			status = clish_shell_tinyrl_complete(this);
+ 			switch (status) {
+ 			case TINYRL_NO_MATCH:
++				result = BOOL_TRUE;
++				break;
+ 			case TINYRL_AMBIGUOUS:
+ 				/* ambiguous result signal an issue */
+ 				break;
+@@ -207,13 +243,50 @@ static bool_t clish_shell_tinyrl_key_space(tinyrl_t *this, int key)
+ 		}
+ 	}
+ 	if (result)
+-		result = tinyrl_insert_text(this, " ");
+-	/* keep compiler happy */
++ 		result = tinyrl_insert_text(this, " ");
++
++ 	/* keep compiler happy */
+ 	key = key;
+ 
+ 	return result;
+ }
+ 
++/*--------------------------------------------------------------*/
++static unsigned find_command_error(clish_shell_t *this,
++         const char *line)
++{
++	const clish_command_t *cmd;
++	clish_shell_iterator_t iter;
++	clish_context_t local_context;
++	unsigned int end = 0;
++	unsigned int cmdlen = 0;
++	char *text = NULL;
++	
++	if ((!this)|| (!line))
++		return 0;
++	    
++	text = lub_string_dup(line);
++	cmdlen = strlen(text);
++	end =  cmdlen;
++
++	if(isspace(text[end - 1])) {
++		end--;
++		text[end] = '\0';
++	}
++
++	for( end--; end>0;end--) {
++		text[end] = '\0';
++		clish_shell_iterator_init(&iter, CLISH_NSPACE_HELP);
++		clish_context_init(&local_context, this);
++	
++		if ((cmd = clish_shell_find_next_completion(this, text, &iter))) {
++			break;
++		}
++	}
++	lub_string_free(text);
++	return end;
++}
++ 
+ /*-------------------------------------------------------- */
+ static bool_t clish_shell_tinyrl_key_enter(tinyrl_t *this, int key)
+ {
+@@ -223,11 +296,22 @@ static bool_t clish_shell_tinyrl_key_enter(tinyrl_t *this, int key)
+ 	const char *line = tinyrl__get_line(this);
+ 	bool_t result = BOOL_FALSE;
+ 	char *errmsg = NULL;
++	char custom_errmsg[50];
++	clish_ptype_method_e method;
++	const clish_ptype_t *ptype = NULL;
++	const clish_param_t *failed_param = NULL;
++	int cnt = 0;
++	int cmderrlen = 0;
++	int promtlen = 0;
++	int loopindex=0;
+ 
+ 	/* Inc line counter */
+ 	if (shell->current_file)
+ 		shell->current_file->line++;
+ 
++	/* Renew prompt */
++	clish_shell_renew_prompt(shell);
++
+ 	/* nothing to pass simply move down the screen */
+ 	if (!*line) {
+ 		tinyrl_multi_crlf(this);
+@@ -235,20 +319,22 @@ static bool_t clish_shell_tinyrl_key_enter(tinyrl_t *this, int key)
+ 		return BOOL_TRUE;
+ 	}
+ 
++	clish_shell_tinyrl_complete_ignore_error(this);
++	line = tinyrl__get_line(this);
++
++
+ 	/* try and parse the command */
+-	cmd = clish_shell_resolve_command(shell, line);
++	cmd = clish_shell_resolve_command(shell, line, context);
+ 	if (!cmd) {
+ 		tinyrl_match_e status = clish_shell_tinyrl_complete(this);
+ 		switch (status) {
+-		case TINYRL_MATCH:
+-		case TINYRL_MATCH_WITH_EXTENSIONS:
+ 		case TINYRL_COMPLETED_MATCH:
+ 			/* re-fetch the line as it may have changed
+ 			 * due to auto-completion
+ 			 */
+ 			line = tinyrl__get_line(this);
+ 			/* get the command to parse? */
+-			cmd = clish_shell_resolve_command(shell, line);
++			cmd = clish_shell_resolve_command(shell, line, context);
+ 			/*
+ 			 * We have had a match but it is not a command
+ 			 * so add a space so as not to confuse the user
+@@ -256,49 +342,138 @@ static bool_t clish_shell_tinyrl_key_enter(tinyrl_t *this, int key)
+ 			if (!cmd)
+ 				result = tinyrl_insert_text(this, " ");
+ 			break;
++
++		case TINYRL_MATCH:
++           result = tinyrl_insert_text(this, " ");
++           //Try to auto-complete if there is any unique match
++           status = clish_shell_tinyrl_complete(this);
++           if(status == TINYRL_COMPLETED_MATCH)
++           {
++               /* re-fetch the line as it may have changed
++                * due to auto-completion
++                */
++               line = tinyrl__get_line(this);
++               /* get the command to parse? */
++               cmd = clish_shell_resolve_command(shell, line, context);
++               /*
++                * We have had a match but it is not a command
++                * so add a space so as not to confuse the user
++                */
++               if (!cmd)
++                   result = tinyrl_insert_text(this, " ");
++           }
++           else
++           {
++               tinyrl_crlf(this);
++               tinyrl_printf(this,"%% Error: Ambiguous command.");
++               tinyrl_crlf(this);
++               tinyrl_done(this);
++           }
++           break;
++              case TINYRL_MATCH_WITH_EXTENSIONS:
++              case TINYRL_AMBIGUOUS:
++              case TINYRL_COMPLETED_AMBIGUOUS:
++                      tinyrl_crlf(this);
++                      tinyrl_printf(this,"%% Error: Ambiguous command.");
++                      tinyrl_crlf(this);
++                      tinyrl_done(this);
++                      break;
++
++
+ 		default:
++                        cmderrlen = find_command_error(shell, line);
++                        promtlen = strlen(tinyrl__get_prompt(this));
++                        fprintf(stderr, "\r\n");
++                        for( loopindex=0; loopindex<(cmderrlen+promtlen); loopindex++)
++                        fprintf(stderr, " ");
++                        fprintf(stderr, "^",cmderrlen,promtlen);
++
+ 			/* failed to get a unique match... */
+ 			if (!tinyrl__get_isatty(this)) {
+ 				/* batch mode */
+ 				tinyrl_multi_crlf(this);
+-				errmsg = "Unknown command";
++				errmsg = "%% Error: Invalid input detected at \"^\" marker.";
++			} else {
++				tinyrl_crlf(this);
++				tinyrl_printf(this,"%% Error: Invalid input detected at \"^\" marker.");
++				tinyrl_crlf(this);
++				tinyrl_done(this);
+ 			}
+ 			break;
+ 		}
+ 	}
+ 	if (cmd) {
+-		clish_pargv_status_e arg_status;
+-		tinyrl_multi_crlf(this);
++		clish_pargv_status_t arg_status;
++                unsigned err_len=0;
++                unsigned chooselen =0;
+ 		/* we've got a command so check the syntax */
+ 		arg_status = clish_shell_parse(shell,
+-			line, &context->cmd, &context->pargv);
++			line, &context->cmd, &context->pargv, context, &err_len);
++
+ 		switch (arg_status) {
+ 		case CLISH_LINE_OK:
+ 			tinyrl_done(this);
++			tinyrl_multi_crlf(this);
+ 			result = BOOL_TRUE;
+ 			break;
+ 		case CLISH_BAD_HISTORY:
+-			errmsg = "Bad history entry";
++			errmsg = "Bad history entry.";
+ 			break;
+ 		case CLISH_BAD_CMD:
+-			errmsg = "Illegal command line";
++			cmderrlen = find_command_error(shell, line);
++			promtlen = strlen(tinyrl__get_prompt(this));
++			chooselen = ((cmderrlen > err_len) ? cmderrlen : (err_len));
++			fprintf(stderr, "\r\n");
++			for( loopindex=0; loopindex<(chooselen+promtlen); loopindex++)
++			fprintf(stderr, " ");
++			fprintf(stderr, "^");
++			errmsg = "Invalid input detected at \"^\" marker.";
+ 			break;
+ 		case CLISH_BAD_PARAM:
+-			errmsg = "Illegal parameter";
++			promtlen = strlen(tinyrl__get_prompt(this));
++			cmderrlen = find_command_error(shell, line);
++			chooselen = ((cmderrlen > err_len) ? cmderrlen : (err_len));
++			fprintf(stderr, "\r\n");
++			for(loopindex=0; loopindex<(chooselen+promtlen); loopindex++)
++			fprintf(stderr, " ");
++			fprintf(stderr, "^");
++			errmsg = "Invalid input detected at \"^\" marker.";
++			cnt = clish_pargv__get_count(context->pargv);
++			failed_param = clish_pargv__get_param(context->pargv,
++							      (cnt)?(cnt-1):0);
++			if(failed_param) {
++ 				/*Check the failure is due to
++				  out of range case */
++				ptype = clish_param__get_ptype(failed_param);
++				if(ptype) {
++					method = clish_ptype__get_method(ptype);
++					if(method == CLISH_PTYPE_METHOD_INTEGER ||
++					   method == CLISH_PTYPE_METHOD_UNSIGNEDINTEGER) {
++						snprintf(custom_errmsg,
++							 sizeof(custom_errmsg),
++							 "Value out of range(%s).",
++							 clish_ptype__get_range(ptype));
++						errmsg = custom_errmsg;
++					}
++				}
++				clish_pargv_delete(context->pargv);
++				context->pargv = NULL;
++			}
+ 			break;
+ 		case CLISH_LINE_PARTIAL:
+-			errmsg = "The command is not completed";
++			errmsg = "The command is not completed.";
+ 			break;
+ 		default:
+-			errmsg = "Unknown problem";
++			errmsg = "Unknown problem.";
+ 			break;
+ 		}
+ 	}
+ 	/* If error then print message */
+-	if (errmsg) {
+-		if (tinyrl__get_isatty(this) || !shell->current_file) {
+-			fprintf(stderr, "Syntax error: %s\n", errmsg);
+-			tinyrl_reset_line_state(this);
++    if (errmsg) {
++        if (tinyrl__get_isatty(this) || !shell->current_file) {
++            tinyrl_crlf(this);
++            fprintf(stderr, "%% Error: %s\n", errmsg);
++            tinyrl_done(this);
+ 		} else {
+ 			char *fname = "stdin";
+ 			if (shell->current_file->fname)
+@@ -308,6 +483,7 @@ static bool_t clish_shell_tinyrl_key_enter(tinyrl_t *this, int key)
+ 			line, errmsg);
+ 		}
+ 	}
++
+ 	/* keep the compiler happy */
+ 	key = key;
+ 
+@@ -361,6 +537,7 @@ char **clish_shell_tinyrl_completion(tinyrl_t * tinyrl,
+ 	const clish_command_t *cmd = NULL;
+ 	char *text;
+ 	char **result = NULL;
++    clish_context_t local_context;
+ 
+ 	if (tinyrl_is_quoting(tinyrl))
+ 		return result;
+@@ -371,13 +548,23 @@ char **clish_shell_tinyrl_completion(tinyrl_t * tinyrl,
+ 	/* Don't bother to resort to filename completion */
+ 	tinyrl_completion_over(tinyrl);
+ 
++	/* Search for COMMAND completions */
++
+ 	/* Search for COMMAND completions */
+ 	clish_shell_iterator_init(&iter, CLISH_NSPACE_COMPLETION);
+-	while ((cmd = clish_shell_find_next_completion(this, text, &iter)))
++    	clish_context_init(&local_context, this);
++	while ((cmd = clish_shell_find_next_completion(this, text, &iter))) {
++        	clish_context__set_cmd(&local_context, cmd);
++		if(clish_shell_command_test(cmd, &local_context) == BOOL_FALSE)
++			continue;
++		if(clish_command__get_hidden(cmd) == BOOL_TRUE)
++			continue;
++        	if(clish_command__get_enabled(cmd) == BOOL_FALSE)
++			continue;
+ 		lub_argv_add(matches, clish_command__get_suffix(cmd));
+-
++	}
+ 	/* Try and resolve a command */
+-	cmd = clish_shell_resolve_command(this, text);
++	cmd = clish_shell_resolve_command(this, text, context);
+ 	/* Search for PARAM completion */
+ 	if (cmd)
+ 		clish_shell_param_generator(this, matches, cmd, text, start);
+@@ -459,6 +646,13 @@ void clish_shell_tinyrl_fini(tinyrl_t * this)
+ 	this = this;
+ }
+ 
++/*-------------------------------------------------------- */
++bool_t clish_shell_tinyrl_key_enter_test(tinyrl_t *tinyrl, int key)
++{
++    bool_t res;
++    res = clish_shell_tinyrl_key_enter(tinyrl, key);
++    return res;
++}
+ /*-------------------------------------------------------- */
+ void clish_shell_tinyrl_delete(tinyrl_t * this)
+ {
+@@ -475,6 +669,7 @@ static int clish_shell_execline(clish_shell_t *this, const char *line, char **ou
+ 	clish_context_t context;
+ 	tinyrl_history_t *history;
+ 	int lerror = 0;
++	time_t timestamp;
+ 
+ 	assert(this);
+ 	this->state = SHELL_STATE_OK;
+@@ -512,10 +707,10 @@ static int clish_shell_execline(clish_shell_t *this, const char *line, char **ou
+ 
+ 	/* Deal with the history list */
+ 	if (tinyrl__get_isatty(this->tinyrl)) {
+-		history = tinyrl__get_history(this->tinyrl);
+-		tinyrl_history_add(history, str);
+-	}
+-	free(str);
++                history = tinyrl__get_history(this->tinyrl);
++                tinyrl_history_add(history, str);
++        }
++	context.commandstr = str;
+ 
+ 	/* Execute the provided command */
+ 	if (context.cmd && context.pargv) {
+@@ -524,10 +719,13 @@ static int clish_shell_execline(clish_shell_t *this, const char *line, char **ou
+ 			this->state = SHELL_STATE_SCRIPT_ERROR;
+ 			if (context.pargv)
+ 				clish_pargv_delete(context.pargv);
++			free(str);
+ 			return res;
+ 		}
+ 	}
+ 
++	context.commandstr = NULL;
++	free(str);
+ 	if (context.pargv)
+ 		clish_pargv_delete(context.pargv);
+ 
+@@ -553,11 +751,18 @@ FILE * clish_shell__get_istream(const clish_shell_t * this)
+ }
+ 
+ /*-------------------------------------------------------- */
+-FILE * clish_shell__get_ostream(const clish_shell_t * this)
++void clish_shell__set_interactive(clish_shell_t * this, bool_t interactive)
+ {
+-	return tinyrl__get_ostream(this->tinyrl);
++	assert(this);
++	this->interactive = interactive;
+ }
+ 
++/*-------------------------------------------------------- */
++bool_t clish_shell__get_interactive(const clish_shell_t * this)
++{
++	assert(this);
++	return this->interactive;
++}
+ 
+ /*-------------------------------------------------------- */
+ bool_t clish_shell__get_utf8(const clish_shell_t * this)
+@@ -573,6 +778,13 @@ void clish_shell__set_utf8(clish_shell_t * this, bool_t utf8)
+ 	tinyrl__set_utf8(this->tinyrl, utf8);
+ }
+ 
++/*-------------------------------------------------------- */
++void clish_shell__set_timeout(clish_shell_t *this, int timeout)
++{
++	assert(this);
++	this->idle_timeout = timeout;
++}
++
+ /*--------------------------------------------------------- */
+ tinyrl_t *clish_shell__get_tinyrl(const clish_shell_t * this)
+ {
+@@ -597,6 +809,4 @@ void clish_shell__stifle_history(clish_shell_t *this, unsigned int stifle)
+ 	tinyrl__stifle_history(this->tinyrl, stifle);
+ }
+ 
+-CLISH_SET(shell, unsigned int, idle_timeout);
+-CLISH_SET(shell, bool_t, interactive);
+-CLISH_GET(shell, bool_t, interactive);
++/*-------------------------------------------------------- */
+diff --git a/clish/shell/shell_wdog.c b/clish/shell/shell_wdog.c
+index 0b04c88..dd256c9 100644
+--- a/clish/shell/shell_wdog.c
++++ b/clish/shell/shell_wdog.c
+@@ -3,6 +3,7 @@
+  */
+ #include "private.h"
+ #include <assert.h>
++#include <syslog.h>
+ 
+ #include "tinyrl/tinyrl.h"
+ #include "lub/string.h"
+@@ -18,6 +19,7 @@ int clish_shell_timeout_fn(tinyrl_t *tinyrl)
+ 		tinyrl_crlf(tinyrl);
+ 		fprintf(stderr, "Warning: Idle timeout. The session will be closed.\n");
+ 		/* Return -1 to close session on timeout */
++		syslog(LOG_WARNING, "Idle timeout. The session will be closed.");
+ 		return -1;
+ 	}
+ 
+diff --git a/clish/shell/shell_xml.c b/clish/shell/shell_xml.c
+index 8467ec1..6a4b49e 100644
+--- a/clish/shell/shell_xml.c
++++ b/clish/shell/shell_xml.c
+@@ -179,6 +179,7 @@ int clish_shell_load_scheme(clish_shell_t *this, const char *xml_path, const cha
+ 			root = clish_xmldoc_get_root(doc);
+ 			r = process_node(this, root, NULL);
+ 			clish_xmldoc_release(doc);
++			doc = NULL;
+ 
+ 			/* Error message */
+ 			if (r) {
+@@ -382,6 +383,10 @@ static int process_ptype(clish_shell_t *shell, clish_xmlnode_t *element,
+ 	char *pattern = clish_xmlnode_fetch_attr(element, "pattern");
+ 	char *method_name = clish_xmlnode_fetch_attr(element, "method");
+ 	char *preprocess_name =	clish_xmlnode_fetch_attr(element, "preprocess");
++	char *ext_pattern = clish_xmlnode_fetch_attr(element, "ext_pattern");
++        char *ext_help = clish_xmlnode_fetch_attr(element, "ext_help");
++	char *alt_ext_pattern = clish_xmlnode_fetch_attr(element, "alt_ext_pattern");
++	char *alt_pattern = clish_xmlnode_fetch_attr(element, "alt_pattern");
+ 
+ 	/* Check syntax */
+ 	if (!name) {
+@@ -400,8 +405,13 @@ static int process_ptype(clish_shell_t *shell, clish_xmlnode_t *element,
+ 	}
+ 
+ 	preprocess = clish_ptype_preprocess_resolve(preprocess_name);
++	if ((preprocess == CLISH_PTYPE_PRE_MODE) && !alt_ext_pattern) {
++		fprintf(stderr, CLISH_XML_ERROR_ATTR("alt_ext_pattern"));
++		goto error;
++	}
+ 	ptype = clish_shell_find_create_ptype(shell,
+-		name, help, pattern, method, preprocess);
++		name, help, pattern, method, preprocess, ext_pattern, ext_help,
++		alt_ext_pattern, alt_pattern);
+ 
+ 	res = process_children(shell, element, ptype);
+ error:
+@@ -410,6 +420,10 @@ error:
+ 	clish_xml_release(pattern);
+ 	clish_xml_release(method_name);
+ 	clish_xml_release(preprocess_name);
++        clish_xml_release(ext_pattern);
++        clish_xml_release(ext_help);
++        clish_xml_release(alt_ext_pattern);
++	clish_xml_release(alt_pattern);
+ 
+ 	parent = parent; /* Happy compiler */
+ 
+@@ -476,6 +490,7 @@ static int process_command(clish_shell_t *shell, clish_xmlnode_t *element,
+ 	char *args_name = clish_xmlnode_fetch_attr(element, "args");
+ 	char *args_help = clish_xmlnode_fetch_attr(element, "args_help");
+ 	char *ref = clish_xmlnode_fetch_attr(element, "ref");
++        char *hidden = clish_xmlnode_fetch_attr(element, "hidden");
+ #ifdef LEGACY
+ 	char *lock = clish_xmlnode_fetch_attr(element, "lock");
+ 	char *interrupt = clish_xmlnode_fetch_attr(element, "interrupt");
+@@ -573,6 +588,11 @@ static int process_command(clish_shell_t *shell, clish_xmlnode_t *element,
+ 	if (access)
+ 		clish_command__set_access(cmd, access);
+ 
++        if (hidden && lub_string_nocasecmp(hidden, "true") == 0)
++                clish_command__set_hidden(cmd, BOOL_TRUE);
++        else
++                clish_command__set_hidden(cmd, BOOL_FALSE);
++
+ //process_command_end:
+ 	res = process_children(shell, element, cmd);
+ error:
+@@ -585,6 +605,7 @@ error:
+ 	clish_xml_release(args_name);
+ 	clish_xml_release(args_help);
+ 	clish_xml_release(ref);
++	clish_xml_release(hidden);
+ #ifdef LEGACY
+ 	clish_xml_release(lock);
+ 	clish_xml_release(interrupt);
+@@ -642,7 +663,7 @@ static int process_startup(clish_shell_t *shell, clish_xmlnode_t *element,
+ 	if (timeout) {
+ 		unsigned int to = 0;
+ 		lub_conv_atoui(timeout, &to, 0);
+-		clish_shell__set_idle_timeout(shell, to);
++		clish_shell__set_timeout(shell, to);
+ 	}
+ 
+ #ifdef LEGACY
+@@ -710,6 +731,9 @@ static int process_param(clish_shell_t *shell, clish_xmlnode_t *element,
+ 	char *test = clish_xmlnode_fetch_attr(element, "test");
+ 	char *completion = clish_xmlnode_fetch_attr(element, "completion");
+ 	char *access = clish_xmlnode_fetch_attr(element, "access");
++	char *view = clish_xmlnode_fetch_attr(element, "view");
++	char *viewid = clish_xmlnode_fetch_attr(element, "viewid");
++
+ 
+ 	/* The PARAM can be child of COMMAND or another PARAM */
+ 	pelement = clish_xmlnode_parent(element);
+@@ -760,7 +784,8 @@ static int process_param(clish_shell_t *shell, clish_xmlnode_t *element,
+ 		 */
+ 		tmp = clish_shell_find_create_ptype(shell,
+ 			ptype_name, "Option", "[^\\\\]+",
+-			CLISH_PTYPE_METHOD_REGEXP, CLISH_PTYPE_PRE_NONE);
++			CLISH_PTYPE_METHOD_REGEXP, CLISH_PTYPE_PRE_NONE, NULL, NULL,
++			NULL, NULL);
+ 		assert(tmp);
+ 		lub_string_cat(&str, "_prefix_");
+ 		lub_string_cat(&str, name);
+@@ -841,6 +867,12 @@ static int process_param(clish_shell_t *shell, clish_xmlnode_t *element,
+ 	if (p_param)
+ 		clish_param_insert_param(p_param, param);
+ 
++	if (view)
++		clish_param__set_viewname(param, view);
++
++	if (viewid)
++		clish_param__set_viewid(param, viewid);
++
+ 	res = process_children(shell, element, param);
+ 
+ error:
+@@ -857,6 +889,8 @@ error:
+ 	clish_xml_release(test);
+ 	clish_xml_release(completion);
+ 	clish_xml_release(access);
++	clish_xml_release(view);
++	clish_xml_release(viewid);
+ 
+ 	return res;
+ }
+diff --git a/configure.ac b/configure.ac
+index 9d3e49f..42e46e6 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -25,6 +25,8 @@ AC_PROG_CC
+ AC_LIBTOOL_WIN32_DLL
+ AC_PROG_LIBTOOL
+ 
++AC_PROG_CXX
++
+ AC_CONFIG_HEADERS([config.h])
+ AM_INIT_AUTOMAKE(subdir-objects)
+ AM_PROG_CC_C_O
+diff --git a/lub/argv.h b/lub/argv.h
+index 7e0c7cc..7da2bc4 100644
+--- a/lub/argv.h
++++ b/lub/argv.h
+@@ -73,6 +73,7 @@ char **lub_argv__get_argv(const lub_argv_t * instance, const char *argv0);
+ void lub_argv__free_argv(char **argv);
+ char *lub_argv__get_line(const lub_argv_t * instance);
+ void lub_argv_add(lub_argv_t * instance, const char *text);
++bool_t lub_argv__swap_arg(const lub_argv_t * instance,unsigned index1, unsigned index2);
+ 
+ _END_C_DECL
+ #endif				/* _lub_argv_h */
+diff --git a/lub/argv/argv.c b/lub/argv/argv.c
+index 14e81fc..0eb95a4 100644
+--- a/lub/argv/argv.c
++++ b/lub/argv/argv.c
+@@ -88,6 +88,9 @@ static void lub_argv_fini(lub_argv_t * this)
+ /*--------------------------------------------------------- */
+ void lub_argv_delete(lub_argv_t * this)
+ {
++	if (!this)
++		return;
++
+ 	lub_argv_fini(this);
+ 	free(this);
+ }
+@@ -171,6 +174,9 @@ const char *lub_argv__get_arg(const lub_argv_t *this, unsigned int index)
+ /*--------------------------------------------------------- */
+ unsigned lub_argv__get_count(const lub_argv_t * this)
+ {
++	if (!this)
++		return 0;
++
+ 	return this->argc;
+ }
+ 
+@@ -197,3 +203,18 @@ bool_t lub_argv__get_quoted(const lub_argv_t * this, unsigned index)
+ }
+ 
+ /*--------------------------------------------------------- */
++bool_t lub_argv__swap_arg (const lub_argv_t *this, unsigned int index1, unsigned int index2) {
++	char *temp = NULL;
++	bool_t result = BOOL_FALSE;
++	if (!this)
++		return result;
++	if ((this->argc > index1) && (this->argc > index2)) {
++		temp = this->argv[index1].arg;
++		this->argv[index1].arg = this->argv[index2].arg;
++		this->argv[index2].arg = temp;
++		result = BOOL_TRUE;
++	}
++	return result;
++}
++
++/*--------------------------------------------------------- */
+diff --git a/lub/string.h b/lub/string.h
+index ad6a09f..064ebfa 100644
+--- a/lub/string.h
++++ b/lub/string.h
+@@ -270,6 +270,8 @@ char *lub_string_encode(const char *string, const char *escape_chars);
+ char *lub_string_tolower(const char *str);
+ unsigned int lub_string_equal_part(const char *str1, const char *str2,
+ 	bool_t utf8);
++unsigned int lub_string_equal_part_nocase(const char *str1, const char *str2,
++	bool_t utf8);
+ const char *lub_string_nextword(const char *string,
+ 	size_t *len, size_t *offset, size_t *quoted);
+ unsigned int lub_string_wordcount(const char *line);
+diff --git a/lub/string/string.c b/lub/string/string.c
+index 2d94710..dc26ad1 100644
+--- a/lub/string/string.c
++++ b/lub/string/string.c
+@@ -233,6 +233,31 @@ const char *lub_string_nocasestr(const char *cs, const char *ct)
+ 	return result;
+ }
+ 
++/*--------------------------------------------------------- */
++unsigned int lub_string_equal_part_nocase(const char *str1, const char *str2,
++	bool_t utf8)
++{
++	unsigned int cnt = 0;
++
++	if (!str1 || !str2)
++		return cnt;
++	while (*str1 && *str2) {
++		if (tolower(*str1) != tolower(*str2))
++			break;
++		cnt++;
++		str1++;
++		str2++;
++	}
++	if (!utf8)
++		return cnt;
++
++	/* UTF8 features */
++	if (cnt && (UTF8_11 == (*(str1 - 1) & UTF8_MASK)))
++		cnt--;
++
++	return cnt;
++}
++
+ /*--------------------------------------------------------- */
+ unsigned int lub_string_equal_part(const char *str1, const char *str2,
+ 	bool_t utf8)
+@@ -257,7 +282,6 @@ unsigned int lub_string_equal_part(const char *str1, const char *str2,
+ 
+ 	return cnt;
+ }
+-
+ /*--------------------------------------------------------- */
+ const char *lub_string_suffix(const char *string)
+ {
+diff --git a/mgmt_clish_extn_param.h b/mgmt_clish_extn_param.h
+new file mode 100644
+index 0000000..69ae136
+--- /dev/null
++++ b/mgmt_clish_extn_param.h
+@@ -0,0 +1,23 @@
++/*
++ * filename: mgmt_clish_extn_param.h
++ * (c) Copyright 2020 Dell EMC All Rights Reserved.
++ *
++ * APIs to set and get the new attributes added to the klish PARAM option
++ */
++
++/** OPENSOURCELICENSE */
++
++#ifndef _mgmt_clish_extn_param_h
++#define _mgmt_clish_extn_param_h
++
++/* SET */
++_CLISH_SET_STR(param, viewname);
++_CLISH_SET_STR(param, viewid);
++_CLISH_SET(param, bool_t, recursive);
++
++/* GET */
++_CLISH_GET_STR(param, viewname);
++_CLISH_GET_STR(param, viewid);
++_CLISH_GET(param, bool_t, recursive);
++
++#endif
+diff --git a/plugins/clish/builtin_init.c b/plugins/clish/builtin_init.c
+index c2fb9fd..21d4b6a 100644
+--- a/plugins/clish/builtin_init.c
++++ b/plugins/clish/builtin_init.c
+@@ -7,6 +7,7 @@
+ #include "clish/plugin.h"
+ #include "private.h"
+ 
++#include "nos_extn.h"
+ /*----------------------------------------------------------- */
+ /* Initialize internal pseudo-plugin */
+ CLISH_PLUGIN_INIT(clish)
+@@ -30,6 +31,11 @@ CLISH_PLUGIN_INIT(clish)
+ 	clish_plugin_add_psym(plugin, clish_wdog, "clish_wdog");
+ 	clish_plugin_add_psym(plugin, clish_macros, "clish_macros");
+ 	clish_plugin_add_osym(plugin, clish_script, "clish_script");
++	clish_plugin_add_psym(plugin, clish_restcl, "clish_restcl");
++	clish_plugin_add_psym(plugin, clish_pyobj, "clish_pyobj");
++	clish_plugin_add_psym(plugin, clish_setenv, "clish_setenv");
++
++	nos_extn_init();
+ 
+ 	clish_shell = clish_shell; /* Happy compiler */
+ 
+diff --git a/plugins/clish/call_pyobj.c b/plugins/clish/call_pyobj.c
+new file mode 100644
+index 0000000..4055911
+--- /dev/null
++++ b/plugins/clish/call_pyobj.c
+@@ -0,0 +1,260 @@
++/*
++###########################################################################
++#
++# Copyright 2019 Dell, Inc.
++#
++# Licensed under the Apache License, Version 2.0 (the "License");
++# you may not use this file except in compliance with the License.
++# You may obtain a copy of the License at
++#
++#     http://www.apache.org/licenses/LICENSE-2.0
++#
++# Unless required by applicable law or agreed to in writing, software
++# distributed under the License is distributed on an "AS IS" BASIS,
++# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++# See the License for the specific language governing permissions and
++# limitations under the License.
++#
++###########################################################################
++*/
++#include "lub/dump.h"
++#include "private.h"
++#include "logging.h"
++
++#include <stdio.h>
++#include <Python.h>
++#include <stdarg.h>
++#include <malloc.h>
++
++void pyobj_init() {
++    Py_Initialize();
++}
++
++static void pyobj_handle_error() {
++    PyObject *type, *value, *traceback;
++    PyObject *pystr, *py_module, *py_func;
++    const char *str;
++
++    if (!PyErr_Occurred()) {
++        return;
++    }
++
++    PyErr_Fetch(&type, &value, &traceback);
++    PyErr_NormalizeException(&type, &value, &traceback);
++
++    if (!PyErr_GivenExceptionMatches(type, PyExc_SystemExit)) {
++       lub_dump_printf("%%Error: Internal error.\n");
++    }
++
++    py_module = PyImport_ImportModule("traceback");
++    if (py_module) {
++        py_func = PyObject_GetAttrString(py_module, "format_exception");
++
++        if (py_func && PyCallable_Check(py_func)) {
++            PyObject *py_val;
++            py_val = PyObject_CallFunctionObjArgs(py_func,
++                        type, value, traceback, NULL);
++
++            pystr = PyObject_Str(py_val);
++            if (pystr)  {
++		str = PyUnicode_AsUTF8(pystr);
++                syslog(LOG_WARNING, "clish_pyobj: Traceback: %s", str);
++            }
++
++            Py_XDECREF(pystr);
++            Py_XDECREF(py_func);
++            Py_XDECREF(py_val);
++        }
++    }
++
++    pystr = PyObject_Str(value);
++    if (pystr) {
++	str = PyUnicode_AsUTF8(pystr);
++        syslog(LOG_WARNING, "clish_pyobj: Error: %s", str);
++    }
++
++    Py_XDECREF(pystr);
++    Py_XDECREF(type);
++    Py_XDECREF(value);
++    Py_XDECREF(traceback);
++    Py_XDECREF(py_module);
++}
++
++int pyobj_update_environ(const char *key, const char *val) {
++
++    PyObject *module = PyImport_ImportModule("os");
++    if (module == NULL) {
++        pyobj_handle_error();
++        return -1;
++    }
++
++    PyObject *dict = PyModule_GetDict(module);
++    PyObject *env_obj = PyDict_GetItemString(dict, "environ");
++
++    PyObject *func = PyObject_GetAttrString(env_obj, "update");
++   
++    PyObject *pMap = PyDict_New();
++    PyObject *v_obj = PyUnicode_FromString(val);
++    PyDict_SetItemString(pMap, key, v_obj);
++
++    PyObject *args = PyTuple_New(1);
++    PyTuple_SetItem(args, 0, pMap);
++
++    PyObject_CallObject(func, args);
++
++    if (PyErr_Occurred()) {
++        pyobj_handle_error();
++        return 1;
++    }
++
++    Py_XDECREF(module);
++    Py_XDECREF(func);
++    Py_XDECREF(v_obj);
++    Py_XDECREF(pMap);
++    Py_XDECREF(args);
++
++    return 0;
++}
++
++static int pyobj_set_user_cmd(const char *cmd) {
++    return pyobj_update_environ("USER_COMMAND", cmd);
++}
++
++int pyobj_set_rest_token(const char *token) {
++    return pyobj_update_environ("REST_API_TOKEN", token);
++}
++
++int call_pyobj(char *cmd, const char *arg, char **out) {
++    int ret_code = 0;
++    char *token[128];
++    char *buf;
++    int i;
++
++    PyGILState_STATE gstate;
++    gstate = PyGILState_Ensure();
++
++    pyobj_set_user_cmd(cmd);
++    syslog(LOG_DEBUG, "clish_pyobj: cmd=%s", cmd);
++
++    buf = strdup(arg);
++    if (!buf) {
++        syslog(LOG_WARNING, "clish_pyobj: Failed to allocate memory");
++        return -1;
++    }
++
++    // trim leading and trailing whtespace
++    char *p = buf;
++    int len = strlen(buf);
++    while (isspace(p[len-1])) p[--len] = '\0';
++    while (*p && isspace(*p)) ++p, --len;
++
++    char *saved_ptr = '\0';
++    size_t idx = 0;
++    bool quoted = false;
++
++    while (*p) {
++	if (!saved_ptr) saved_ptr = p;
++	if (*p == ' ' && quoted == false) {
++	   while (*(p+1) && *(p+1)==' ') {
++	      memmove(p, p+1, strlen(p)-1);
++	      *(p+strlen(p)-1) = '\0';
++	   }
++	   *p = '\0';
++           token[idx++] = saved_ptr;
++	   saved_ptr = '\0';
++	} else if (*p == '\"') {
++	   if (!quoted && strchr((p+1), '\"')) {
++	      // open quote
++	      if (*saved_ptr == '\"') {
++		 saved_ptr++;
++	         quoted = true;
++	      }
++	   } else if (quoted) {
++	      // close quote
++	      quoted = false;
++	      *p = '\0';
++	   }
++	}
++	// escape chars
++	if (*p == '\\') {
++	   if (*(p+1) == '\\' || *(p+1) == '\"') {
++	      memmove(p, p+1, strlen(p)-1);
++	      *(p+strlen(p)-1) = '\0';
++	   }
++	}
++	if (*++p == '\0' && saved_ptr)
++           token[idx++] = saved_ptr;
++    }
++
++    PyObject *module, *name, *func, *args, *value;
++
++    name = PyUnicode_FromString(token[0]);
++    module = PyImport_Import(name);
++    if (module == NULL) {
++        syslog(LOG_WARNING, "clish_pyobj: Failed to load module %s", token[0]);
++        pyobj_handle_error();
++        free(buf);
++        Py_XDECREF(name);
++        PyGILState_Release(gstate);
++        return -1;
++    }
++
++    func = PyObject_GetAttrString(module, "run");
++
++    if (!func || !PyCallable_Check(func)) {
++        lub_dump_printf("%%Error: Internal error.\n");
++        syslog(LOG_WARNING, "clish_pyobj: Function run not found in module %s", token[0]);
++        Py_XDECREF(module);
++        Py_XDECREF(name);
++        free(buf);
++        PyGILState_Release(gstate);
++        return -1;
++    }
++
++    args = PyTuple_New(2);
++    PyTuple_SetItem(args, 0, PyUnicode_FromString(token[1]));
++
++    PyObject *args_list = PyList_New(0);
++    for (i=1; i< idx-1; i++) {
++	PyList_Append(args_list, PyUnicode_FromString(token[i+1]));
++    }
++    PyTuple_SetItem(args, 1, args_list);
++
++    value = PyObject_CallObject(func, args);
++    if (value == NULL) {
++       pyobj_handle_error();
++       syslog(LOG_WARNING, "clish_pyobj: Failed [cmd=%s][args:%s]", cmd, arg);
++       ret_code = 1;
++    } else {
++        if (PyLong_Check(value)) {
++            ret_code = PyLong_AsLong(value);
++        } else if (PyUnicode_Check(value)) {
++            if (!*out) *out = (char *)calloc((PyBytes_Size(value)+1), sizeof(char)); // dealloc higher up in call hierarchy
++            if (*out == NULL) {
++                lub_dump_printf("%%Error: Internal error.\n");
++                syslog(LOG_WARNING, "clish_pyobj: Failed to allocate memory");
++                ret_code = -1;
++            } else {
++		strncpy(*out,PyUnicode_AsUTF8(value),PyBytes_Size(value));
++            }
++        }
++
++        if (ret_code) {
++            syslog(LOG_WARNING, "clish_pyobj: [cmd=%s][args:%s] ret_code:%d", cmd, arg, ret_code);
++        }
++    }
++
++    Py_XDECREF(module);
++    Py_XDECREF(name);
++    Py_XDECREF(func);
++    Py_XDECREF(args);
++    Py_XDECREF(value);
++
++    free(buf);
++
++    PyGC_Collect();
++    malloc_trim(0);
++
++    PyGILState_Release(gstate);
++    return ret_code;
++}
+diff --git a/plugins/clish/hook_log.c b/plugins/clish/hook_log.c
+index cafd29e..da59419 100644
+--- a/plugins/clish/hook_log.c
++++ b/plugins/clish/hook_log.c
+@@ -37,8 +37,9 @@ CLISH_HOOK_LOG(clish_hook_log)
+ 		if (!(uname = getenv("LOGNAME")))
+ 			uname = user ? user->pw_name : "unknown";
+ 	}
+-	syslog(LOG_INFO, "%u(%s) %s : %d",
+-		user ? user->pw_uid : getuid(), uname, line, retcode);
++
++        int facility = LOG_LOCAL4;
++        syslog(LOG_INFO|facility, "User \"%s\" command \"%s\" status - %s", uname, line, retcode ? "failure" : "success");
+ 
+ 	return 0;
+ }
+diff --git a/plugins/clish/logging.h b/plugins/clish/logging.h
+new file mode 100644
+index 0000000..2f5f84b
+--- /dev/null
++++ b/plugins/clish/logging.h
+@@ -0,0 +1,18 @@
++#ifndef __LOGGING_H__
++#define __LOGGING_H__
++
++#include <stdlib.h>
++#include <syslog.h>
++
++#ifdef SYSLOG_TO_STDOUT
++
++#define syslog(LEVEL, FMT, ARGS...) \
++    do { \
++        if (LEVEL < LOG_DEBUG || getenv("DEBUG")) { \
++            printf("[%s] " FMT "\n", #LEVEL, ##ARGS); \
++        } \
++    } while(0)
++
++#endif
++
++#endif // __LOGGING_H__
+diff --git a/plugins/clish/module.am b/plugins/clish/module.am
+index ec19989..0cd4e54 100644
+--- a/plugins/clish/module.am
++++ b/plugins/clish/module.am
+@@ -18,5 +18,8 @@ clish_plugin_clish_la_SOURCES += \
+ 	plugins/clish/hook_config.c \
+ 	plugins/clish/hook_log.c \
+ 	plugins/clish/sym_misc.c \
++	plugins/clish/rest_cl.cpp \
++	plugins/clish/call_pyobj.c \
++	plugins/clish/nos_extn.c \
+ 	plugins/clish/sym_script.c \
+ 	plugins/clish/private.h
+diff --git a/plugins/clish/nos_extn.c b/plugins/clish/nos_extn.c
+new file mode 100644
+index 0000000..e0686c7
+--- /dev/null
++++ b/plugins/clish/nos_extn.c
+@@ -0,0 +1,125 @@
++/*
++###########################################################################
++#
++# Copyright 2019 Dell, Inc.
++#
++# Licensed under the Apache License, Version 2.0 (the "License");
++# you may not use this file except in compliance with the License.
++# You may obtain a copy of the License at
++#
++#     http://www.apache.org/licenses/LICENSE-2.0
++#
++# Unless required by applicable law or agreed to in writing, software
++# distributed under the License is distributed on an "AS IS" BASIS,
++# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++# See the License for the specific language governing permissions and
++# limitations under the License.
++#
++###########################################################################
++*/
++
++#include "private.h"
++#include "nos_extn.h"
++#include "lub/string.h"
++
++#include <pthread.h>
++#include <unistd.h>
++#include <syslog.h>
++#include <stdint.h>
++#include <stdlib.h>
++#include <string.h>
++#include <signal.h>
++
++pthread_mutex_t lock;
++
++void *rest_token_refresh(void *vargp){
++    int expiry  = (intptr_t)vargp;
++    int interval;
++    while(1) {
++        interval = 0.8 * expiry; 
++        syslog(LOG_DEBUG, "Token update - sleeping for %d of %d", interval, expiry);
++
++        /* Sleep for 80% of the interval */
++        sleep(interval);
++
++        pthread_mutex_lock(&lock);
++
++        rest_token_fetch(&expiry);
++
++        pthread_mutex_unlock(&lock);
++    }
++}
++
++int clish_rest_thread_init() {
++    pthread_t thread_id;
++
++
++    int expiry = 30;
++    rest_token_fetch(&expiry);
++    
++    pthread_create(&thread_id, NULL, rest_token_refresh, (void*)(long)expiry);
++    return 0;
++}
++
++CLISH_PLUGIN_SYM(clish_restcl)
++{
++    char *cmd = clish_shell__get_full_line(clish_context);
++    
++    pthread_mutex_lock(&lock);
++
++    int ret = rest_cl(cmd, script);
++
++    pthread_mutex_unlock(&lock);
++
++    lub_string_free(cmd);
++
++    return ret;
++}
++
++CLISH_PLUGIN_SYM(clish_pyobj)
++{
++    char *cmd = clish_shell__get_full_line(clish_context);
++
++    sigset_t sigs;
++    sigemptyset(&sigs);
++    sigaddset(&sigs, SIGINT);
++    sigprocmask(SIG_UNBLOCK, &sigs, NULL);
++
++    pthread_mutex_lock(&lock);
++    int ret = call_pyobj(cmd, script, out);
++    pthread_mutex_unlock(&lock);
++
++    return ret;
++}
++
++CLISH_PLUGIN_SYM(clish_setenv)
++{
++    char *key, *value;
++    key = strtok_r((char*)script, "=", &value);
++
++    if (key) {
++	pyobj_update_environ(key,value);
++
++	setenv(key, value, 1);
++    }
++
++    return 0;
++}
++
++void nos_extn_init() {
++    
++    pthread_mutex_init(&lock, NULL);
++
++    int auth_ena = (getenv("CLISH_NOAUTH") == NULL);
++
++    rest_client_init();
++    pyobj_init();
++    
++    if (auth_ena) {
++        clish_rest_thread_init();
++    }
++    
++    if (!auth_ena) {
++        syslog(LOG_WARNING, "CLISH running with auth disabled");
++    }
++}
+diff --git a/plugins/clish/nos_extn.h b/plugins/clish/nos_extn.h
+new file mode 100644
+index 0000000..d7cb235
+--- /dev/null
++++ b/plugins/clish/nos_extn.h
+@@ -0,0 +1,24 @@
++
++#ifndef __NOS_EXTN_H__
++#define __NOS_EXTN_H__
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++extern void pyobj_init();
++extern void nos_extn_init();
++
++extern int call_pyobj(char *cmd, const char *buff, char **out);
++extern int pyobj_set_rest_token(const char*);
++extern int pyobj_update_environ(const char *key, const char *val);
++
++extern void rest_client_init();
++extern int rest_token_fetch(int *interval);
++extern int rest_cl(char *cmd, const char *buff);
++
++#ifdef __cplusplus
++}
++#endif
++
++#endif
+diff --git a/plugins/clish/private.h b/plugins/clish/private.h
+index 0348264..d65b331 100644
+--- a/plugins/clish/private.h
++++ b/plugins/clish/private.h
+@@ -21,3 +21,6 @@ CLISH_PLUGIN_SYM(clish_nop);
+ CLISH_PLUGIN_SYM(clish_wdog);
+ CLISH_PLUGIN_OSYM(clish_script);
+ CLISH_PLUGIN_SYM(clish_macros);
++CLISH_PLUGIN_SYM(clish_restcl);
++CLISH_PLUGIN_SYM(clish_pyobj);
++CLISH_PLUGIN_SYM(clish_setenv);
+diff --git a/plugins/clish/rest_cl.cpp b/plugins/clish/rest_cl.cpp
+new file mode 100644
+index 0000000..1690f74
+--- /dev/null
++++ b/plugins/clish/rest_cl.cpp
+@@ -0,0 +1,364 @@
++/*
++###########################################################################
++#
++# Copyright 2019 Dell, Inc.
++#
++# Licensed under the Apache License, Version 2.0 (the "License");
++# you may not use this file except in compliance with the License.
++# You may obtain a copy of the License at
++#
++#     http://www.apache.org/licenses/LICENSE-2.0
++#
++# Unless required by applicable law or agreed to in writing, software
++# distributed under the License is distributed on an "AS IS" BASIS,
++# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++# See the License for the specific language governing permissions and
++# limitations under the License.
++#
++###########################################################################
++*/
++
++extern "C" {
++#include "private.h"
++#include "lub/dump.h"
++#include "nos_extn.h"
++#include "logging.h"
++
++#include <stdio.h>
++#include <fcntl.h>
++#include <sys/stat.h>
++#include <curl/curl.h>
++#include <string.h>
++#include <stdlib.h>
++#include <pwd.h>
++#include <cJSON.h>
++#include <pthread.h>
++#include <unistd.h>
++#include <stdbool.h>
++}
++
++#include <string>
++
++std::string REST_API_ROOT;
++
++typedef struct {
++    int size;
++    std::string body;
++} RestResponse;
++
++typedef struct {
++    const char* data;
++    size_t length;
++} PayloadData;
++
++static ssize_t read_callback(void *ptr, size_t size, size_t nmemb, void *userp)
++{
++  PayloadData *upload = reinterpret_cast<PayloadData *>(userp);
++  size_t max = size*nmemb;
++
++  size_t copy_size = max;
++  if (upload->length < max) {
++      copy_size = upload->length;
++  }
++
++  memcpy(ptr, upload->data, copy_size);
++
++  upload->length -= copy_size;
++  upload->data += copy_size;
++
++  return copy_size; 
++}
++
++static size_t write_callback(void *data, size_t size,
++                                    size_t nmemb, void *userdata) {
++  size_t realsize = size * nmemb;
++  RestResponse *mem = reinterpret_cast<RestResponse *>(userdata);
++
++  mem->body.append(reinterpret_cast<char*>(data), realsize);
++  mem->size += realsize;
++
++  return realsize;
++
++}
++
++int print_error(const char *str) {
++
++    cJSON *ret_json = cJSON_Parse(str);
++    if (!ret_json) {
++        syslog(LOG_DEBUG, "clish_restcl: Failed parsing error string\r\n");
++        return 0;
++    }
++
++    cJSON *ietf_err = cJSON_GetObjectItemCaseSensitive(ret_json, "ietf-restconf:errors");
++    if (!ietf_err) {
++        syslog(LOG_DEBUG, "clish_restcl: No errors\r\n");
++        return 0;
++    }
++
++    cJSON *errors = cJSON_GetObjectItemCaseSensitive(ietf_err, "error");
++    if (!errors) {
++        syslog(LOG_DEBUG, "clish_restcl: No error\r\n");
++        return 0;
++    }
++
++    cJSON *error;
++    cJSON_ArrayForEach(error, errors) {
++        cJSON *err_msg = cJSON_GetObjectItemCaseSensitive(error, "error-message");
++        if (err_msg) {
++            lub_dump_printf("%% Error: %s\r\n", err_msg->valuestring);
++        /* Since error-message is an optional attribute, we need to check for "error-tag"
++           and print the error-message accordingly */
++        } else {
++            std::string err_msg = "operation failed";
++
++            cJSON* err_tag = cJSON_GetObjectItemCaseSensitive(error, "error-tag");
++            if(err_tag == NULL) {
++                lub_dump_printf("%% Error: %s\r\n", err_msg.c_str());
++                return 1;
++            }
++            std::string err_tag_str = std::string {err_tag->valuestring};
++
++            if(err_tag_str == "invalid-value") {
++                err_msg = "validation failed";
++            } else if (err_tag_str == "operation-not-supported") {
++                err_msg = "not supported";
++            } else if (err_tag_str == "access-denied") {
++                err_msg = "not authorized";
++            } else {
++                err_msg = "operation failed";
++            }
++            lub_dump_printf("%% Error: %s\r\n", err_msg.c_str());
++        }
++        return 1;
++    }
++    return 0;
++}
++
++
++std::string rest_token;
++
++CURL *curl =  NULL;
++
++static int rest_set_curl_headers(bool use_token) {
++    struct curl_slist* headerList = NULL;
++    headerList = curl_slist_append(headerList, "accept: application/yang-data+json");
++    headerList = curl_slist_append(headerList, "Content-Type: application/yang-data+json");
++
++    if (rest_token.size() && use_token) {
++        std::string auth_hdr = "Authorization: Bearer ";
++        auth_hdr += rest_token;
++        headerList = curl_slist_append(headerList, auth_hdr.c_str());
++    }
++
++    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headerList);
++
++    return 0;
++}
++
++static int _init_curl() {
++
++    curl_global_init(CURL_GLOBAL_ALL);
++
++    curl = curl_easy_init();
++    if (!curl) {
++        return 1;
++    }
++    
++    curl_easy_setopt(curl, CURLOPT_USERAGENT, "CLI");
++
++    curl_easy_setopt(curl, CURLOPT_READFUNCTION, read_callback);
++    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
++
++    if (REST_API_ROOT.find("https://") == 0) {
++        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
++        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
++    } else {
++        curl_easy_setopt(curl, CURLOPT_UNIX_SOCKET_PATH, "/var/run/rest-local.sock");
++    }
++
++    return 0;
++}
++
++void rest_client_init() {
++    char *root = getenv("REST_API_ROOT");
++
++    REST_API_ROOT.assign(root ? root : "http://localhost");
++
++    _init_curl();
++
++    rest_set_curl_headers(true);
++}
++
++int rest_token_fetch(int *interval) {
++
++    CURLcode res;
++    std::string url;
++
++    if (!curl) {
++        syslog(LOG_WARNING, "curl handle is not yet initialized.");
++        return 1;
++    }
++    
++    url  = REST_API_ROOT;
++    url.append("/authenticate");
++
++    rest_set_curl_headers(false);
++   
++    RestResponse ret = {};
++    ret.size = 0;
++
++    if(curl) {
++        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
++
++        curl_easy_setopt(curl, CURLOPT_UPLOAD, 0L);
++        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &ret);
++        
++        curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "GET");
++
++        res = curl_easy_perform(curl);
++        /* Check for errors */
++        if(res != CURLE_OK) {
++            syslog(LOG_WARNING, "curl_easy_perform() for rest_token_fetch failed: %s\n",
++                    curl_easy_strerror(res));
++        } else {
++            if (ret.size) {
++                cJSON *ret_json = cJSON_Parse(ret.body.c_str());
++                if (ret_json) {
++                    cJSON *token = cJSON_GetObjectItemCaseSensitive(ret_json, "access_token");
++                    if (token) {
++                        rest_token.assign(token->valuestring);
++
++                        setenv("REST_API_TOKEN", rest_token.c_str(), 1);
++
++                        pyobj_set_rest_token(rest_token.c_str());
++
++                        rest_set_curl_headers(true);
++
++                        cJSON  *expiry = cJSON_GetObjectItemCaseSensitive(ret_json, "expires_in");
++                        if (expiry) {
++                            *interval = expiry->valueint;
++                        }
++                    } else {
++                        syslog(LOG_DEBUG, "rest_token_fetch: No access_token");
++                    }
++                } else {
++                    syslog(LOG_DEBUG, "rest_token_fetch: Failed parsing return string");
++                }
++            } else {
++                syslog(LOG_DEBUG, "rest_token_fetch: No response received");
++            }
++        }
++    }
++    return 0;
++}
++
++std::string& rtrim(std::string& str, const std::string& chars = "\t\n\v\f\r ")
++{
++    str.erase(str.find_last_not_of(chars) + 1);
++    return str;
++}
++
++int _parse_args (std::string &input, std::string &oper_s, std::string &url_s, std::string &body_s){
++
++    size_t oper_pos = input.find("oper=");
++    if (oper_pos != std::string::npos) {
++        oper_pos += strlen("oper=");
++    }
++
++    size_t url_pos = input.find("url=");
++    if (url_pos == std::string::npos) {
++        syslog(LOG_ERR, "url= missing in %s\r\n", input.c_str());
++        return 1;
++    } else {
++        /* 'oper' terminates just before 'url=' */
++        oper_s = input.substr(oper_pos, url_pos - oper_pos);
++        rtrim(oper_s);
++    
++        url_pos += strlen("url=");
++    }
++
++    url_s = REST_API_ROOT;
++    
++    size_t body_pos = input.find("body=");
++
++    /* If "body=" doesnt exist, 'url' extends till end of string */
++    if (body_pos == std::string::npos) {
++        url_s += input.substr(url_pos);
++    } else {
++        /* 'url' terminates just before 'body=' */
++        url_s += input.substr(url_pos, body_pos - url_pos);
++
++        body_pos += strlen("body=");
++        body_s = input.substr(body_pos);
++
++        rtrim(body_s);
++    }
++
++    rtrim(url_s);
++    
++    return 0;
++}
++
++int rest_cl(char *cmd, const char *buff)
++{
++    CURLcode res;
++
++    int ret_code = 1;
++    std::string url, body, oper;
++    std::string arg = buff;
++
++    setenv("USER_COMMAND", cmd, 1);
++    syslog(LOG_DEBUG, "clish_restcl: cmd=%s", cmd);
++
++    _parse_args(arg, oper, url, body);
++    syslog(LOG_DEBUG, "clish_restcl: [oper:%s][path:%s][body:%s]", oper.c_str(), url.c_str(), body.c_str());
++
++    RestResponse ret = {};
++    ret.size = 0;
++
++    if(curl) {
++
++        curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, oper.c_str());
++
++        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
++
++        PayloadData up_obj = {};
++        if (body.size()) {
++
++            up_obj.data = body.c_str();
++            up_obj.length = body.size(); 
++            curl_easy_setopt(curl, CURLOPT_READDATA, &up_obj);
++
++            curl_easy_setopt(curl, CURLOPT_INFILESIZE_LARGE,
++                    (curl_off_t)up_obj.length);
++
++            curl_easy_setopt(curl, CURLOPT_UPLOAD, 1L);
++        } else {
++            curl_easy_setopt(curl, CURLOPT_UPLOAD, 0L);
++        }
++
++        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &ret);
++
++        res = curl_easy_perform(curl);
++        /* Check for errors */
++        if(res != CURLE_OK) {
++            lub_dump_printf("%%Error: Could not connect to Management REST Server\n");
++            syslog(LOG_WARNING, "curl_easy_perform() failed: %s\n",
++                    curl_easy_strerror(res));
++        } else {
++            int64_t http_code = 0;
++            curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
++            if (ret.size) {
++                syslog(LOG_DEBUG, "clish_restcl: http_code:%ld [%d:%s]", http_code, ret.size, ret.body.c_str());
++                print_error(ret.body.c_str());
++            } else {
++                ret_code = 0;
++            }
++        }
++    } else {
++        lub_dump_printf("%%Error: Could not connect to Management REST Server\n");
++        syslog(LOG_WARNING, "Couldn't initialize curl handle");
++    }
++
++    return ret_code;
++}
+diff --git a/plugins/clish/sym_script.c b/plugins/clish/sym_script.c
+index 93cc88f..dc12297 100644
+--- a/plugins/clish/sym_script.c
++++ b/plugins/clish/sym_script.c
+@@ -37,6 +37,10 @@ CLISH_PLUGIN_OSYM(clish_script)
+ 	if (!script) /* Nothing to do */
+ 		return 0;
+ 
++	char *cmd = clish_shell__get_full_line(clish_context);
++	setenv("USER_COMMAND", cmd, 1);
++	lub_string_free(cmd);
++
+ 	/* Find out shebang */
+ 	if (action)
+ 		shebang = clish_action__get_shebang(action);
+@@ -80,6 +84,12 @@ CLISH_PLUGIN_OSYM(clish_script)
+ 	lub_string_cat(&command, shebang);
+ 	lub_string_cat(&command, " ");
+ 	lub_string_cat(&command, fifo_name);
++	lub_string_cat(&command, " 2> /dev/stdout");
++
++	sigset_t sigs;
++	sigemptyset(&sigs);
++	sigaddset(&sigs, SIGINT);
++	sigprocmask(SIG_UNBLOCK, &sigs, NULL);
+ 
+ 	res = system(command);
+ 
+diff --git a/tinyrl/history/history.c b/tinyrl/history/history.c
+index 286efe6..15ef653 100644
+--- a/tinyrl/history/history.c
++++ b/tinyrl/history/history.c
+@@ -12,6 +12,7 @@
+ #include "private.h"
+ #include "lub/string.h"
+ #include "tinyrl/history.h"
++#include "clish/plugin/mgmt_clish_utils.h"
+ 
+ struct _tinyrl_history {
+ 	tinyrl_history_entry_t **entries;	/* pointer entries */
+@@ -135,15 +136,8 @@ static bool_t remove_duplicate(tinyrl_history_t * this, const char *line)
+ 	bool_t result = BOOL_FALSE;
+ 	unsigned i;
+ 
+-	for (i = 0; i < this->length; i++) {
+-		tinyrl_history_entry_t *entry = this->entries[i];
+-		if (0 == strcmp(line, tinyrl_history_entry__get_line(entry))) {
+-			free_entries(this, i, i);
+-			remove_entries(this, i, i);
+-			result = BOOL_TRUE;
+-			break;
+-		}
+-	}
++	/* We don't want to remove duplicates from the history,
++	   hence returning false immediately*/
+ 	return result;
+ }
+ 
+@@ -201,11 +195,15 @@ static void add_n_grow(tinyrl_history_t * this, const char *line)
+ /*------------------------------------- */
+ void tinyrl_history_add(tinyrl_history_t * this, const char *line)
+ {
++	char *masked_line = NULL;
++	mask_password(line, &masked_line);
++	if (!masked_line) return;
+ 	if (this->length && (this->length == this->stifle)) {
+-		add_n_replace(this, line);
++		add_n_replace(this, (const char*)masked_line);
+ 	} else {
+-		add_n_grow(this, line);
++		add_n_grow(this, (const char*)masked_line);
+ 	}
++	if(masked_line) free(masked_line);
+ }
+ 
+ /*------------------------------------- */
+diff --git a/tinyrl/tinyrl.c b/tinyrl/tinyrl.c
+index 3a8d866..b1da324 100644
+--- a/tinyrl/tinyrl.c
++++ b/tinyrl/tinyrl.c
+@@ -1412,6 +1412,22 @@ tinyrl_do_complete(tinyrl_t * this, bool_t with_extensions)
+ 		else
+ 			result = TINYRL_AMBIGUOUS;
+ 		if (with_extensions || !prefix) {
++                        int indexi,indexj;
++                        char * temp = NULL;
++                        for (indexi=1;indexi<len-1;indexi++) {
++
++                                for (indexj=indexi+1;indexj<=len-1;indexj++) {
++                                    if ((matches[indexi] == NULL) || (matches[indexj] == NULL))
++                                        continue;
++
++                                    if(lub_string_nocasecmp(matches[indexi],matches[indexj]) > 0) {
++                                        temp = matches[indexi];
++                                        matches[indexi] = matches[indexj];
++                                        matches[indexj] = temp;
++                                    }
++                                }
++                        }
++
+ 			/* Either we always want to show extensions or
+ 			 * we haven't been able to complete the current line
+ 			 * and there is just a prefix, so let the user see the options
+@@ -1432,6 +1448,51 @@ tinyrl_do_complete(tinyrl_t * this, bool_t with_extensions)
+ 	return result;
+ }
+ 
++/*-------------------------------------------------------- */
++static void
++tinyrl_do_complete_ignore_error(tinyrl_t * this, bool_t with_extensions)
++{
++        char **matches = NULL;
++        unsigned int start, end;
++
++        /* find the start and end of the current word */
++        start = end = this->point;
++        while (start && !isspace(this->line[start - 1]))
++                start--;
++
++        if (this->attempted_completion_function) {
++                this->completion_over = BOOL_FALSE;
++                this->completion_error_over = BOOL_FALSE;
++                /* try and complete the current line buffer */
++                matches = this->attempted_completion_function(this,
++                                this->line, start, end);
++        }
++        if (!matches && (BOOL_FALSE == this->completion_over)) {
++                /* insert default completion call here... */
++        }
++        if (!matches)
++                return;
++
++        /* Check if user entered value is a substring of match returned.
++           If true, replace the line with the matched value */
++        if ((end - start > 0) && (0 == strncasecmp(matches[0], &this->line[start],
++                (end - start)))) {
++                /*
++                 * delete the original text not including
++                 * the current insertion point character
++                 */
++                if (this->end != end)
++                        end--;
++                tinyrl_delete_text(this, start, end);
++                tinyrl_insert_text(this, matches[0]);
++        }
++
++        tinyrl_delete_matches(matches);
++        /* redisplay the line */
++        tinyrl_redisplay(this);
++        return;
++}
++
+ /*-------------------------------------------------------- */
+ tinyrl_match_e tinyrl_complete_with_extensions(tinyrl_t * this)
+ {
+@@ -1444,6 +1505,12 @@ tinyrl_match_e tinyrl_complete(tinyrl_t * this)
+ 	return tinyrl_do_complete(this, BOOL_FALSE);
+ }
+ 
++/*-------------------------------------------------------- */
++void tinyrl_complete_ignore_error(tinyrl_t * this)
++{
++        return tinyrl_do_complete_ignore_error(this, BOOL_FALSE);
++}
++
+ /*-------------------------------------------------------- */
+ void *tinyrl__get_context(const tinyrl_t * this)
+ {
+@@ -1654,4 +1721,11 @@ void tinyrl__stifle_history(tinyrl_t *this, unsigned int stifle)
+ {
+ 	tinyrl_history_stifle(this->history, stifle);
+ }
++
++/*-------------------------------------------------------- */
++bool_t tinyrl_is_cursor_in_middle(const tinyrl_t *this)
++{
++        return (this->point < this->end) ? BOOL_TRUE : BOOL_FALSE;
++}
++
+ /*--------------------------------------------------------- */
+diff --git a/tinyrl/tinyrl.h b/tinyrl/tinyrl.h
+index 8fd5c4f..a5e3b9a 100644
+--- a/tinyrl/tinyrl.h
++++ b/tinyrl/tinyrl.h
+@@ -222,6 +222,18 @@ extern unsigned tinyrl__get_height(const tinyrl_t *instance);
+ extern int tinyrl__save_history(const tinyrl_t *instance, const char *fname);
+ extern int tinyrl__restore_history(tinyrl_t *instance, const char *fname);
+ extern void tinyrl__stifle_history(tinyrl_t *instance, unsigned int stifle);
++extern void tinyrl_complete_ignore_error(tinyrl_t * instance);
++/**
++ * Indicate whether the cursor is in middle or not
++ */
++extern bool_t
++        tinyrl_is_cursor_in_middle(
++                /**
++                 * The instance on which to operate
++                 */
++                const tinyrl_t *instance
++        );
++
+ 
+ _END_C_DECL
+ #endif				/* _tinyrl_tinyrl_h */
+-- 
+2.25.1
+

@@ -17,7 +17,7 @@ endif
 SRC_REPLACEMENTS:=$(shell find patches -type f)
 all : $(SRC_REPLACEMENTS)
 	tar xzvf klish-$(KLISH_VERSION).tgz -C $(SONIC_CLI_ROOT)
-	./patches/scripts/patchmake.sh -p VER=${KLISH_VERSION} TSP=${SONIC_CLI_ROOT} DSP=${CURDIR}/patches TWP=${SONIC_CLI_ROOT}
+	cd ${KLISH_SRC} && QUILT_PATCHES=${CURDIR}/patches quilt push -a
 
 	cd ${KLISH_SRC} && sh autogen.sh && ./configure --with-libxml2=/usr $(CROSS_CONFIGURE_OPTS) --enable-debug=no LIBS='-l:libcurl-gnutls.so.4 -L$(LIB_PATH) -lpython3.7m -Wl,-rpath=$(LIB_PATH) -lcjson' CFLAGS='${CFLAGS} -g -I/usr/include/python3.7m' CPPFLAGS='${CPPFLAGS} -I/usr/include/cjson' && make
 
