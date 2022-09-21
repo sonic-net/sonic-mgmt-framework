@@ -117,7 +117,7 @@ def update_view_tag(root, viewlist, filename, out_dirpath):
                 element_inst.insert(0,end_element)
                 element_inst.insert(0,exit_element)
                 element_inst.insert(0,inherit_enable_element)
-                element_inst.insert(0,inherit_enable_element_without_prefix)
+#                element_inst.insert(0,inherit_enable_element_without_prefix)
                 element_inst.insert(0,comment_element)
 
                 file_modified = True
