@@ -462,4 +462,32 @@ limitations under the License.
         help="Hexadecimal Type"
 	/>
     <!--=======================================================-->
+     <PTYPE
+        name="MCLAG_KA_INTERVAL_RANGE"
+        method="integer"
+        pattern="1..60"
+        help="MCLAG keepalive interval range"
+        />
+    <!--=======================================================-->
+     <PTYPE
+        name="MCLAG_SESSION_TIMEOUT_RANGE"
+        method="integer"
+        pattern="3..180"
+        help="MCLAG session timeout range"
+        />
+    <!--=======================================================-->
+     <PTYPE
+        name="LAG_ID"
+        method="integer"
+        pattern="0..9999"
+        help="PortChannel ID"
+        />
+    <!--=======================================================-->
+     <PTYPE
+        name="RANGE_1_4095"
+        method="integer"
+        pattern="1..4095"
+        help="domain id"
+        />
+    <!--=======================================================-->
 </CLISH_MODULE>
