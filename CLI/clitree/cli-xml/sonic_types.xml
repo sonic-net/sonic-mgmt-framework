@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright 2019 Dell, Inc.  
+Copyright 2019 Dell, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
---> 
+-->
 
 <!DOCTYPE CLISH_MODULE [
 <!ENTITY MAX_MTU         "9216">
@@ -102,6 +102,34 @@ limitations under the License.
         method="unsignedInteger"
         pattern="1..4294967295"
         help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="RANGE_1_4095"
+        method="integer"
+        pattern="1..4095"
+        help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="LAG_ID"
+        method="integer"
+        pattern="1..256"
+        help="Port-channel id"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="MCLAG_KA_INTERVAL_RANGE"
+        method="integer"
+        pattern="1..60"
+        help="Keepalive Interval"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="MCLAG_SESSION_TIMEOUT_RANGE"
+        method="integer"
+        pattern="1..3600"
+        help="Session Timeout"
         />
     <!--=======================================================-->
     <PTYPE
