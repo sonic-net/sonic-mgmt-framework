@@ -1,2 +1,2 @@
-libcurl3-gnutls
+libcurl4-openssl-dev
 libcjson-dev
