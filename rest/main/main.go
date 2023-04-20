@@ -118,8 +118,11 @@ func main() {
 		ErrorLog:    serverLog,
 	}
 
-	glog.Infof("Read timeout = %v", readTimeout)
-	glog.Infof("Authentication modes = %v", clientAuth)
+	if glog.V(1) {
+		glog.Infof("Read timeout = %v", readTimeout)
+		glog.Infof("Authentication modes = %v", clientAuth)
+	}
+
 	glog.Infof("Server started on %v", address)
 
 	// Start HTTPS server
