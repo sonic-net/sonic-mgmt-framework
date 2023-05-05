@@ -166,7 +166,7 @@ def insert_pipe (dirpath, debug):
             print('Parsing ', fname)
         if fname.endswith(".xml", re.I):
             try:
-                temp_file = open(temp_file_name, "w")
+                temp_file = open(temp_file_name, "wb")
             except IOError as e:
                 print(e.filename, ":", e.strerror)
                 sys.exit(99)
