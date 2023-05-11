@@ -1,3 +1,0 @@
-272a273,274
-> unsigned int lub_string_equal_part_nocase(const char *str1, const char *str2,
-> 	bool_t utf8);

@@ -1,0 +1,34 @@
+From bf2fe604a732ee99e5560f3372815f04009877d0 Mon Sep 17 00:00:00 2001
+From: Saikrishna Arcot <sarcot@microsoft.com>
+Date: Fri, 12 Aug 2022 14:36:16 -0700
+Subject: [PATCH 1/2] Libxml fix
+
+---
+ clish/shell/shell_libxml2.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/clish/shell/shell_libxml2.c b/clish/shell/shell_libxml2.c
+index 7acca05..32ca4e7 100644
+--- a/clish/shell/shell_libxml2.c
++++ b/clish/shell/shell_libxml2.c
+@@ -17,6 +17,7 @@
+ #include <string.h>
+ #include <libxml/parser.h>
+ #include <libxml/tree.h>
++#include <libxml/xinclude.h>
+ #include "xmlapi.h"
+ 
+ #ifdef HAVE_LIB_LIBXSLT
+@@ -91,7 +92,8 @@ int clish_xmldoc_stop(void)
+ clish_xmldoc_t *clish_xmldoc_read(const char *filename)
+ {
+ 	xmlDoc *doc;
+-	doc = xmlReadFile(filename, NULL, 0);
++	doc = xmlReadFile(filename, NULL, 1026);
++	xmlXIncludeProcess(doc);
+ 	return doc_to_xmldoc(doc);
+ }
+ 
+-- 
+2.25.1
+

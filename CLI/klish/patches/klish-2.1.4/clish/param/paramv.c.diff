@@ -1,4 +1,0 @@
-137c137
-< 		return clish_param__get_defval(res);
----
-> 		return clish_param__get_default(res);

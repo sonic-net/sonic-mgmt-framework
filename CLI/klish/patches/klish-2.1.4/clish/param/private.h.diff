@@ -1,5 +1,0 @@
-29a30,33
-> 	char *viewname;
-> 	char *viewid;
-> 	bool_t recursive;
-> 	bool_t enabled;
