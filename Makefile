@@ -42,7 +42,7 @@ GO_DEPS_LIST = golang.org/x/crypto@https\://go.googlesource.com/crypto@0ec3e9974
                golang.org/x/sys@https\://go.googlesource.com/sys@85ca7c5b95cdf1e557abb38a283d1e61a5959c31 \
                golang.org/x/text@https\://go.googlesource.com/text@06d492aade888ab8698aad35476286b7b555c961 \
                golang.org/x/net@https\://go.googlesource.com/net@d3edc9973b7eb1fb302b0ff2c62357091cea9a30 \
-               gopkg.in/go-playground/validator.v9@https\://gopkg.in/go-playground/validator.v9@21c910fc6d9c3556c28252b04beb17de0c2d40ec \
+               github.com/go-playground/validator.v9@https\://github.com/go-playground/validator.v9@21c910fc6d9c3556c28252b04beb17de0c2d40ec \
                google.golang.org/grpc@https\://github.com/grpc/grpc-go@192c8a2a3506bb69336f5c135733a3435a04fb30 \
                google.golang.org/genproto@https\://github.com/google/go-genproto@5b2d0af7952bff3ac94fc13b18af3efa8927cf94 \
                google.golang.org/protobuf@https\://go.googlesource.com/protobuf@d037755d51bc456237589295f966da868ee6dd35 \
