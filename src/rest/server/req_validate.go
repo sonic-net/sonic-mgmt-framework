@@ -24,7 +24,7 @@ import (
 	"reflect"
 
 	"github.com/golang/glog"
-	"gopkg.in/go-playground/validator.v9"
+	"github.com/go-playground/validator.v9"
 )
 
 func isSkipValidation(t reflect.Type) bool {
