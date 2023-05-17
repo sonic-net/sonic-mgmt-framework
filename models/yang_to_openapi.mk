@@ -20,8 +20,9 @@
 TOPDIR := ..
 BUILD_DIR := $(TOPDIR)/build
 
+MGMT_COMMON_DIR             ?= $(TOPDIR)/../sonic-mgmt-common
 YANGAPI_DIR                 := $(BUILD_DIR)/yaml
-YANGDIR                     := yangs
+YANGDIR                     := $(or $(wildcard $(MGMT_COMMON_DIR)/build/yang), $(MGMT_COMMON_DIR)/models/yang)
 YANGDIR_COMMON              := $(YANGDIR)/common
 YANGDIR_EXTENSIONS          := $(YANGDIR)/extensions
 YANG_MOD_FILES              := $(wildcard $(YANGDIR)/*.yang)

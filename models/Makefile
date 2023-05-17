@@ -17,11 +17,7 @@
 #                                                                              #
 ################################################################################
 
-all: yangs
+all:
 %:
 	$(MAKE) -f yang_to_openapi.mk $@
 	$(MAKE) -f openapi_codegen.mk $@
-
-yangs:
-	ln -s ../../sonic-mgmt-common/models/yang $@
-
