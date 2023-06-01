@@ -20,16 +20,19 @@
 package main
 
 import (
+	"bytes"
 	"crypto/tls"
 	"crypto/x509"
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/Azure/sonic-mgmt-framework/build/rest_server/dist/swagger"
 	"github.com/Azure/sonic-mgmt-framework/rest/server"
@@ -44,6 +47,10 @@ var (
 	keyFile    string // Server private key file path
 	caFile     string // Client CA certificate file path
 	clientAuth string // Client auth mode
+
+	// readTimeout is the deadline for receiving a full request (TLS+header+body)
+	// once the connection is made. Value 0 indicates no timeout.
+	readTimeout time.Duration = 15 * time.Second
 )
 
 func init() {
@@ -54,6 +61,7 @@ func init() {
 	flag.StringVar(&keyFile, "key", "", "Server private key file path")
 	flag.StringVar(&caFile, "cacert", "", "CA certificate for client certificate validation")
 	flag.StringVar(&clientAuth, "client_auth", "none", "Client auth mode - none|cert|user")
+	flag.DurationVar(&readTimeout, "readtimeout", readTimeout, "Maximum duration for reading entire request")
 	flag.Parse()
 }
 
@@ -103,9 +111,16 @@ func main() {
 
 	// Prepare HTTPS server
 	restServer := &http.Server{
-		Addr:      address,
-		Handler:   router,
-		TLSConfig: &tlsConfig,
+		Addr:        address,
+		Handler:     router,
+		TLSConfig:   &tlsConfig,
+		ReadTimeout: readTimeout,
+		ErrorLog:    serverLog,
+	}
+
+	if glog.V(1) {
+		glog.Infof("Read timeout = %v", readTimeout)
+		glog.Infof("Authentication modes = %v", clientAuth)
 	}
 
 	glog.Infof("Server started on %v", address)
@@ -217,4 +232,30 @@ func findAManagementIP() string {
 
 	glog.Warning("Could not find a management address!!")
 	return ""
+}
+
+// errorMsgPrefixes identifies the important error messages logged by
+// the standard http library that should not be missed
+var errorMsgPrefixes = [][]byte{
+	[]byte("http: Accept error"),
+	[]byte("http: panic"),
+	[]byte("http2: panic"),
+}
+
+// serverLog forwards the http library's logs to glog
+var serverLog = log.New(logWriter{}, "", 0)
+
+type logWriter struct{}
+
+func (logWriter) Write(p []byte) (int, error) {
+	for _, pfx := range errorMsgPrefixes {
+		if bytes.HasPrefix(p, pfx) {
+			glog.Warning(string(p))
+			return len(p), nil
+		}
+	}
+	if glog.V(2) {
+		glog.Info(string(p))
+	}
+	return len(p), nil
 }
