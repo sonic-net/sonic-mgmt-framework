@@ -32,46 +32,7 @@ if [[ ! -f $SERVER_DIR/rest_server ]]; then
     exit 1
 fi
 
-# Setup database config file path
-if [[ -z ${DB_CONFIG_PATH} ]]; then
-    export DB_CONFIG_PATH=${MGMT_COMMON_DIR}/tools/test/database_config.json
-fi
-
-# LD_LIBRARY_PATH for CVL
-[ -z $LD_LIBRARY_PATH ] && export LD_LIBRARY_PATH=/usr/local/lib
-
-# Setup CVL schema directory
-if [ -z $CVL_SCHEMA_PATH ]; then
-    export CVL_SCHEMA_PATH=$MGMT_COMMON_DIR/build/cvl/schema
-fi
-
-echo "CVL schema directory is $CVL_SCHEMA_PATH"
-if [ $(find $CVL_SCHEMA_PATH -name *.yin | wc -l) == 0 ]; then
-    echo "WARNING: no yin files at $CVL_SCHEMA_PATH"
-    echo ""
-fi
-
-# Prepare CVL config file with all traces enabled
-if [[ -z $CVL_CFG_FILE ]]; then
-    export CVL_CFG_FILE=$SERVER_DIR/cvl_cfg.json
-    if [[ ! -e $CVL_CFG_FILE ]]; then
-        F=$MGMT_COMMON_DIR/cvl/conf/cvl_cfg.json
-        sed -E 's/((TRACE|LOG).*)\"false\"/\1\"true\"/' $F > $CVL_CFG_FILE
-    fi
-fi
-
-# Prepare yang files directiry for transformer
-if [[ -z ${YANG_MODELS_PATH} ]]; then
-    export YANG_MODELS_PATH=${BUILD_DIR}/all_yangs
-    mkdir -p ${YANG_MODELS_PATH}
-    pushd ${YANG_MODELS_PATH} > /dev/null
-    MGMT_COMN=$(realpath --relative-to=${PWD} ${MGMT_COMMON_DIR})
-    rm -f *
-    find ${MGMT_COMN}/models/yang -name "*.yang" -not -path "*/testdata/*" -exec ln -sf {} \;
-    ln -sf ${MGMT_COMN}/models/yang/version.xml
-    ln -sf ${MGMT_COMN}/config/transformer/models_list
-    popd > /dev/null
-fi
+source ${MGMT_COMMON_DIR}/tools/test/env.sh --dest=${SERVER_DIR}
 
 EXTRA_ARGS="-rest_ui $SERVER_DIR/dist/ui -logtostderr"
 

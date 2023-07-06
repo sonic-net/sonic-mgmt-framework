@@ -44,17 +44,6 @@ ACTION_XPATH_EXPR       = "{"+DEFAULT_NS_HREF+"}ACTION"
 actionlst               = ['clish_history', 'clish_file_print', 'clish_show_alias_plugin', \
                             'clish_logger_on_off', 'clish_show_batch_plugin']
 
-'''
-@brief Convert the escaped characters back to their original form
-@param[in] Input Text
-@return Output Text
-'''
-def unescape(s):
-        s = re.sub("&lt;", "<", s)
-        s = re.sub("&gt;", ">", s)
-        s = re.sub("&amp;", "&", s)
-        return s
-
 
 '''
 @brief Align and Save tempfile to outputfile
@@ -65,8 +54,6 @@ def align_and_save(temp_file_name, output_file_name):
     try:
         parser = etree.XMLParser(remove_blank_text=True, resolve_entities=False)
         root = etree.parse(temp_file_name, parser)
-        text = etree.tostring(root, pretty_print=True, xml_declaration=True, encoding=root.docinfo.encoding)
-        text = unescape(text)
         root.write(output_file_name, pretty_print=True, xml_declaration=True, encoding=root.docinfo.encoding)
     except:
         error = parser.error_log[0]
@@ -166,7 +153,7 @@ def insert_pipe (dirpath, debug):
             print('Parsing ', fname)
         if fname.endswith(".xml", re.I):
             try:
-                temp_file = open(temp_file_name, "w")
+                temp_file = open(temp_file_name, "wb")
             except IOError as e:
                 print(e.filename, ":", e.strerror)
                 sys.exit(99)
