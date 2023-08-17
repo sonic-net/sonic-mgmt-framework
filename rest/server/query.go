@@ -30,6 +30,9 @@ import (
 // parseQueryParams parses the http request's query parameters
 // into a translibArgs args.
 func (args *translibArgs) parseQueryParams(r *http.Request) error {
+	if r.URL.RawQuery == "" {
+		return nil
+	}
 	if strings.Contains(r.URL.Path, restconfDataPathPrefix) {
 		return args.parseRestconfQueryParams(r)
 	}
@@ -42,12 +45,16 @@ func (args *translibArgs) parseQueryParams(r *http.Request) error {
 // if any parameter is unsupported or has invalid value.
 func (args *translibArgs) parseRestconfQueryParams(r *http.Request) error {
 	var err error
-	qParams := r.URL.Query()
+	qParams := extractQuery(r.URL.RawQuery)
 
 	for name, vals := range qParams {
 		switch name {
 		case "depth":
 			args.depth, err = parseDepthParam(vals, r)
+		case "content":
+			args.content, err = parseContentParam(vals, r)
+		case "fields":
+			args.fields, err = parseFieldsParam(vals, r)
 		case "deleteEmptyEntry":
 			args.deleteEmpty, err = parseDeleteEmptyEntryParam(vals, r)
 		default:
@@ -57,8 +64,39 @@ func (args *translibArgs) parseRestconfQueryParams(r *http.Request) error {
 			return err
 		}
 	}
+	if len(args.fields) > 0 {
+		if len(args.content) > 0 || args.depth > 0 {
+			return httpError(http.StatusBadRequest, "Fields query parameter is not supported along with other query parameters")
+		}
+	}
 
 	return nil
+}
+
+func extractQuery(rawQuery string) map[string][]string {
+	queryParamsMap := make(map[string][]string)
+	if len(rawQuery) == 0 {
+		return queryParamsMap
+	}
+	// The query parameters are seperated by &
+	qpList := strings.Split(rawQuery, "&")
+	for _, each := range qpList {
+		var valList []string
+		if strings.Contains(each, "=") {
+			eqIdx := strings.Index(each, "=")
+			key := each[:eqIdx]
+			val := each[eqIdx+1:]
+			if _, ok := queryParamsMap[key]; ok {
+				queryParamsMap[key] = append(queryParamsMap[key], val)
+			} else {
+				valList = append(valList, val)
+				queryParamsMap[key] = valList
+			}
+		} else {
+			queryParamsMap[each] = valList
+		}
+	}
+	return queryParamsMap
 }
 
 func newUnsupportedParamError(name string, r *http.Request) error {
@@ -79,7 +117,7 @@ func parseDepthParam(v []string, r *http.Request) (uint, error) {
 
 	if r.Method != "GET" && r.Method != "HEAD" {
 		glog.V(1).Infof("[%s] 'depth' not supported for %s", getRequestID(r), r.Method)
-		return 0, newUnsupportedParamError("depth", r)
+		return 0, newUnsupportedParamError("depth supported only for GET/HEAD requests", r)
 	}
 
 	if len(v) != 1 {
@@ -98,6 +136,95 @@ func parseDepthParam(v []string, r *http.Request) (uint, error) {
 	}
 
 	return uint(d), nil
+}
+
+// parseContentParam parses query parameter value for "content" parameter.
+// See https://tools.ietf.org/html/rfc8040#section-4.8.1
+func parseContentParam(v []string, r *http.Request) (string, error) {
+	if !restconfCapabilities.content {
+		glog.V(1).Infof("'content' support disabled")
+		return "", newUnsupportedParamError("content", r)
+	}
+
+	if r.Method != "GET" && r.Method != "HEAD" {
+		glog.V(1).Infof("'content' not supported for %s", r.Method)
+		return "", newUnsupportedParamError("content", r)
+	}
+
+	if len(v) != 1 {
+		glog.V(1).Infof("Expecting only 1 content param; found %d", len(v))
+		return "", newInvalidParamError("content", r)
+	}
+
+	if v[0] == "all" || v[0] == "config" || v[0] == "nonconfig" {
+		return v[0], nil
+	} else {
+		glog.V(1).Infof("Bad content value '%s'", v[0])
+		return "", newInvalidParamError("content", r)
+	}
+
+	return v[0], nil
+}
+
+func extractFields(s string) []string {
+	prefix := ""
+	cur := ""
+	res := make([]string, 0)
+	for i, c := range s {
+		if c == '(' {
+			prefix = cur
+			cur = ""
+		} else if c == ')' {
+			res = append(res, prefix+"/"+cur)
+			prefix = ""
+			cur = ""
+		} else if c == ';' {
+			fullpath := prefix
+			if len(prefix) > 0 {
+				fullpath += "/"
+			}
+			if len(fullpath+cur) > 0 {
+				res = append(res, fullpath+cur)
+			}
+			cur = ""
+		} else if c == ' ' {
+			continue
+		} else {
+			cur += string(c)
+		}
+		if i == (len(s) - 1) {
+			fullpath := prefix
+			if len(prefix) > 0 {
+				fullpath += "/"
+			}
+			if len(fullpath+cur) > 0 {
+				res = append(res, fullpath+cur)
+			}
+		}
+	}
+	return res
+}
+
+// parseFieldsParam parses query parameter value for "fields" parameter.
+// See https://tools.ietf.org/html/rfc8040#section-4.8.3
+func parseFieldsParam(v []string, r *http.Request) ([]string, error) {
+	if !restconfCapabilities.fields {
+		glog.V(1).Infof("'fields' support disabled")
+		return v, newUnsupportedParamError("fields", r)
+	}
+
+	if r.Method != "GET" && r.Method != "HEAD" {
+		glog.V(1).Infof("'fields' not supported for %s", r.Method)
+		return v, newUnsupportedParamError("fields supported only for GET/HEAD query", r)
+	}
+
+	if len(v) != 1 {
+		glog.V(1).Infof("Expecting atleast 1 fields param; found %d", len(v))
+		return v, newInvalidParamError("fields", r)
+	}
+
+	res := extractFields(v[0])
+	return res, nil
 }
 
 // parseDeleteEmptyEntryParam parses the custom "deleteEmptyEntry" query parameter.

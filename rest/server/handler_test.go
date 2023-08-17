@@ -574,6 +574,60 @@ func TestProcessGET(t *testing.T) {
 	verifyResponseData(t, w, 200, jsonObj{"path": "/api-tests:sample", "depth": 0})
 }
 
+func TestProcessGET_query_depth(t *testing.T) {
+	w := httptest.NewRecorder()
+	Process(w, prepareRequest(t, "GET", "/api-tests:sample?depth=10", ""))
+	if restconfCapabilities.depth {
+		verifyResponseData(t, w, 200, jsonObj{"depth": 10})
+	} else {
+		verifyResponse(t, w, 400)
+	}
+}
+
+func TestProcessGET_query_depth_error(t *testing.T) {
+	w := httptest.NewRecorder()
+	Process(w, prepareRequest(t, "GET", "/api-tests:sample?depth=none", ""))
+	verifyResponse(t, w, 400)
+}
+
+func TestProcessGET_query_depth_content_field_capability_support(t *testing.T) {
+	if !restconfCapabilities.depth || !restconfCapabilities.content || !restconfCapabilities.fields {
+		t.Fatalf("depth/content/fields capability is expected to be supported in rest-server")
+	}
+}
+
+func TestProcessGET_query_content(t *testing.T) {
+	w := httptest.NewRecorder()
+	Process(w, prepareRequest(t, "GET", "/api-tests:sample?content=all", ""))
+	if restconfCapabilities.content {
+		verifyResponseData(t, w, 200, jsonObj{"content": "all"})
+	} else {
+		verifyResponse(t, w, 400)
+	}
+}
+
+func TestProcessGET_query_content_error(t *testing.T) {
+	w := httptest.NewRecorder()
+	Process(w, prepareRequest(t, "GET", "/api-tests:sample?content=getall", ""))
+	verifyResponse(t, w, 400)
+}
+
+func TestProcessGET_query_fields(t *testing.T) {
+	w := httptest.NewRecorder()
+	Process(w, prepareRequest(t, "GET", "/api-tests:sample?fields=home/name", ""))
+	if restconfCapabilities.fields {
+		verifyResponseData(t, w, 200, jsonObj{"fields": "[home/name]"})
+	} else {
+		verifyResponse(t, w, 400)
+	}
+}
+
+func TestProcessGET_query_fields_error(t *testing.T) {
+	w := httptest.NewRecorder()
+	Process(w, prepareRequest(t, "GET", "/api-tests:sample?fields=home&content=all", ""))
+	verifyResponse(t, w, 400)
+}
+
 func TestProcessGET_error(t *testing.T) {
 	w := httptest.NewRecorder()
 	Process(w, prepareRequest(t, "GET", "/api-tests:sample/error/not-found", ""))

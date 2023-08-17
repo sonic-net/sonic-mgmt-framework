@@ -165,6 +165,17 @@ func testCapability(t *testing.T, path string) {
 	if c, ok := cap.([]interface{}); !ok || len(c) == 0 {
 		log.Fatalf("Could not parse capability info: %s", w.Body.String())
 	}
+
+	var curCap []interface{}
+	curCap = append(curCap, "urn:ietf:params:restconf:capability:defaults:1.0?basic-mode=report-all",
+		"urn:ietf:params:restconf:capability:depth:1.0",
+		"urn:ietf:params:restconf:capability:content:1.0",
+		"urn:ietf:params:restconf:capability:fields:1.0")
+
+	if !reflect.DeepEqual(cap.([]interface{}), curCap) {
+		t.Fatalf("Response does not include expected capabilities \n"+
+			"expected: %v\nfound: %v", curCap, cap)
+	}
 }
 
 func TestOpsDiscovery_none(t *testing.T) {
