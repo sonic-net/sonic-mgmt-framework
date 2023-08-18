@@ -744,6 +744,10 @@ func TestProcessReadError(t *testing.T) {
 }
 
 func prepareRequest(t *testing.T, method, path, data string) *http.Request {
+	if !strings.Contains(path, "/restconf/") {
+		path = "/restconf/data" + path
+	}
+
 	r := httptest.NewRequest(method, path, strings.NewReader(data))
 	rc, r := GetContext(r)
 	rc.ID = t.Name()
