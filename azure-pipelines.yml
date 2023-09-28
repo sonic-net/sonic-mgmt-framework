@@ -52,6 +52,8 @@ stages:
         artifact: sonic-buildimage.vs
         runVersion: 'latestFromBranch'
         runBranch: 'refs/heads/master'
+        patterns: |
+          target/debs/buster/libyang*.deb
       displayName: "Download sonic buildimage"
 
     - script: |
