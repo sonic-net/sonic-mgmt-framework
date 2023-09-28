@@ -561,10 +561,10 @@ func verifyParseVersion(t *testing.T, r *http.Request, expSuccess bool, expVer t
 
 func TestPanic(t *testing.T) {
 	s := newEmptyRouter()
-	s.addRoute("panic", "GET", "/panic",
+	s.addRoute("panic", "GET", "/restconf/panic",
 		func(w http.ResponseWriter, r *http.Request) { panic("testing 123") })
 	w := httptest.NewRecorder()
-	s.ServeHTTP(w, prepareRequest(t, "GET", "/panic", ""))
+	s.ServeHTTP(w, prepareRequest(t, "GET", "/restconf/panic", ""))
 	verifyResponse(t, w, 500)
 }
 
