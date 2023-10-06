@@ -260,6 +260,8 @@ type translibArgs struct {
 	data        []byte           // payload
 	version     translib.Version // client version
 	depth       uint             // RESTCONF depth, for Get API only
+	content     string           // RESTCONF content, for Get API only
+	fields      []string         // RESTCONF fields, for Get API only
 	deleteEmpty bool             // Delete empty entry during field delete
 }
 
@@ -304,8 +306,12 @@ func invokeTranslib(args *translibArgs, rc *RequestContext) (int, []byte, error)
 	case "GET", "HEAD":
 		req := translib.GetRequest{
 			Path:          args.path,
-			Depth:         args.depth,
 			ClientVersion: args.version,
+			QueryParams: translib.QueryParameters{
+				Depth:   args.depth,
+				Content: args.content,
+				Fields:  args.fields,
+			},
 		}
 		resp, err1 := translib.Get(req)
 		if err1 == nil {

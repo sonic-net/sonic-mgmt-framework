@@ -39,7 +39,9 @@ const (
 
 // restconfCapabilities defines server capabilities
 var restconfCapabilities struct {
-	depth bool // depth query parameter
+	depth   bool // depth query parameter
+	content bool // content query parameter
+	fields  bool // fields query parameter
 }
 
 func init() {
@@ -51,6 +53,9 @@ func init() {
 	AddRoute("yanglibVersionHandler", "GET", "/restconf/yang-library-version", yanglibVersionHandler)
 
 	// RESTCONF capability handler
+	restconfCapabilities.depth = true
+	restconfCapabilities.content = true
+	restconfCapabilities.fields = true
 	AddRoute("capabilityHandler", "GET",
 		"/restconf/data/ietf-restconf-monitoring:restconf-state/capabilities", capabilityHandler)
 	AddRoute("capabilityHandler", "GET",
@@ -111,7 +116,14 @@ func capabilityHandler(w http.ResponseWriter, r *http.Request) {
 		c.Capabilities.Capability = append(c.Capabilities.Capability,
 			"urn:ietf:params:restconf:capability:depth:1.0")
 	}
-
+	if restconfCapabilities.content {
+		c.Capabilities.Capability = append(c.Capabilities.Capability,
+			"urn:ietf:params:restconf:capability:content:1.0")
+	}
+	if restconfCapabilities.fields {
+		c.Capabilities.Capability = append(c.Capabilities.Capability,
+			"urn:ietf:params:restconf:capability:fields:1.0")
+	}
 	var data []byte
 	if strings.HasSuffix(r.URL.Path, "/capabilities") {
 		data, _ = json.Marshal(&c)
