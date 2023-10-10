@@ -107,7 +107,7 @@ func TestMain(m *testing.M) {
 // Dummy test handler which returns 200 on success; 401 on
 // authentication failure and 403 on authorization failure
 func authTestHandler(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(200)
+	w.WriteHeader(200)
 }
 
 func TestAuth_LocalUser(t *testing.T) {
