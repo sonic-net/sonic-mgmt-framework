@@ -7,11 +7,20 @@ trigger:
   branches:
     include:
     - master
+    - 202???
 
 pr:
   branches:
     include:
     - master
+    - 202???
+
+variables:
+  - name: BUILD_BRANCH
+    ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
+      value: $(System.PullRequest.TargetBranch)
+    ${{ else }}:
+      value: $(Build.SourceBranchName)
 
 resources:
   repositories:
@@ -19,6 +28,7 @@ resources:
     type: github
     name: sonic-net/sonic-mgmt-common
     endpoint: sonic-net
+    ref: refs/heads/$(BUILD_BRANCH)
 
 stages:
 - stage: Build
@@ -42,18 +52,19 @@ stages:
     - checkout: sonic-mgmt-common
       clean: true
       submodules: recursive
-      displayName: 'Checkout code'
+      displayName: 'Checkout sonic-mgmt-common'
 
     - task: DownloadPipelineArtifact@2
       inputs:
         source: specific
         project: build
-        pipeline: 1
+        pipeline: 142
         artifact: sonic-buildimage.vs
         runVersion: 'latestFromBranch'
-        runBranch: 'refs/heads/master'
+        runBranch: 'refs/heads/$(BUILD_BRANCH)'
         patterns: |
           target/debs/bookworm/libyang*.deb
+          target/python-wheels/bookworm/sonic_yang_models*.whl
       displayName: "Download sonic buildimage"
 
     - script: |
@@ -80,18 +91,21 @@ stages:
         [[ ! -f python3_requirements.txt ]] || \
             sudo pip3 install --no-cache-dir -r python3_requirements.txt
 
-        popd
-
-        pushd sonic-mgmt-common
-
-        NO_TEST_BINS=1 dpkg-buildpackage -rfakeroot -b -us -uc -j$(nproc)
-
       displayName: "Install dependency"
 
     - script: |
-        set -ex
-        ls -l
+        sudo pip3 install ../target/python-wheels/bookworm/sonic_yang_models-1.0-py3-none-any.whl
+      displayName: "Install sonic yangs"
 
+    - script: |
+        set -ex
+        pushd sonic-mgmt-common
+
+        NO_TEST_BINS=1 dpkg-buildpackage -rfakeroot -b -us -uc -j$(nproc)
+      displayName: "Build sonic-mgmt-common"
+
+    - script: |
+        set -ex
         pushd sonic-mgmt-framework
 
         dpkg-buildpackage -rfakeroot -us -uc -b -j$(nproc) && cp ../*.deb $(Build.ArtifactStagingDirectory)/
