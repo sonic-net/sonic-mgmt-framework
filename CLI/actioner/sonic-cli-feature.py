@@ -22,32 +22,28 @@ import cli_client as cc
 import re
 
 
-def invoke(func, enable):
+def config_nhg_feature(enable):
     body = None
     aa = cc.ApiClient()
 
-    feature = "nexthop_group"
-
-    if enable == "1":
-
-        keypath = cc.Path("/restconf/data/sonic-feature:sonic-feature")
-
+    if enable:
+        keypath = cc.Path("/restconf/data/sonic-device_metadata:sonic-device_metadata")
         body = {
-            "sonic-feature": {
-                "FEATURE": {"FEATURE_LIST": [{"name": feature, "state": "enabled"}]}
+            "sonic-device_metadata": {
+                "DEVICE_METADATA": {"localhost": {"nexthop_group": "enabled"}}
             }
         }
         return aa.patch(keypath, body)
-
     else:
-
         keypath = cc.Path(
-            "/restconf/data/sonic-feature:sonic-feature/FEATURE/FEATURE_LIST={}".format(
-                feature
-            )
+            "/restconf/data/sonic-device_metadata:sonic-device_metadata/DEVICE_METADATA/localhost/nexthop_group"
         )
-
         return aa.delete(keypath)
+
+
+def invoke(func, enable):
+    if func == "configure_sonic_nexthop_groups":
+        return config_nhg_feature(enable == "1")
 
 
 def run(func, enable):
