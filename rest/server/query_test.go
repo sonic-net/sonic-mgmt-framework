@@ -21,6 +21,7 @@ package server
 
 import (
 	"net/http/httptest"
+	"reflect"
 	"testing"
 )
 
@@ -51,6 +52,12 @@ func testQuery(method, queryStr string, exp *translibArgs) func(*testing.T) {
 		if p.deleteEmpty != exp.deleteEmpty {
 			t.Errorf("'deleteEmptyEntry' mismatch; expting %v, found %v", exp.deleteEmpty, p.deleteEmpty)
 		}
+		if p.content != exp.content {
+			t.Errorf("'content' mismatch; expecting %s, found %s", exp.content, p.content)
+		}
+		if !reflect.DeepEqual(p.fields, exp.fields) {
+			t.Errorf("fields mismatch; expecting %s, found %s", exp.fields, p.fields)
+		}
 		if t.Failed() {
 			t.Errorf("Testcase failed for query '%s'", r.URL.RawQuery)
 		}
@@ -62,6 +69,11 @@ func TestQuery(t *testing.T) {
 	t.Run("unknown", testQuery("GET", "one=1", nil))
 }
 
+func testGetQuery(t *testing.T, name, queryStr string, exp *translibArgs) {
+	t.Run("GET/"+name, testQuery("GET", queryStr, exp))
+	t.Run("HEAD/"+name, testQuery("HEAD", queryStr, exp))
+}
+
 func TestQuery_depth(t *testing.T) {
 	rcCaps := restconfCapabilities
 	defer func() { restconfCapabilities = rcCaps }()
@@ -69,15 +81,15 @@ func TestQuery_depth(t *testing.T) {
 	restconfCapabilities.depth = true
 
 	// run depth test cases for GET and HEAD
-	testDepth(t, "=unbounded", "depth=unbounded", &translibArgs{depth: 0})
-	testDepth(t, "=0", "depth=0", nil)
-	testDepth(t, "=1", "depth=1", &translibArgs{depth: 1})
-	testDepth(t, "=101", "depth=101", &translibArgs{depth: 101})
-	testDepth(t, "=65535", "depth=65535", &translibArgs{depth: 65535})
-	testDepth(t, "=65536", "depth=65536", nil)
-	testDepth(t, "=junk", "depth=junk", nil)
-	testDepth(t, "extra", "depth=1&extra=1", nil)
-	testDepth(t, "dup", "depth=1&depth=2", nil)
+	testGetQuery(t, "=unbounded", "depth=unbounded", &translibArgs{depth: 0})
+	testGetQuery(t, "=0", "depth=0", nil)
+	testGetQuery(t, "=1", "depth=1", &translibArgs{depth: 1})
+	testGetQuery(t, "=101", "depth=101", &translibArgs{depth: 101})
+	testGetQuery(t, "=65535", "depth=65535", &translibArgs{depth: 65535})
+	testGetQuery(t, "=65536", "depth=65536", nil)
+	testGetQuery(t, "=junk", "depth=junk", nil)
+	testGetQuery(t, "extra", "depth=1&extra=1", nil)
+	testGetQuery(t, "dup", "depth=1&depth=2", nil)
 
 	// check for other methods
 	t.Run("OPTIONS", testQuery("OPTIONS", "depth=1", nil))
@@ -93,12 +105,8 @@ func TestQuery_depth_disabled(t *testing.T) {
 
 	restconfCapabilities.depth = false
 
-	testDepth(t, "100", "depth=100", nil)
-}
-
-func testDepth(t *testing.T, name, queryStr string, exp *translibArgs) {
-	t.Run("GET/"+name, testQuery("GET", queryStr, exp))
-	t.Run("HEAD/"+name, testQuery("HEAD", queryStr, exp))
+	testGetQuery(t, "100", "depth=100", nil)
+	restconfCapabilities.depth = true
 }
 
 func TestQuery_deleteEmptyEntry(t *testing.T) {
@@ -113,4 +121,133 @@ func TestQuery_deleteEmptyEntry(t *testing.T) {
 	t.Run("PUT", testQuery("PUT", "deleteEmptyEntry=true", nil))
 	t.Run("POST", testQuery("POST", "deleteEmptyEntry=true", nil))
 	t.Run("PATCH", testQuery("PATCH", "deleteEmptyEntry=true", nil))
+}
+
+func TestQuery_content(t *testing.T) {
+	rcCaps := restconfCapabilities
+	defer func() { restconfCapabilities = rcCaps }()
+
+	restconfCapabilities.content = true
+
+	// run content query test cases for GET and HEAD
+	testGetQuery(t, "=all", "content=all", &translibArgs{content: "all"})
+	testGetQuery(t, "=ALL", "content=ALL", nil)
+	testGetQuery(t, "=config", "content=config", &translibArgs{content: "config"})
+	testGetQuery(t, "=Config", "content=Config", nil)
+	testGetQuery(t, "=nonconfig", "content=nonconfig", &translibArgs{content: "nonconfig"})
+	testGetQuery(t, "=NonConfig", "content=NonConfig", nil)
+	testGetQuery(t, "=getall", "content=getall", nil)
+	testGetQuery(t, "=operational", "content=operational", nil)
+	testGetQuery(t, "=state", "content=state", nil)
+	testGetQuery(t, "=0", "content=0", nil)
+	testGetQuery(t, "dup", "content=config&content=nonconfig", nil)
+
+	// check for other methods
+	t.Run("OPTIONS", testQuery("OPTIONS", "content=config", nil))
+	t.Run("PUT", testQuery("PUT", "content=config", nil))
+	t.Run("POST", testQuery("POST", "content=config", nil))
+	t.Run("PATCH", testQuery("PATCH", "content=config", nil))
+	t.Run("DELETE", testQuery("DELETE", "content=config", nil))
+}
+
+func TestQuery_content_disabled(t *testing.T) {
+	rcCaps := restconfCapabilities
+	defer func() { restconfCapabilities = rcCaps }()
+
+	restconfCapabilities.content = false
+	testGetQuery(t, "config", "content=config", nil)
+	restconfCapabilities.content = true
+}
+
+func TestQuery_fields(t *testing.T) {
+	rcCaps := restconfCapabilities
+	defer func() { restconfCapabilities = rcCaps }()
+
+	restconfCapabilities.depth = true
+
+	// run depth test cases for GET and HEAD
+	testGetQuery(t, "testfield1", "fields=description", &translibArgs{fields: []string{"description"}})
+	testGetQuery(t, "testfield2", "fields=description;mtu", &translibArgs{fields: []string{"description", "mtu"}})
+	testGetQuery(t, "testfield3", "fields=description,mtu", &translibArgs{fields: []string{"description,mtu"}})
+	testGetQuery(t, "testfield4", "fields=config/description;mtu", &translibArgs{fields: []string{"config/description", "mtu"}})
+	testGetQuery(t, "testfield4", "fields=config/description,mtu", &translibArgs{fields: []string{"config/description,mtu"}})
+	testGetQuery(t, "testfield5", "fields=config(description;mtu)", &translibArgs{fields: []string{"config/description", "config/mtu"}})
+	testGetQuery(t, "testfield6", "fields=config(description;mtu);state", &translibArgs{fields: []string{"config/description", "config/mtu", "state"}})
+	testGetQuery(t, "testfield7", "fields=config(description;mtu),state", &translibArgs{fields: []string{"config/description", "config/mtu", ",state"}})
+	testGetQuery(t, "testfield8", "fields=config(description,mtu),state", &translibArgs{fields: []string{"config/description,mtu", ",state"}})
+	testGetQuery(t, "testfield9", "fields=config(description;mtu);state/mtu", &translibArgs{fields: []string{"config/description", "config/mtu", "state/mtu"}})
+	testGetQuery(t, "testfield10", "fields=config(description;mtu);state(mtu)", &translibArgs{fields: []string{"config/description", "config/mtu", "state/mtu"}})
+	testGetQuery(t, "testfield11", "fields=config(description;mtu);state(mtu;counters)", &translibArgs{fields: []string{"config/description", "config/mtu", "state/mtu", "state/counters"}})
+	testGetQuery(t, "testfield12", "fields=config(description;mtu)&state", nil)
+	testGetQuery(t, "testfield13", "fields=config(description,mtu)&state=test", nil)
+	testGetQuery(t, "testfield14", "fields=config/mtu@state", &translibArgs{fields: []string{"config/mtu@state"}})
+	testGetQuery(t, "testfield15", "fields=config(description,mtu)@state", &translibArgs{fields: []string{"config/description,mtu", "@state"}})
+	testGetQuery(t, "testfield16", "fields=mtu&depth=2", nil)
+	testGetQuery(t, "testfield17", "fields=mtu&content=all", nil)
+	testGetQuery(t, "testfield18", "fields=mtu&depth=2&content=all", nil)
+
+	// check for other methods
+	t.Run("OPTIONS", testQuery("OPTIONS", "fields=mtu", nil))
+	t.Run("PUT", testQuery("PUT", "fields=mtu", nil))
+	t.Run("POST", testQuery("POST", "fields=mtu", nil))
+	t.Run("PATCH", testQuery("PATCH", "fields=mtu", nil))
+	t.Run("DELETE", testQuery("DELETE", "fields=mtu", nil))
+}
+
+func TestQuery_fields_disabled(t *testing.T) {
+	rcCaps := restconfCapabilities
+	defer func() { restconfCapabilities = rcCaps }()
+
+	restconfCapabilities.fields = false
+
+	testGetQuery(t, "100", "fields=100", nil)
+	restconfCapabilities.fields = true
+}
+
+func TestQuery_DepthContent(t *testing.T) {
+	rcCaps := restconfCapabilities
+	defer func() { restconfCapabilities = rcCaps }()
+
+	restconfCapabilities.content = true
+	restconfCapabilities.depth = true
+
+	// run content and depth query test cases for GET and HEAD
+	testGetQuery(t, "testDepConQuery1", "depth=unbounded&content=all", &translibArgs{content: "all", depth: 0})
+	testGetQuery(t, "testDepConQuery2", "depth=1&content=all", &translibArgs{content: "all", depth: 1})
+	testGetQuery(t, "testDepConQuery3", "depth=3&content=config", &translibArgs{content: "config", depth: 3})
+	testGetQuery(t, "testDepConQuery4", "depth=4&content=nonconfig", &translibArgs{content: "nonconfig", depth: 4})
+	testGetQuery(t, "testDepConQuery5", "depth=65535&content=nonconfig", &translibArgs{content: "nonconfig", depth: 65535})
+	testGetQuery(t, "testDepConQuery6", "depth=65536&content=all", nil)
+	testGetQuery(t, "testDepConQuery7", "depth=5&content=ALL", nil)
+	testGetQuery(t, "testDepConQuery8", "depth=5&content=9", nil)
+	testGetQuery(t, "testDepConQuery9", "depth=%$&content=state", nil)
+	testGetQuery(t, "testDepConQuery10", "depth=3$&depth=2&content=all", nil)
+	testGetQuery(t, "testDepConQuery11", "depth=3$&content=all&content=config", nil)
+	testGetQuery(t, "testDepConQuery12", "depth=3$&content=all&content=config", nil)
+	testGetQuery(t, "testDepConQuery13", "depth=3;content=all", nil)
+
+	// check for other methods
+	t.Run("OPTIONS", testQuery("OPTIONS", "depth=3&content=config", nil))
+	t.Run("PUT", testQuery("PUT", "depth=3&content=config", nil))
+	t.Run("POST", testQuery("POST", "depth=3&content=config", nil))
+	t.Run("PATCH", testQuery("PATCH", "depth=3&content=config", nil))
+	t.Run("DELETE", testQuery("DELETE", "depth=3&content=config", nil))
+}
+
+func TestQuery_depth_content_disabled(t *testing.T) {
+	rcCaps := restconfCapabilities
+	defer func() { restconfCapabilities = rcCaps }()
+
+	restconfCapabilities.content = false
+	restconfCapabilities.depth = true
+	testGetQuery(t, "config", "depth=3&content=config", nil)
+
+	restconfCapabilities.content = true
+	restconfCapabilities.depth = false
+	testGetQuery(t, "config", "depth=3&content=config", nil)
+
+	restconfCapabilities.content = false
+	restconfCapabilities.depth = false
+	testGetQuery(t, "config", "depth=3&content=config", nil)
+
 }

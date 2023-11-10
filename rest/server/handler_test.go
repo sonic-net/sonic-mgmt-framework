@@ -561,10 +561,10 @@ func verifyParseVersion(t *testing.T, r *http.Request, expSuccess bool, expVer t
 
 func TestPanic(t *testing.T) {
 	s := newEmptyRouter()
-	s.addRoute("panic", "GET", "/panic",
+	s.addRoute("panic", "GET", "/restconf/panic",
 		func(w http.ResponseWriter, r *http.Request) { panic("testing 123") })
 	w := httptest.NewRecorder()
-	s.ServeHTTP(w, prepareRequest(t, "GET", "/panic", ""))
+	s.ServeHTTP(w, prepareRequest(t, "GET", "/restconf/panic", ""))
 	verifyResponse(t, w, 500)
 }
 
@@ -572,6 +572,60 @@ func TestProcessGET(t *testing.T) {
 	w := httptest.NewRecorder()
 	Process(w, prepareRequest(t, "GET", "/api-tests:sample", ""))
 	verifyResponseData(t, w, 200, jsonObj{"path": "/api-tests:sample", "depth": 0})
+}
+
+func TestProcessGET_query_depth(t *testing.T) {
+	w := httptest.NewRecorder()
+	Process(w, prepareRequest(t, "GET", "/api-tests:sample?depth=10", ""))
+	if restconfCapabilities.depth {
+		verifyResponseData(t, w, 200, jsonObj{"depth": 10})
+	} else {
+		verifyResponse(t, w, 400)
+	}
+}
+
+func TestProcessGET_query_depth_error(t *testing.T) {
+	w := httptest.NewRecorder()
+	Process(w, prepareRequest(t, "GET", "/api-tests:sample?depth=none", ""))
+	verifyResponse(t, w, 400)
+}
+
+func TestProcessGET_query_depth_content_field_capability_support(t *testing.T) {
+	if !restconfCapabilities.depth || !restconfCapabilities.content || !restconfCapabilities.fields {
+		t.Fatalf("depth/content/fields capability is expected to be supported in rest-server")
+	}
+}
+
+func TestProcessGET_query_content(t *testing.T) {
+	w := httptest.NewRecorder()
+	Process(w, prepareRequest(t, "GET", "/api-tests:sample?content=all", ""))
+	if restconfCapabilities.content {
+		verifyResponseData(t, w, 200, jsonObj{"content": "all"})
+	} else {
+		verifyResponse(t, w, 400)
+	}
+}
+
+func TestProcessGET_query_content_error(t *testing.T) {
+	w := httptest.NewRecorder()
+	Process(w, prepareRequest(t, "GET", "/api-tests:sample?content=getall", ""))
+	verifyResponse(t, w, 400)
+}
+
+func TestProcessGET_query_fields(t *testing.T) {
+	w := httptest.NewRecorder()
+	Process(w, prepareRequest(t, "GET", "/api-tests:sample?fields=home/name", ""))
+	if restconfCapabilities.fields {
+		verifyResponseData(t, w, 200, jsonObj{"fields": "[home/name]"})
+	} else {
+		verifyResponse(t, w, 400)
+	}
+}
+
+func TestProcessGET_query_fields_error(t *testing.T) {
+	w := httptest.NewRecorder()
+	Process(w, prepareRequest(t, "GET", "/api-tests:sample?fields=home&content=all", ""))
+	verifyResponse(t, w, 400)
 }
 
 func TestProcessGET_error(t *testing.T) {
@@ -690,6 +744,10 @@ func TestProcessReadError(t *testing.T) {
 }
 
 func prepareRequest(t *testing.T, method, path, data string) *http.Request {
+	if !strings.Contains(path, "/restconf/") {
+		path = "/restconf/data" + path
+	}
+
 	r := httptest.NewRequest(method, path, strings.NewReader(data))
 	rc, r := GetContext(r)
 	rc.ID = t.Name()
