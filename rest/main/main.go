@@ -104,6 +104,7 @@ func main() {
 		ClientAuth:               getTLSClientAuthType(),
 		Certificates:             prepareServerCertificate(),
 		ClientCAs:                prepareCACertificates(),
+		MinVersion:               tls.VersionTLS12,
 	}
 
 	// Prepare HTTPS server
