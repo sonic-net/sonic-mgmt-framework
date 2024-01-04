@@ -1,0 +1,74 @@
+module test-rpc {
+    namespace "https://example.com/ns/example-ops";
+    prefix "ops";
+
+    organization "Example, Inc.";
+    contact "support at example.com";
+    description "Example Operations Data Model Module.";
+    revision "2016-07-07" {
+      description "Initial version.";
+      reference "example.com document 3-3373.";
+    }
+    
+    rpc reboot {
+      description "Reboot operation.";
+      input {
+        leaf delay {
+          type uint32;
+          units "seconds";
+          default 0;
+          description
+            "Number of seconds to wait before initiating the
+             reboot operation.";
+        }
+        leaf message {
+          type string;
+          description
+            "Log message to display when reboot is started.";
+        }
+        leaf language {
+          type string;
+          description "Language identifier string.";
+          reference "RFC 5646.";
+        }
+      }
+    }  
+
+    rpc get-reboot-info {
+       description
+         "Retrieve parameters used in the last reboot operation.";
+       output {
+         leaf reboot-time {
+           type uint32;
+           description
+             "The 'delay' parameter used in the last reboot
+              operation.";
+         }
+         leaf message {
+           type string;
+           description
+             "The 'message' parameter used in the last reboot
+              operation.";
+         }
+         leaf language {
+           type string;
+           description
+             "The 'language' parameter used in the last reboot
+              operation.";
+         }
+       }
+     }
+
+    rpc activate-software-image {
+        input {
+            leaf image-name {
+                type string;
+            }
+        }
+        output {
+            leaf status {
+                type string;
+            }
+        }
+    }     
+}      

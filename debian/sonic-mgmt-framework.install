@@ -1,5 +1,4 @@
 build/rest_server/rest_server       usr/sbin
 build/rest_server/generate_cert     usr/sbin
 build/rest_server/dist/ui           etc/rest_server
-build/swagger_client_py/*_client    usr/sbin/lib/swagger_client_py
 build/cli                           usr/sbin

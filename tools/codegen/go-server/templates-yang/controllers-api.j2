@@ -1,0 +1,41 @@
+
+package openapi
+
+import (
+	"net/http"
+
+	"github.com/Azure/sonic-mgmt-framework/rest/server"
+)
+
+{% for operationId in OpIds %}
+{% set path = OpIdDict[operationId]["path"] %}
+{% set pathEntry = OpIdDict[operationId]["obj"] %}
+{% set method = OpIdDict[operationId]["method"] %}
+func {{ operationId }}(w http.ResponseWriter, r *http.Request) {
+    rc, r := server.GetContext(r)
+    rc.Name = "{{ operationId }}"
+	{% if method in ["post", "put", "patch"] and "requestBody" in pathEntry %}
+	{% for consume in pathEntry["requestBody"]["content"].keys() %}
+    rc.Consumes.Add("{{ consume }}")
+	{% endfor %}
+	{% endif %}
+	{% set content = dict() %}
+	{% if method == "get" %}
+	{% set content = pathEntry["responses"]["200"]["content"] %}
+	{% endif %}
+	{% if 'x-rpc' in pathEntry and 'content' in pathEntry["responses"]["204"] %}
+	{% set content = pathEntry["responses"]["204"]["content"] %}
+	{% endif %}
+	{% for produce in content.keys() %}
+    rc.Produces.Add("{{ produce }}")
+	{% endfor %}
+	{% if 'x-params' in pathEntry.keys() %}
+	{% set varMappings = pathEntry['x-params']['varMapping'] %}
+    rc.PMap = server.NameMap{ {% for varMapping in varMappings %}"{{ varMapping['uriName'] }}":"{{ varMapping['yangName'] }}", {% endfor %} }
+	{% endif %}
+	server.Process(w, r)
+}
+{% if not loop.last %}
+
+{% endif %}
+{% endfor %}

@@ -1,0 +1,186 @@
+# The SONiC RESTCONF APIs User Guide
+
+# Table of Contents
+  * [Introduction](#introduction)
+  * [Port and base URI](#port-and-base-uri)
+  * [Media Types](#media-types)
+  * [Authentication](#authentication)
+  * [YANG module discovery](#yang-module-discovery)
+  * [RESTCONF capabilities](#restconf-capabilities)
+  * [Authentication](#authentication)
+  * [Response codes and Error Messages](#response-codes-and-error-messages)
+  * [Limitations](#limitations)
+  * [Examples](#examples)
+  * [Supported RESTCONF APIs](#supported-restconf-apis)  
+  
+## Introduction
+
+The management REST Server on SONiC is based on the [RESTCONF](https://tools.ietf.org/html/rfc8040) protocol.
+RESTCONF uses HTTP methods to provide CRUD operations on a conceptual datastore containing YANG-defined data, which is compatible with a server that implements NETCONF datastores.
+For more details on [RESTCONF](https://tools.ietf.org/html/rfc8040) protocol, please refer [RESTCONF](https://tools.ietf.org/html/rfc8040) specification.
+
+## Port and base URI
+
+REST Server supports only HTTPS transport and listens on port 443. <br>
+Resources are represented with URIs following the structure for
+generic URIs in [RFC3986](https://tools.ietf.org/html/rfc3986).
+
+A RESTCONF operation is derived from the HTTP method and the request
+URI, using the following conceptual fields:
+
+    <OP> /<restconf>/<path>
+
+      ^       ^        ^      
+      |       |        |     
+    method  entry  resource 
+
+      M       M        O
+
+   M=mandatory, O=optional
+
+   where:
+
+     <OP> is the HTTP method
+     <restconf> is the RESTCONF root resource
+     <path> is the target resource URI
+
+### Method
+
+The HTTP method identifying the RESTCONF operation requested by the client, to act upon the target resource specified in the request URI.
+
+### Entry
+
+The root of the RESTCONF API configured on this HTTP server, discovered by getting the "/.well-known/host-meta" resource, as described in [RESTCONF Spec 3.1](https://tools.ietf.org/html/rfc8040#section-3.1).
+
+### Resource
+
+The path expression identifying the resource that is being accessed by the RESTCONF operation.
+
+## Media Types
+
+YANG defined RESTCONF APIs support **application/yang-data+json** media type. 
+Request and response payloads follow [RFC7951](https://tools.ietf.org/html/rfc7951) 
+defined encoding rules. Media type **application/yang-data+xml** is not supported
+in this release.
+
+## Authentication
+
+REST server will support below 3 authentication modes.
+
+* No authentication
+* TLS Certificate authentication
+* Username/password authentication
+
+Only one mode can be active at a time. 
+
+### No Authentication
+
+This is the default mode. REST server will not authenticate the client; all requests will be processed. It should not be used in production.
+
+### Certificate Authentication
+
+In this mode TLS public certificate of the client will be used to authenticate the client. Administrator will have to pre-provision the CA certificate. REST server will accept a request only if the client TLS certificate is signed by that CA.
+
+### User Authentication
+
+In this mode REST server expects the client to provide user credentials in every request. server will support HTTP Basic Authentication method to accept user credentials.
+
+REST write requests will be allowed only if the user belong to admin group. Only read operations will be allowed for other users.
+
+Performing TACACS+ authentication for every REST request can slow down the APIs. This will be optimized through JSON Web Token (JWT) or a similar mechanism in future release.
+
+
+## YANG module discovery
+
+REST server allows clients to discover and download all YANG modules supported by the server
+via "GET /restconf/data/ietf-yang-library:modules-state" API. Response data includes YANG module
+information as per [RFC7895](https://tools.ietf.org/html/rfc7895) requirements.
+
+REST server allows clients to download the YANG files via "GET /models/yang/{filename}" API.
+YANG module library response includes full download URL for every YANG module entry.
+
+Note - RFC7895 has been recently obsoleted by [RFC8525](https://tools.ietf.org/html/rfc8525).
+It supports YANG library with multi data stores and data store schemas. However these features
+are not available in SONiC. Hence REST server does not implement RFC8525 YANG library APIs (for now).
+
+## RESTCONF capabilities
+
+REST server supports "GET /restconf/data/ietf-restconf-monitoring:restconf-state/capabilities" API to
+advertise its capabilities as described in [RFC8040, section 9.1](https://tools.ietf.org/html/rfc8040#section-9.1).
+REsponse includes below mentioned capability information.
+
+    urn:ietf:params:restconf:capability:defaults:1.0?basic-mode=report-all
+
+## Response codes and Error Messages
+
+REST server sends back HTTP client error (4xx) or server error (5xx) status when request processing
+fails. Response status and payload will be as per RESTCONF specifications - [RCF8040, section7](https://tools.ietf.org/html/rfc8040#page-73).
+Error response data will be a JSON with below structure. Response Content-Type will be
+"application/yang-data+json".
+
+    +---- errors
+         +---- error*
+              +---- error-type       "protocol" or "application"
+              +---- error-tag        string
+              +---- error-app-tag?   string
+              +---- error-path?      xpath
+              +---- error-message?   string
+
+Note: REST server will not populate error-app-tag and error-path fields in this release. It can be
+enhanced in a future release. A sample error response:
+
+    {
+      "ietf-restconf:errors" : {
+        "error" : [
+          {
+            "error-type" : "application",
+            "error-tag" : "invalid-value",
+            "error-message" : "VLAN 100 not found"
+          }
+        ]
+      }
+    }
+
+**error-type** can be either "protocol" or "application", indicating the origin of the error.
+RESTCONF defines two more error-type enums "transport" and "rpc"; they are not used by REST server.
+
+**error-tag** indicates nature of error as described in [RFC8040, section 7](https://tools.ietf.org/html/rfc8040#page-74).
+
+**error-message** field carries a human friendly error message that can be displayed to the end
+user. This is an optional field; system error do not include error-message, or have generic
+messages like "Internal error".
+
+Table below lists possible error conditions with response status and data returned by REST server.
+
+Method  | Error condition          | Status | error-type  | error-tag        | error-message
+--------|--------------------------|--------|-------------|------------------|----------------------
+*any*   | Incorrect request data      | 400 | protocol    | invalid-value    |
+*write* | Bad content-type            | 415 | protocol    | invalid-value    | Unsupported content-type
+*write* | Schema validation fails    | 400 | protocol| invalid-value    | *YGOT returned message*
+*any*   | Invalid user credentials    | 401 | protocol    | access-denied    | Authentication failed
+*write* | User is not an admin        | 403 | protocol    | access-denied    | Authorization failed
+*write* | Commit failure     | 409 | protocol    | in-use           |
+*any*   | Unknown HTTP server failure | 500 | protocol    | operation-failed | Internal error
+*any*   | Not supported  | 405 | application | operation-not-supported | *App module returned message*
+*any*   | Incorrect payload           | 400 | application | invalid-value    | *App module returned message*
+*any*   | Resource not found          | 404 | application | invalid-value    | *App module returned message*
+POST    | Resource exists             | 409 | application | resource-denied  | *App module returned message*
+*any*   | Unknown error   | 500 | application | operation-failed | Internal error
+
+## Limitations
+
+* RESTCONF Notifications, streams are currently not supported
+* RESTCONF Query Parameters are currently not supported
+* RESTCONF entity tags and last modified timestamps are currently not supported
+
+## Examples
+
+Please refer [Appendix-B of RESTCONF Spec](https://tools.ietf.org/html/rfc8040#appendix-B) for the samples/examples.
+
+## Supported RESTCONF APIs
+
+Please click on the links below to explore RESTCONF APIs
+
+{% for file in mdfiles %}
+[{{file}}]({{file}}.md)
+{% endfor %}
