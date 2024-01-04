@@ -1,0 +1,214 @@
+openapi: 3.0.1
+info:
+  description: Network Management Open APIs for SONiC
+  version: 1.0.0
+  title: Sonic Network Management RESTCONF APIs
+servers:
+- url: https://
+security:
+- basic: []
+- bearer: []
+tags:
+- name: test-rpc
+  description: Operations for test-rpc
+paths:
+  /restconf/operations/test-rpc:reboot:
+    post:
+      tags:
+      - test-rpc
+      operationId: rpc_test_rpc_reboot
+      x-operationIdCamelCase: RpcTestRpcReboot
+      x-rpc: true
+      description: 'OperationId: rpc_test_rpc_reboot
+
+        Reboot operation.'
+      requestBody:
+        content:
+          application/yang-data+json:
+            schema:
+              $ref: '#/components/schemas/rpc_input_test_rpc_reboot'
+        required: true
+      responses:
+        '204':
+          content:
+            application/yang-data+json:
+              schema:
+                $ref: '#/components/schemas/rpc_output_test_rpc_reboot'
+          description: No Content
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+        '405':
+          description: Method Not Allowed
+        '415':
+          description: Unsupported Media Type
+        '500':
+          description: Internal Server Error
+  /restconf/operations/test-rpc:get-reboot-info:
+    post:
+      tags:
+      - test-rpc
+      operationId: rpc_test_rpc_get_reboot_info
+      x-operationIdCamelCase: RpcTestRpcGetRebootInfo
+      x-rpc: true
+      description: 'OperationId: rpc_test_rpc_get_reboot_info
+
+        Retrieve parameters used in the last reboot operation.'
+      requestBody:
+        content:
+          application/yang-data+json:
+            schema:
+              $ref: '#/components/schemas/rpc_input_test_rpc_get_reboot_info'
+        required: true
+      responses:
+        '204':
+          content:
+            application/yang-data+json:
+              schema:
+                $ref: '#/components/schemas/rpc_output_test_rpc_get_reboot_info'
+          description: No Content
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+        '405':
+          description: Method Not Allowed
+        '415':
+          description: Unsupported Media Type
+        '500':
+          description: Internal Server Error
+  /restconf/operations/test-rpc:activate-software-image:
+    post:
+      tags:
+      - test-rpc
+      operationId: rpc_test_rpc_activate_software_image
+      x-operationIdCamelCase: RpcTestRpcActivateSoftwareImage
+      x-rpc: true
+      description: 'OperationId: rpc_test_rpc_activate_software_image
+
+        '
+      requestBody:
+        content:
+          application/yang-data+json:
+            schema:
+              $ref: '#/components/schemas/rpc_input_test_rpc_activate_software_image'
+        required: true
+      responses:
+        '204':
+          content:
+            application/yang-data+json:
+              schema:
+                $ref: '#/components/schemas/rpc_output_test_rpc_activate_software_image'
+          description: No Content
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+        '405':
+          description: Method Not Allowed
+        '415':
+          description: Unsupported Media Type
+        '500':
+          description: Internal Server Error
+components:
+  securitySchemes:
+    basic:
+      scheme: basic
+      type: http
+    bearer:
+      bearerFormat: JWT
+      scheme: bearer
+      type: http
+  schemas:
+    rpc_input_test_rpc_reboot:
+      type: object
+      properties:
+        test-rpc:input:
+          type: object
+          properties:
+            delay:
+              default: 0
+              format: int32
+              maximum: 4294967295
+              minimum: 0
+              type: integer
+              x-yang-type: uint32
+            message:
+              maxLength: 18446744073709551615
+              minLength: 0
+              type: string
+              x-yang-type: string
+            language:
+              maxLength: 18446744073709551615
+              minLength: 0
+              type: string
+              x-yang-type: string
+    rpc_output_test_rpc_reboot:
+      type: object
+      properties:
+        test-rpc:output:
+          type: object
+          properties: {}
+    rpc_input_test_rpc_get_reboot_info:
+      type: object
+      properties:
+        test-rpc:input:
+          type: object
+          properties: {}
+    rpc_output_test_rpc_get_reboot_info:
+      type: object
+      properties:
+        test-rpc:output:
+          type: object
+          properties:
+            reboot-time:
+              format: int32
+              maximum: 4294967295
+              minimum: 0
+              type: integer
+              x-yang-type: uint32
+            message:
+              maxLength: 18446744073709551615
+              minLength: 0
+              type: string
+              x-yang-type: string
+            language:
+              maxLength: 18446744073709551615
+              minLength: 0
+              type: string
+              x-yang-type: string
+    rpc_input_test_rpc_activate_software_image:
+      type: object
+      properties:
+        test-rpc:input:
+          type: object
+          properties:
+            image-name:
+              maxLength: 18446744073709551615
+              minLength: 0
+              type: string
+              x-yang-type: string
+    rpc_output_test_rpc_activate_software_image:
+      type: object
+      properties:
+        test-rpc:output:
+          type: object
+          properties:
+            status:
+              maxLength: 18446744073709551615
+              minLength: 0
+              type: string
+              x-yang-type: string

@@ -71,7 +71,6 @@ fi
 PYTHONPATH+=:$CLISOURCE/actioner
 PYTHONPATH+=:$CLISOURCE/renderer
 PYTHONPATH+=:$CLISOURCE/renderer/scripts
-PYTHONPATH+=:$BUILDDIR/swagger_client_py
 PYTHONPATH+=:$(realpath $TOPDIR/..)/sonic-py-swsssdk/src
 export PYTHONPATH
 

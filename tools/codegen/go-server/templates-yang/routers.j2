@@ -1,0 +1,22 @@
+
+package openapi
+
+import (
+	"github.com/Azure/sonic-mgmt-framework/rest/server"
+)
+
+func init() {
+	
+{% for operationId in OpIds %}
+{% set path = OpIdDict[operationId]["path"] %}
+{% set pathEntry = OpIdDict[operationId]["obj"] %}
+{% set method = OpIdDict[operationId]["method"] %}
+	server.AddRoute(
+		"{{ operationId }}",
+		"{{ method|capitalize }}",
+		"{{ path }}",
+		{{ operationId }},
+	)
+	
+{% endfor %}
+}

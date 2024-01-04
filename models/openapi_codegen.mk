@@ -22,54 +22,49 @@ TOPDIR := ..
 BUILD_DIR := $(TOPDIR)/build
 CODEGEN_TOOLS_DIR := $(TOPDIR)/tools/swagger_codegen
 
-CODEGEN_VER	:= 2.4.5
-CODEGEN_JAR := $(CODEGEN_TOOLS_DIR)/swagger-codegen-cli-$(CODEGEN_VER).jar
+CODEGEN_VER	:= 4.2.3
+CODEGEN_JAR := $(CODEGEN_TOOLS_DIR)/openapi-generator-cli-$(CODEGEN_VER).jar
 
 SERVER_BUILD_DIR	:= $(BUILD_DIR)/rest_server
 SERVER_CODEGEN_DIR	:= $(SERVER_BUILD_DIR)/codegen
 SERVER_DIST_DIR		:= $(SERVER_BUILD_DIR)/dist
 SERVER_DIST_INIT	:= $(SERVER_DIST_DIR)/.init_done
-SERVER_DIST_GO		:= $(SERVER_DIST_DIR)/swagger
+SERVER_DIST_GO		:= $(SERVER_DIST_DIR)/openapi
 SERVER_DIST_UI		:= $(SERVER_DIST_DIR)/ui
 SERVER_DIST_UI_HOME	:= $(SERVER_DIST_DIR)/ui/index.html
+RESTCONF_MD_INDEX	:= $(BUILD_DIR)/restconf_md/index.md
 
 # Load codegen preferences
 include codegen.config
 
 YANGAPI_DIR     := $(TOPDIR)/build/yaml
-YANGAPI_SPECS   := $(wildcard $(YANGAPI_DIR)/*.yaml)
+YANGAPI_SPECS   := $(shell find $(YANGAPI_DIR) -name '*.yaml' 2> /dev/null)
 YANGAPI_NAMES   := $(filter-out $(YANGAPI_EXCLUDES), $(basename $(notdir $(YANGAPI_SPECS))))
-YANGAPI_SERVERS := $(addsuffix /.yangapi_done, $(addprefix $(SERVER_CODEGEN_DIR)/, $(YANGAPI_NAMES)))
+YANGAPI_SERVERS := $(addsuffix /.yangapi_copy_done, $(addprefix $(SERVER_CODEGEN_DIR)/, $(YANGAPI_NAMES)))
 
 OPENAPI_DIR   := openapi
 OPENAPI_SPECS := $(shell find $(OPENAPI_DIR) -name '*.yaml' | sort)
 OPENAPI_NAMES := $(filter-out $(OPENAPI_EXCLUDES), $(basename $(notdir $(OPENAPI_SPECS))))
 OPENAPI_SERVERS := $(addsuffix /.openapi_done, $(addprefix $(SERVER_CODEGEN_DIR)/, $(OPENAPI_NAMES)))
 
-PY_YANGAPI_NAMES       := $(filter $(YANGAPI_NAMES), $(PY_YANGAPI_CLIENTS))
-PY_OPENAPI_NAMES       := $(filter $(OPENAPI_NAMES), $(PY_OPENAPI_CLIENTS))
-PY_CLIENT_CODEGEN_DIR  := $(BUILD_DIR)/swagger_client_py
-PY_CLIENT_TARGETS := $(addsuffix .yangapi_client_done, $(addprefix $(PY_CLIENT_CODEGEN_DIR)/, $(PY_YANGAPI_NAMES)))
-PY_CLIENT_TARGETS += $(addsuffix .openapi_client_done, $(addprefix $(PY_CLIENT_CODEGEN_DIR)/, $(PY_OPENAPI_NAMES)))
-
 UIGEN_DIR  = $(TOPDIR)/tools/ui_gen
 UIGEN_SRCS = $(shell find $(UIGEN_DIR) -type f)
 
 JAVA ?= java
 
-all: go-server py-client
+all: go-server
 
 go-server-init: $(SERVER_DIST_INIT)
 
-go-server: $(YANGAPI_SERVERS) $(OPENAPI_SERVERS) $(SERVER_DIST_INIT) $(SERVER_DIST_UI_HOME)
+go-server: $(YANGAPI_SERVERS) $(OPENAPI_SERVERS) $(SERVER_DIST_INIT) $(SERVER_DIST_UI_HOME) $(RESTCONF_MD_INDEX)
 
 $(SERVER_DIST_UI_HOME): $(YANGAPI_SERVERS) $(OPENAPI_SERVERS) $(UIGEN_SRCS)
 	@echo "+++ Generating  landing page for Swagger UI +++"
 	$(UIGEN_DIR)/src/uigen.py
 
-py-client: $(PY_CLIENT_TARGETS) | $(PY_CLIENT_CODEGEN_DIR)/.
-	@echo $(basename $(^F)) > $(PY_CLIENT_CODEGEN_DIR)/py_client
-
+$(RESTCONF_MD_INDEX): $(YANGAPI_SERVERS) $(OPENAPI_SERVERS)
+	@echo "+++ Generating index page for RESTCONF documents +++"
+	$(TOPDIR)/tools/restconf_doc_tools/index.py --mdDir $(BUILD_DIR)/restconf_md
 
 .SECONDEXPANSION:
 
@@ -86,22 +81,14 @@ py-client: $(PY_CLIENT_TARGETS) | $(PY_CLIENT_CODEGEN_DIR)/.
 #======================================================================
 $(CODEGEN_JAR): | $$(@D)/.
 	cd $(@D) && \
-	wget https://repo1.maven.org/maven2/io/swagger/swagger-codegen-cli/$(CODEGEN_VER)/$(@F)
+	wget https://repo1.maven.org/maven2/org/openapitools/openapi-generator-cli/$(CODEGEN_VER)/$(@F)
 
 #======================================================================
-# Generate swagger server in GO language for Yang generated OpenAPIs
-# specs.
+# copy yang specs
 #======================================================================
-%/.yangapi_done: $(YANGAPI_DIR)/$$(*F).yaml | $$(@D)/. $(CODEGEN_JAR) $(SERVER_DIST_INIT)
-	@echo "+++ Generating GO server for Yang API $$(basename $(@D)).yaml +++"
-	$(JAVA) -jar $(CODEGEN_JAR) generate \
-		--lang go-server \
-		--input-spec $(YANGAPI_DIR)/$$(basename $(@D)).yaml \
-		--template-dir $(CODEGEN_TOOLS_DIR)/go-server/templates-yang \
-		--output $(@D)
-	cp $(@D)/go/api_* $(SERVER_DIST_GO)/
-	cp $(@D)/go/routers.go $(SERVER_DIST_GO)/routers_$$(basename $(@D)).go
-	cp $(@D)/api/swagger.yaml $(SERVER_DIST_UI)/$$(basename $(@D)).yaml
+%/.yangapi_copy_done: $(YANGAPI_DIR)/$$(*F).yaml | $$(@D)/. $(CODEGEN_JAR) $(SERVER_DIST_INIT)
+	@echo "+++ Copying $$(basename $(@D)).yaml +++"
+	cp $(YANGAPI_DIR)/$$(basename $(@D)).yaml $(SERVER_DIST_UI)/$$(basename $(@D)).yaml
 	touch $@
 
 #======================================================================
@@ -110,13 +97,14 @@ $(CODEGEN_JAR): | $$(@D)/.
 %/.openapi_done: $(OPENAPI_DIR)/$$(*F).yaml | $$(@D)/. $(CODEGEN_JAR) $(SERVER_DIST_INIT)
 	@echo "+++ Generating GO server for OpenAPI $$(basename $(@D)).yaml +++"
 	$(JAVA) -jar $(CODEGEN_JAR) generate \
-		--lang go-server \
+		-g go-server \
 		--input-spec $(OPENAPI_DIR)/$$(basename $(@D)).yaml \
 		--template-dir $(CODEGEN_TOOLS_DIR)/go-server/templates-nonyang \
 		--output $(@D)
+	rm -rf  $(@D)/go/api_*service.go
 	cp $(@D)/go/api_* $(@D)/go/model_* $(SERVER_DIST_GO)/
 	cp $(@D)/go/routers.go $(SERVER_DIST_GO)/routers_$$(basename $(@D)).go
-	cp $(@D)/api/swagger.yaml $(SERVER_DIST_UI)/$$(basename $(@D)).yaml
+	cp $(@D)/api/openapi.yaml $(SERVER_DIST_UI)/$$(basename $(@D)).yaml
 	touch $@
 
 #======================================================================
@@ -128,43 +116,13 @@ $(SERVER_DIST_INIT): | $$(@D)/.
 	touch $@
 
 #======================================================================
-# Generate swagger client in Python for yang generated OpenAPI specs
-#======================================================================
-%.yangapi_client_done: $(YANGAPI_DIR)/$$(*F).yaml | $(CODEGEN_JAR) $$(@D)/.
-	@echo "+++++ Generating Python client for $(*F).yaml +++++"
-	$(JAVA) -jar $(CODEGEN_JAR) generate \
-		-DpackageName=$(subst -,_,$(*F))_client \
-		--lang python \
-		--input-spec $(YANGAPI_DIR)/$(*F).yaml \
-		--template-dir $(CODEGEN_TOOLS_DIR)/py-client/templates \
-		--output $(@D)
-	touch $@
-
-#======================================================================
-# Generate swagger client in Python for handcoded OpenAPI specs
-#======================================================================
-%.openapi_client_done: $(OPENAPI_DIR)/$$(*F).yaml | $(CODEGEN_JAR) $$(@D)/.
-	@echo "+++++ Generating Python client for $(*F).yaml +++++"
-	$(JAVA) -jar $(CODEGEN_JAR) generate \
-		-DpackageName=$(subst -,_,$(*F))_client \
-		--lang python \
-		--input-spec $(OPENAPI_DIR)/$(*F).yaml \
-		--template-dir $(CODEGEN_TOOLS_DIR)/py-client/templates \
-		--output $(@D)
-	touch $@
-
-#======================================================================
 # Cleanups
 #======================================================================
 
-clean-server:
+clean:
 	$(RM) -r $(SERVER_DIST_DIR)
 	$(RM) -r $(SERVER_CODEGEN_DIR)
-
-clean-client:
-	$(RM) -r $(PY_CLIENT_CODEGEN_DIR)
-
-clean: clean-server clean-client
+	$(RM) $(SERVER_DIST_UI_HOME)
 
 cleanall: clean
 	$(RM) $(CODEGEN_JAR)

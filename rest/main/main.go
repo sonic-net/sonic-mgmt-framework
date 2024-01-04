@@ -34,7 +34,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/Azure/sonic-mgmt-framework/build/rest_server/dist/swagger"
+	"github.com/Azure/sonic-mgmt-framework/build/rest_server/dist/openapi"
 	"github.com/Azure/sonic-mgmt-framework/rest/server"
 	"github.com/golang/glog"
 	"github.com/pkg/profile"
@@ -85,7 +85,7 @@ func main() {
 		prof.Stop()
 	}()
 
-	swagger.Load()
+	openapi.Load()
 
 	rtrConfig := server.RouterConfig{}
 	if clientAuth == "user" {
