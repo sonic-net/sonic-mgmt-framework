@@ -105,6 +105,7 @@ func main() {
 		Certificates:             prepareServerCertificate(),
 		ClientCAs:                prepareCACertificates(),
 		MinVersion:               tls.VersionTLS12,
+		PreferServerCipherSuites: true,
 	}
 
 	// Prepare HTTPS server
