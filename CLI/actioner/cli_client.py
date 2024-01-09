@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 ################################################################################
 #                                                                              #
 #  Copyright 2019 Broadcom. The term Broadcom refers to Broadcom Inc. and/or   #
@@ -25,25 +24,25 @@ import requests
 from requests.structures import CaseInsensitiveDict
 from six.moves.urllib.parse import quote
 from collections import OrderedDict
-from cli_log import log_warning
+from cli_log import log_info, log_warning
 
 urllib3.disable_warnings()
+
 
 class ApiClient(object):
     """REST API client to connect to the SONiC management REST server.
     Customized for CLI actioner use.
     """
 
-    # Initialize API root and session 
+    # Initialize API root and session
     __api_root = os.getenv('REST_API_ROOT', 'https://localhost')
     __session = requests.Session()
 
-
     def request(self, method, path, data=None, headers={}, query=None, response_type=None):
 
-        url = '{0}{1}'.format(ApiClient.__api_root, path)
+        url = "{0}{1}".format(ApiClient.__api_root, path)
 
-        req_headers = CaseInsensitiveDict({ 'User-Agent': 'sonic-cli' })
+        req_headers = CaseInsensitiveDict({'User-Agent': 'sonic-cli'})
         req_headers.update(headers)
 
         body = None
@@ -64,8 +63,8 @@ class ApiClient(object):
             return Response(r, response_type)
 
         except requests.RequestException as e:
-            log_warning('cli_client request exception: ' + str(e))
-            #TODO have more specific error message based
+            log_info("cli_client request exception: {}", e)
+            # TODO have more specific error message based
             msg = '%Error: Could not connect to Management REST Server'
             return ApiClient.__new_error_response(msg)
 
@@ -110,8 +109,8 @@ class ApiClient(object):
     @staticmethod
     def __new_error_response(errMessage, errType='client', errTag='operation-failed'):
         r = Response(requests.Response())
-        r.content = {'ietf-restconf:errors':{ 'error':[ {
-            'error-type':errType, 'error-tag':errTag, 'error-message':errMessage }]}}
+        r.content = {'ietf-restconf:errors': {'error': [{
+            'error-type': errType, 'error-tag': errTag, 'error-message': errMessage}]}}
         return r
 
     def cli_not_implemented(self, hint):
@@ -126,6 +125,15 @@ class Path(object):
         for k, v in list(kwargs.items()):
             self.path = self.path.replace('{%s}' % k, quote(v, safe=''))
 
+    def join(self, p, **kwargs):
+        if not isinstance(p, Path):
+            p = Path(p, **kwargs)
+        return Path(self.path + Path._withslash(p.path))
+
+    @staticmethod
+    def _withslash(s):
+        return "/"+s if s and not s.startswith("/") else s
+
     def __str__(self):
         return self.path
 
@@ -134,7 +142,7 @@ class Response(object):
     def __init__(self, response, response_type=None):
         self.response = response
         self.response_type = response_type
-        self.status_code = response.status_code
+        self.status_code = (response.status_code if response.status_code else 0)
         self.content = response.content
 
         try:
@@ -145,7 +153,9 @@ class Response(object):
             elif has_json_content(response):
                 self.content = json.loads(response.content, object_pairs_hook=OrderedDict)
         except ValueError:
-            log_warning('Server returned invalid json! using raw content..')
+            # TODO Can we set status_code to 5XX in this case???
+            # Json parsing can fail only if server returned bad json
+            log_warning("Server returned invalid json for url {}", self.response.url)
             self.content = response.content
 
     def ok(self):
@@ -156,48 +166,73 @@ class Response(object):
             return {}
 
         errors = self.content
-
-        if(not isinstance(errors, dict)):
+        if not isinstance(errors, dict):
             errors = {"error": errors}  # convert to dict for consistency
-        elif('ietf-restconf:errors' in errors):
-            errors = errors['ietf-restconf:errors']
-
+        elif "ietf-restconf:errors" in errors:
+            errors = errors["ietf-restconf:errors"]
         return errors
 
     def error_message(self, formatter_func=None):
-        err = self.errors().get('error')
+        if hasattr(self, "err_message_override"):
+            return self.err_message_override
+
+        err = self.errors().get("error")
         if err is None:
             return None
         if isinstance(err, list):
             err = err[0]
         if isinstance(err, dict):
-            if formatter_func is not None:
-                return formatter_func(self.status_code, err)
-            return default_error_message_formatter(self.status_code, err)
+            return format_error_message(self.status_code, err, formatter_func)
         return str(err)
+
+    def set_error_message(self, message):
+        self.err_message_override = add_error_prefix(message)
 
     def __getitem__(self, key):
         return self.content[key]
 
-def has_json_content(resp):
-    ctype = resp.headers.get('Content-Type')
-    return (ctype is not None and 'json' in ctype)
 
-def default_error_message_formatter(status_code, err_entry):
-    if 'error-message' in err_entry:
-        err_msg = err_entry['error-message']
+def has_json_content(resp):
+    ctype = resp.headers.get("Content-Type")
+    return ctype is not None and "json" in ctype
+
+
+def format_error_message(status_code, err_entry, formatter_func=None):
+    if formatter_func is not None:
+        err_msg = formatter_func(status_code, err_entry)
+        if err_msg:
+            return add_error_prefix(err_msg)
+    if "error-message" in err_entry:
+        err_msg = err_entry["error-message"]
         return add_error_prefix(err_msg)
-    err_tag = err_entry.get('error-tag')
-    if err_tag == 'invalid-value':
-        return '%Error: validation failed'
-    if err_tag == 'operation-not-supported':
-        return '%Error: not supported'
-    if err_tag == 'access-denied':
-        return '%Error: not authorized'
-    return '%Error: operation failed'
+    err_tag = err_entry.get("error-tag")
+    if err_tag == "invalid-value":
+        return "%Error: validation failed"
+    if err_tag == "operation-not-supported":
+        return "%Error: not supported"
+    if err_tag == "access-denied":
+        return "%Error: not authorized"
+    return "%Error: operation failed"
+
 
 def add_error_prefix(err_msg):
     if not err_msg.startswith("%Error"):
-        return '%Error: ' + err_msg
+        return "%Error: " + err_msg
     return err_msg
 
+
+class ErrorData(object):
+    def __init__(self, response, index=0, formatter_func=None):
+        """Constructs an ErrorData object by parsing the RESTCONF error message
+        from a Response object.
+        """
+        err_list = response.errors().get("error")
+        err = err_list[index] if err_list and len(err_list) > index else {}
+        err_info = err.get("error-info", {})
+        self.status = response.status_code
+        self.type = err.get("error-type")
+        self.tag = err.get("error-tag")
+        self.app_tag = err.get("error-app-tag")
+        self.path = err.get("error-path")
+        self.cvl_err = err_info.get("cvl-error")
+        self.message = format_error_message(response.status_code, err, formatter_func)

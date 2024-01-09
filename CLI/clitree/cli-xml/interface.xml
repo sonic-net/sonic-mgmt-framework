@@ -99,7 +99,7 @@ limitations under the License.
                     help="Physical interface(Multiples of 4)"
                     ptype="UINT"
                     view="configure-if-view"
-                    viewid="iface=Ethernet${phyifname}"
+                    viewid="iface=Ethernet${phy-if-name}"
                     />
             </PARAM>
             <ACTION builtin="clish_nop"></ACTION>
