@@ -18,82 +18,47 @@
 ###########################################################################
 
 import sys
-import time
-import json
-import ast
-import openconfig_lldp_client
+from natsort import natsorted
+
+from cli_client import ApiClient, Path
 from rpipe_utils import pipestr
-from openconfig_lldp_client.rest import ApiException
 from scripts.render_cli import show_cli_output
 
 
-import urllib3
-urllib3.disable_warnings()
-plugins = dict()
-
-
-def register(func):
-    """Register sdk client method as a plug-in"""
-    plugins[func.__name__] = func
-    return func
-
-def call_method(name, args):
-    method = plugins[name]
-    return method(args)
-
-def generate_body(func, args):
-    body = None
-    if func.__name__ == 'get_openconfig_lldp_lldp_interfaces':
-        keypath = []
-    elif func.__name__ == 'get_openconfig_lldp_lldp_interfaces_interface':
-        keypath = [args[1]]
+def show_lldp_interface(path, template):
+    resp = ApiClient().get(path, ignore404=False)
+    if not resp.ok():
+        print(resp.error_message())
+        return 1
+    if "openconfig-lldp:interfaces" in resp.content:
+        data = resp.content["openconfig-lldp:interfaces"].get("interface", [])
     else:
-       body = {}
+        data = resp.content.get("openconfig-lldp:interface", [])
+    # Server returns junk value for not found case!! Identify valid resp here
+    neigh = data[0].get("neighbors", {}).get("neighbor", []) if data else None
+    if neigh and "state" in neigh[0]:
+        sorted_data = natsorted(data, key=lambda x: x["name"])
+        show_cli_output(template, sorted_data)
+    return 0
 
-    return keypath,body
+
+class Handlers:
+    @staticmethod
+    def get_openconfig_lldp_lldp_interfaces(template, *args):
+        allif_path = Path("/restconf/data/openconfig-lldp:lldp/interfaces")
+        return show_lldp_interface(allif_path, template)
+
+    @staticmethod
+    def get_openconfig_lldp_lldp_interfaces_interface(template, ifname, *args):
+        oneif_path = Path("/restconf/data/openconfig-lldp:lldp/interfaces/interface={name}", name=ifname)
+        return show_lldp_interface(oneif_path, template)
 
 
 def run(func, args):
-    c = openconfig_lldp_client.Configuration()
-    c.verify_ssl = False
-    aa = openconfig_lldp_client.OpenconfigLldpApi(api_client=openconfig_lldp_client.ApiClient(configuration=c))
+    return getattr(Handlers, func)(*args)
 
-    # create a body block
-    keypath, body = generate_body(func, args)
-
-    try:
-        if body is not None:
-           api_response = getattr(aa,func.__name__)(*keypath, body=body)
-        else :
-           api_response = getattr(aa,func.__name__)(*keypath)
-        if api_response is None:
-            print ("Success")
-        else:
-            response = api_response.to_dict()
-            if 'openconfig_lldpinterfaces' in list(response.keys()):
-                if not response['openconfig_lldpinterfaces']:
-                    return
-                neigh_list = response['openconfig_lldpinterfaces']['interface']
-                if neigh_list is None:
-                    return
-                show_cli_output(sys.argv[2],neigh_list)
-            elif 'openconfig_lldpinterface' in list(response.keys()):
-                neigh = response['openconfig_lldpinterface']#[0]['neighbors']['neighbor']
-                if neigh is None:
-                    return
-                if sys.argv[3] is not None:
-                    if neigh[0]['neighbors']['neighbor'][0]['state'] is None:
-                        print('No LLDP neighbor interface')
-                    else:
-                        show_cli_output(sys.argv[2],neigh)
-                else:
-                    show_cli_output(sys.argv[2],neigh)
-            else:
-                print("Failed")
-    except ApiException as e:
-        print(("Exception when calling OpenconfigLldpApi->%s : %s\n" %(func.__name__, e)))
 
 if __name__ == '__main__':
     pipestr().write(sys.argv)
-    func = eval(sys.argv[1], globals(), openconfig_lldp_client.OpenconfigLldpApi.__dict__)
+    func = sys.argv[1]
     run(func, sys.argv[2:])

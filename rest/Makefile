@@ -26,6 +26,8 @@ GOROOT ?= $(shell $(GO) env GOROOT)
 REST_BUILD_DIR := $(BUILD_DIR)/rest_server
 REST_BIN := $(REST_BUILD_DIR)/rest_server
 REST_TEST_BIN := $(BUILD_DIR)/tests/rest/server.test
+FORMAT_CHECK  := $(REST_BUILD_DIR)/.formatcheck
+FORMAT_LOG    := $(REST_BUILD_DIR)/go_format.log
 
 REST_GO_SRCS   = $(shell find . -name '*.go' -not -name '*_test.go')
 REST_TEST_SRCS = $(shell find . -name '*_test.go')
@@ -41,7 +43,7 @@ REST_SRCS += $(shell find $(TOPDIR)/models/openapi -name '*.yaml')
 CERTGEN_BIN := $(REST_BUILD_DIR)/generate_cert
 
 
-DEFAULT_TARGETS = $(REST_BIN) $(CERTGEN_BIN)
+DEFAULT_TARGETS = $(REST_BIN) $(CERTGEN_BIN) $(FORMAT_CHECK)
 ifeq ($(NO_TEST_BINS),)
 DEFAULT_TARGETS += $(REST_TEST_BIN)
 endif
@@ -68,6 +70,21 @@ $(REST_TEST_BIN): $(REST_TEST_SRCS) $(REST_SRCS) | $(REST_BUILD_DIR)/
 # Source file will be available in GOROOT/src.
 $(CERTGEN_BIN): | $(REST_BUILD_DIR)/
 	$(GO) build -o $@ $(GOROOT)/src/crypto/tls/generate_cert.go
+
+.SECONDEXPANSION:
+
+$(FORMAT_CHECK): $(REST_GO_SRCS) $(REST_TEST_SRCS) | $$(@D)/.
+	@echo "Checking Go file formatting..."
+	@$(GOROOT)/bin/gofmt -l -d $? > $(FORMAT_LOG)
+	@if [ -s $(FORMAT_LOG) ]; then \
+		cat $(FORMAT_LOG); \
+		echo "Formatting issues found. Please run 'gofmt -w .' on the above files and commit the changes."; \
+		exit 1; \
+	else \
+		echo "All files are properly formatted."; \
+		rm -f $(FORMAT_LOG); \
+	fi
+	touch $@
 
 clean:
 	$(RM) $(REST_BIN) $(CERTGEN_BIN)

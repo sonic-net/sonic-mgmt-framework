@@ -28,23 +28,25 @@ __enable_print = (os.getenv("LOGTOSCREEN") is not None)
 __severity_str = [ 'EMERG', 'ALERT', 'CRIT', 'ERROR', 'WARN', 'NOTICE', 'INFO', 'DEBUG' ]
 
 
-def log_debug(msg):
+def log_debug(msg, *args, **kwargs):
     if __enable_debug:
-        __write_log(syslog.LOG_DEBUG, msg)
+        __write_log(syslog.LOG_DEBUG, msg, *args, **kwargs)
 
-def log_info(msg):
-    __write_log(syslog.LOG_INFO, msg)
+def log_info(msg, *args, **kwargs):
+    __write_log(syslog.LOG_INFO, msg, *args, **kwargs)
 
-def log_warning(msg):
-    __write_log(syslog.LOG_WARNING, msg)
+def log_warning(msg, *args, **kwargs):
+    __write_log(syslog.LOG_WARNING, msg, *args, **kwargs)
 
-def log_error(msg):
-    __write_log(syslog.LOG_ERR, msg)
+def log_error(msg, *args, **kwargs):
+    __write_log(syslog.LOG_ERR, msg, *args, **kwargs)
 
 
-def __write_log(severity, msg):
+def __write_log(severity, msg, *args, **kwargs):
     if not isinstance(msg, str):
         msg = str(msg)
+    else:
+        msg = msg.format(*args, **kwargs)
 
     syslog.syslog(severity, msg)
 
