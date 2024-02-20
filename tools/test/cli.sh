@@ -54,8 +54,6 @@ export SHOW_CONFIG_TOOLS=$CLIBUILD/render-templates
 #export CLISH_PATH=$CLISOURCE/clitree/cli-xml
 export CLISH_PATH=$CLIBUILD/command-tree
 
-export PYTHONVER=3.7
-
 # KLISH_BIN can be set to use klish exe and libs from other directory.
 if [[ -z ${KLISH_BIN} ]]; then
     if [[ -f ${CLIBUILD}/clish ]]; then

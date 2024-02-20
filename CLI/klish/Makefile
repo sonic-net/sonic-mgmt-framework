@@ -3,9 +3,17 @@ SHELL = /bin/bash
 .SHELLFLAGS += -e
 
 KLISH_VERSION = 2.1.4
-PYTHONVER=3.7
 
 KLISH_SRC = $(SONIC_CLI_ROOT)/klish-$(KLISH_VERSION)
+
+# Python changed how to link against Python for embedding purposes in 3.8
+# which means that in order to support both Debian 10 and Debian >=11
+# we need to try two alternatives.
+CFLAGS_PYTHON := $(shell pkg-config --silence-errors --cflags python3-embed || pkg-config --cflags python3)
+LDFLAGS_PYTHON := $(shell pkg-config --silence-errors --libs python3-embed || pkg-config --libs python3)
+# The installed libcurl's -dev package is not gnutls
+# so we have to explicitly link to the correct .so file
+LDFLAGS_CURL := -l:libcurl-gnutls.so.4
 
 ifeq ($(CROSS_BUILD_ENVIRON),y)
 	CROSS_CONFIGURE_OPTS = --host=$(CROSS_HOST_TYPE)
@@ -19,7 +27,16 @@ all : $(SRC_REPLACEMENTS)
 	tar xzvf klish-$(KLISH_VERSION).tgz -C $(SONIC_CLI_ROOT)
 	./patches/scripts/patchmake.sh -p VER=${KLISH_VERSION} TSP=${SONIC_CLI_ROOT} DSP=${CURDIR}/patches TWP=${SONIC_CLI_ROOT}
 
-	cd ${KLISH_SRC} && sh autogen.sh && ./configure --with-libxml2=/usr $(CROSS_CONFIGURE_OPTS) --enable-debug=no LIBS='-l:libcurl-gnutls.so.4 -L$(LIB_PATH) -lpython3.7m -Wl,-rpath=$(LIB_PATH) -lcjson' CFLAGS='${CFLAGS} -g -I/usr/include/python3.7m' CPPFLAGS='${CPPFLAGS} -I/usr/include/cjson' && make
+	cd ${KLISH_SRC} && \
+		sh autogen.sh && \
+		./configure \
+			--with-libxml2=/usr \
+			$(CROSS_CONFIGURE_OPTS) \
+			--enable-debug=no \
+			LIBS='$(LDFLAGS_CURL) -L$(LIB_PATH) $(LDFLAGS_PYTHON) -Wl,-rpath=$(LIB_PATH) -lcjson' \
+			CFLAGS='${CFLAGS} -g $(CFLAGS_PYTHON)' \
+			CPPFLAGS='${CPPFLAGS} -I/usr/include/cjson' && \
+		make
 
 	mkdir -p $(SONIC_CLI_ROOT)/target/.libs
 	cp $(CURDIR)/clish_start $(SONIC_CLI_ROOT)/target/.
