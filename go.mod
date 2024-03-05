@@ -7,7 +7,7 @@ require (
 	github.com/gorilla/mux v1.7.4
 	github.com/leodido/go-urn v1.2.0 // indirect
 	github.com/pkg/profile v1.4.0
-	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
+	golang.org/x/crypto v0.17.0
 	gopkg.in/go-playground/validator.v9 v9.31.0
 )
 
