@@ -36,19 +36,22 @@ var testRouter *Router
 
 // Basic mux.Router tests
 func TestRoutes(t *testing.T) {
-	AddRoute("one", "GET", "/testroute/1", newHandler(1))
-	AddRoute("two", "GET", "/testroute/2", newHandler(2))
-	AddRoute("two", "GET", "/restconf/data/testroute/3", newHandler(3))
-	AddRoute("two", "GET", "/restconf/data/testroute/4", newHandler(4))
+	// The code has to be valid, otherwise latest (1.19) version of go package
+	// panics. (Panic info for URL /testroute/1: invalid WriteHeader code 1)
+	// go1.19/src/net/http/httptest/recorder.go:148
+	AddRoute("one", "GET", "/testroute/1", newHandler(200))
+	AddRoute("two", "GET", "/testroute/2", newHandler(202))
+	AddRoute("two", "GET", "/restconf/data/testroute/3", newHandler(203))
+	AddRoute("two", "GET", "/restconf/data/testroute/4", newHandler(204))
 
 	testRouter = newDefaultRouter()
 
 	// Try the test URLs and an unknown URL. The unknonw path
 	// should return 404
-	t.Run("Get1", testGet("/testroute/1", 1))
-	t.Run("Get2", testGet("/testroute/2", 2))
-	t.Run("Get3", testGet("/restconf/data/testroute/3", 3))
-	t.Run("Get4", testGet("/restconf/data/testroute/4", 4))
+	t.Run("Get1", testGet("/testroute/1", 200))
+	t.Run("Get2", testGet("/testroute/2", 202))
+	t.Run("Get3", testGet("/restconf/data/testroute/3", 203))
+	t.Run("Get4", testGet("/restconf/data/testroute/4", 204))
 	t.Run("GetUnknown", testGet("/testroute/4", 404))
 	t.Run("Meta", testGet("/.well-known/host-meta", 200))
 
