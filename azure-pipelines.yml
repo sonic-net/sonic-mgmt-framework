@@ -111,4 +111,4 @@ stages:
         # KLISH sanity
         pushd sonic-mgmt-framework
         tools/test/cli.sh -c 'exit'
-      displayName: "KLISH Sanity Test"
+      displayName: "*KLISH Sanity Test*"
