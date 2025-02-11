@@ -58,7 +58,7 @@ stages:
       inputs:
         source: specific
         project: build
-        pipeline: 142
+        pipeline: Azure.sonic-buildimage.official.vs
         artifact: sonic-buildimage.vs
         runVersion: 'latestFromBranch'
         runBranch: 'refs/heads/$(BUILD_BRANCH)'
