@@ -4,6 +4,12 @@ TOPDIR             := ../..
 PYANG_PLUGINS_DIR  := $(TOPDIR)/tools/pyang/pyang_plugins
 PYANG ?= pyang
 
+$(info ==========================)
+$(info $(shell $(PYANG) -version))
+$(info $(shell python3 -V))
+$(info $(shell pip3 freeze | grep -i py))
+$(info ==========================)
+
 all: test-rpc test-data-nodes test-complex-model test-complex-model-no-oneof
 
 # This will cover RPC statements with only input, only output and with
