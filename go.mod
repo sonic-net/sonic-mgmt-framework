@@ -39,6 +39,7 @@ require (
 	google.golang.org/grpc v1.28.0 // indirect
 	google.golang.org/protobuf v1.21.0 // indirect
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
+	gopkg.in/yaml.v2 v2.2.2 // indirect
 	inet.af/netaddr v0.0.0-20230525184311-b8eac61e914a // indirect
 )
 
