@@ -1,0 +1,14 @@
+[Unit]
+Description=SONiC Observability Connector Daemon
+After=redis.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/observabilityd --redis-sock /var/run/redis/redis.sock --db 4 --poll 5s
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target
+
+

@@ -31,7 +31,7 @@ GO_CODEGEN_INIT := $(BUILD_DIR)/rest_server/dist/.init_done
 export TOPDIR MGMT_COMMON_DIR GO GOPATH
 
 .PHONY: all
-all: rest cli
+all: rest cli observabilityd
 
 $(GO_MOD):
 	$(GO) mod init github.com/Azure/sonic-mgmt-framework
@@ -59,6 +59,10 @@ clish:
 rest: $(GO_DEPS) models
 	$(MAKE) -C rest
 
+.PHONY: observabilityd
+observabilityd:
+	$(MAKE) -C observabilityd
+
 # Special target for local compilation of REST server binary.
 # Compiles models, translib and cvl schema from sonic-mgmt-common
 rest-server: go-deps-clean
@@ -78,10 +82,13 @@ models: | $(GO_CODEGEN_INIT)
 models-clean:
 	$(MAKE) -C models clean
 
-clean: rest-clean models-clean
+clean: rest-clean models-clean observabilityd-clean
 	git check-ignore debian/* | xargs -r $(RM) -r
 	$(RM) -r debian/.debhelper
 	$(RM) -r $(BUILD_DIR)
+
+observabilityd-clean:
+	$(MAKE) -C observabilityd clean
 
 cleanall: clean
 
