@@ -1,6 +1,6 @@
 #!/usr/bin/make -f  
 %:  
-	dh $@ --with systemd --parallel --max-parallel=1
+	dh $@ --with systemd --parallel
 
 
 override_dh_shlibdeps:
