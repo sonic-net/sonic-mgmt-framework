@@ -44,4 +44,4 @@ require (
 
 replace github.com/Azure/sonic-mgmt-common => ../sonic-mgmt-common
 
-go 1.19
+go 1.26.1
