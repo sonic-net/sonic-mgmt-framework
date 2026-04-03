@@ -41,7 +41,7 @@ stages:
       vmImage: ubuntu-latest
 
     container:
-      image: sonicdev-microsoft.azurecr.io:443/sonic-slave-bookworm:latest
+      image: sonicdev-microsoft.azurecr.io:443/sonic-slave-trixie:latest
 
     steps:
     - checkout: self
@@ -63,8 +63,12 @@ stages:
         runVersion: 'latestFromBranch'
         runBranch: 'refs/heads/$(BUILD_BRANCH)'
         patterns: |
-          target/debs/bookworm/libyang*.deb
-          target/python-wheels/bookworm/sonic_yang_models*.whl
+          target/debs/trixie/libpcre3_*.deb
+          target/debs/trixie/libpcre16-3_*.deb
+          target/debs/trixie/libpcre32-3_*.deb
+          target/debs/trixie/libpcrecpp0v5_*.deb
+          target/debs/trixie/libyang*.deb
+          target/python-wheels/trixie/sonic_yang_models*.whl
       displayName: "Download sonic buildimage"
 
     - script: |
@@ -76,8 +80,14 @@ stages:
         sudo sed -ri 's/redis-server.sock/redis.sock/' /etc/redis/redis.conf
         sudo service redis-server start
 
+        # LIBPCRE3 (not in Trixie repos, required by libyang 1.0.73)
+        sudo dpkg -i ../target/debs/trixie/libpcre3_*.deb \
+                     ../target/debs/trixie/libpcre16-3_*.deb \
+                     ../target/debs/trixie/libpcre32-3_*.deb \
+                     ../target/debs/trixie/libpcrecpp0v5_*.deb
+
         # LIBYANG
-        sudo dpkg -i ../target/debs/bookworm/libyang*1.0.73*.deb
+        sudo dpkg -i ../target/debs/trixie/libyang*1.0.73*.deb
 
         # Install from "requirement" files in sonic-mgmt-framework/tools/test directory.
         pushd sonic-mgmt-framework/tools/test
@@ -94,7 +104,7 @@ stages:
       displayName: "Install dependency"
 
     - script: |
-        sudo pip3 install ../target/python-wheels/bookworm/sonic_yang_models-1.0-py3-none-any.whl
+        sudo pip3 install ../target/python-wheels/trixie/sonic_yang_models-1.0-py3-none-any.whl
       displayName: "Install sonic yangs"
 
     - script: |
