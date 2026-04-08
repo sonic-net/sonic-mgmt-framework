@@ -104,7 +104,7 @@ stages:
       displayName: "Install dependency"
 
     - script: |
-        sudo pip3 install ../target/python-wheels/trixie/sonic_yang_models-1.0-py3-none-any.whl
+        sudo pip3 install ../target/python-wheels/trixie/sonic_yang_models*.whl
       displayName: "Install sonic yangs"
 
     - script: |
