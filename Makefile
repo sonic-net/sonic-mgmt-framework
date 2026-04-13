@@ -37,6 +37,15 @@ $(GO_MOD):
 	$(GO) mod init github.com/Azure/sonic-mgmt-framework
 
 $(GO_DEPS): $(GO_MOD) $(GO_CODEGEN_INIT)
+	@# Run go mod tidy only if installed Go >= go.mod's go directive
+	@GO_MOD_VER=$$(sed -n 's/^go //p' go.mod) && \
+	 GO_CUR_VER=$$($(GO) env GOVERSION | sed 's/go//') && \
+	 if printf '%s\n' "$$GO_MOD_VER" "$$GO_CUR_VER" | sort -V | head -1 | grep -qx "$$GO_MOD_VER"; then \
+	   echo "Running go mod tidy (Go $$GO_CUR_VER >= go.mod $$GO_MOD_VER)"; \
+	   $(GO) mod tidy; \
+	 else \
+	   echo "Skipping go mod tidy (Go $$GO_CUR_VER < go.mod $$GO_MOD_VER)"; \
+	 fi
 	$(GO) mod vendor
 	$(MGMT_COMMON_DIR)/patches/apply.sh vendor
 	touch  $@
