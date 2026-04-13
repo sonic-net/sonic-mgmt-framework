@@ -351,8 +351,8 @@ def mclag_show_mclag_interface(args):
    
     else:
         #error response
-        print api_response
-        print api_response.error_message()
+        print(api_response)
+        print(api_response.error_message())
 
     return
 
@@ -406,8 +406,8 @@ def mclag_show_mclag_brief(args):
 
     else:
         #error response
-        print api_response
-        print api_response.error_message()
+        print(api_response)
+        print(api_response.error_message())
 
     return
 
@@ -425,7 +425,7 @@ def run(func, args):
             return
 
     except Exception as e:
-            print sys.exc_value
+            print(sys.exc_value)
             return
 
 
