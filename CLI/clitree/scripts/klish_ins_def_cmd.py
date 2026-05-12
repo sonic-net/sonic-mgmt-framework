@@ -83,8 +83,26 @@ END_CMD = """<COMMAND name="end"
                  view="enable-view"/>"""
 
 VIEW_TAG_STR = """{http://www.dellemc.com/sonic/XMLSchema}VIEW"""
+COMMAND_TAG_STR = """{http://www.dellemc.com/sonic/XMLSchema}COMMAND"""
 ENABLE_VIEW_STR = """enable-view"""
 SKIP_VIEW_LIST = ["enable-view", "hidden-view", "ping-view"]
+
+
+def _view_has_command(view_element, command_name):
+    """Return True if the view already declares <COMMAND name="..."/>.
+
+    The auto-insert pass below adds a generic exit/end to every view
+    that hasn't been processed yet, keyed only by view name. Views that
+    legitimately ship their own exit (e.g. IOS-XR style hierarchies
+    where exit returns to the parent view rather than nesting up) end
+    up with two COMMANDs of the same name and klish refuses to parse
+    the whole file. Checking the view's own children instead is what
+    the original docstring already promises ("if exit and end command
+    are not already appended for the view")."""
+    for child in view_element:
+        if child.tag == COMMAND_TAG_STR and child.get("name") == command_name:
+            return True
+    return False
 #DBG_FLAG = False
 DBG_FLAG = True
 
@@ -106,16 +124,16 @@ def update_view_tag(root, viewlist, filename, out_dirpath):
             view_name = element_inst.get('name')
 
             if view_name not in viewlist:
-                exit_element = etree.XML(EXIT_CMD)
-                end_element = etree.XML(END_CMD)
                 inherit_enable_element = etree.XML(INHERIT_ENABLE_MODE_CMD)
                 inherit_enable_element_without_prefix = etree.XML(INHERIT_ENABLE_MODE_CMD_WITHOUT_PREFIX)
                 comment_element = etree.XML(COMMENT_NS)
 
                 if DBG_FLAG == True:
                     print("Appending to view %s ..." %view_name)
-                element_inst.insert(0,end_element)
-                element_inst.insert(0,exit_element)
+                if not _view_has_command(element_inst, "end"):
+                    element_inst.insert(0, etree.XML(END_CMD))
+                if not _view_has_command(element_inst, "exit"):
+                    element_inst.insert(0, etree.XML(EXIT_CMD))
                 element_inst.insert(0,inherit_enable_element)
 #                element_inst.insert(0,inherit_enable_element_without_prefix)
                 element_inst.insert(0,comment_element)
