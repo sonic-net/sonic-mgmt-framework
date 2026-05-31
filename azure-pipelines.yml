@@ -67,7 +67,9 @@ stages:
           target/debs/trixie/libpcre16-3_*.deb
           target/debs/trixie/libpcre32-3_*.deb
           target/debs/trixie/libpcrecpp0v5_*.deb
-          target/debs/trixie/libyang*.deb
+          target/debs/trixie/libyang3_*.deb
+          target/debs/trixie/libyang-dev_3*.deb
+          target/debs/trixie/python3-libyang_*.deb
           target/python-wheels/trixie/sonic_yang_models*.whl
       displayName: "Download sonic buildimage"
 
@@ -80,14 +82,16 @@ stages:
         sudo sed -ri 's/redis-server.sock/redis.sock/' /etc/redis/redis.conf
         sudo service redis-server start
 
-        # LIBPCRE3 (not in Trixie repos, required by libyang 1.0.73)
+        # LIBPCRE3 (not in Trixie repos, required by libyang3)
         sudo dpkg -i ../target/debs/trixie/libpcre3_*.deb \
                      ../target/debs/trixie/libpcre16-3_*.deb \
                      ../target/debs/trixie/libpcre32-3_*.deb \
                      ../target/debs/trixie/libpcrecpp0v5_*.deb
 
         # LIBYANG
-        sudo dpkg -i ../target/debs/trixie/libyang*1.0.73*.deb
+        sudo dpkg -i ../target/debs/trixie/libyang3_*.deb \
+                     ../target/debs/trixie/libyang-dev_3*.deb \
+                     ../target/debs/trixie/python3-libyang_*.deb
 
         # Install from "requirement" files in sonic-mgmt-framework/tools/test directory.
         pushd sonic-mgmt-framework/tools/test
