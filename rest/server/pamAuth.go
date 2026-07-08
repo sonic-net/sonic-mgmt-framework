@@ -120,6 +120,15 @@ func PAMAuthenAndAuthor(r *http.Request, rc *RequestContext) error {
 			ssh.Password(passwd),
 		},
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+		// In FIPS mode (sonic_fips=1) the golang-fips crypto layer rejects
+		// X25519, so the default curve25519-sha256 key exchange panics
+		// ("curve25519: internal error") inside the ssh handshake goroutine
+		// and crashes the whole process. Restrict the exchange and cipher to
+		// FIPS-approved algorithms the local sshd also offers.
+		Config: ssh.Config{
+			KeyExchanges: []string{"ecdh-sha2-nistp256", "ecdh-sha2-nistp384", "ecdh-sha2-nistp521"},
+			Ciphers:      []string{"aes128-gcm@openssh.com", "aes256-gcm@openssh.com"},
+		},
 	}
 	_, err := ssh.Dial("tcp", "127.0.0.1:22", config)
 	if err != nil {
