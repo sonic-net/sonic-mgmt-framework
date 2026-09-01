@@ -29,6 +29,8 @@ class ApiClientCertificateVerificationTest(unittest.TestCase):
             'https://localhost:443',
             'https://127.0.0.1',
             'https://127.0.0.1:8443',
+            'https://127.0.0.2',
+            'https://127.255.255.254',
             'https://[::1]',
             'https://[::1]:8443',
         )

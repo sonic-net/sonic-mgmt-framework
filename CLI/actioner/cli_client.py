@@ -17,6 +17,7 @@
 #                                                                              #
 ################################################################################
 
+import ipaddress
 import os
 import json
 import warnings
@@ -33,11 +34,14 @@ def _is_loopback_endpoint(url):
         hostname = urlparse(url).hostname
     except ValueError:
         return False
-    return hostname is not None and hostname.lower() in (
-        'localhost',
-        '127.0.0.1',
-        '::1',
-    )
+    if hostname is None:
+        return False
+    if hostname.lower() == 'localhost':
+        return True
+    try:
+        return ipaddress.ip_address(hostname).is_loopback
+    except ValueError:
+        return False
 
 
 class ApiClient(object):
