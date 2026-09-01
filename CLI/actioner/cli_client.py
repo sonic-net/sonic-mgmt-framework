@@ -19,14 +19,25 @@
 
 import os
 import json
-import urllib3
+import warnings
 import requests
 from requests.structures import CaseInsensitiveDict
-from six.moves.urllib.parse import quote
+from six.moves.urllib.parse import quote, urlparse
+from urllib3.exceptions import InsecureRequestWarning
 from collections import OrderedDict
 from cli_log import log_info, log_warning
 
-urllib3.disable_warnings()
+
+def _is_loopback_endpoint(url):
+    try:
+        hostname = urlparse(url).hostname
+    except ValueError:
+        return False
+    return hostname is not None and hostname.lower() in (
+        'localhost',
+        '127.0.0.1',
+        '::1',
+    )
 
 
 class ApiClient(object):
@@ -52,13 +63,17 @@ class ApiClient(object):
             body = json.dumps(data)
 
         try:
-            r = ApiClient.__session.request(
-                method,
-                url,
-                headers=req_headers,
-                data=body,
-                params=query,
-                verify=False)
+            verify = not _is_loopback_endpoint(url)
+            with warnings.catch_warnings():
+                if not verify:
+                    warnings.simplefilter('ignore', InsecureRequestWarning)
+                r = ApiClient.__session.request(
+                    method,
+                    url,
+                    headers=req_headers,
+                    data=body,
+                    params=query,
+                    verify=verify)
 
             return Response(r, response_type)
 
