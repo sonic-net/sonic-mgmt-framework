@@ -63,19 +63,83 @@ class ApiClientCertificateVerificationTest(unittest.TestCase):
 
                 self.assertFalse(session.request.call_args.kwargs['verify'])
 
-    def test_remote_request_verifies_server_certificate(self):
+    def test_remote_request_uses_configured_ca_certificate(self):
         with mock.patch.object(
                 cli_client.ApiClient,
                 '_ApiClient__api_root',
                 'https://rest.example.com'):
-            with mock.patch.object(
-                    cli_client.ApiClient,
-                    '_ApiClient__session') as session:
-                session.request.return_value = _response()
+            with mock.patch.dict(
+                    os.environ,
+                    {cli_client.REST_API_CA_CERT: '/etc/sonic/rest-ca.pem'}):
+                with mock.patch('cli_client.os.path.isfile', return_value=True):
+                    with mock.patch('cli_client.os.access', return_value=True):
+                        with mock.patch.object(
+                                cli_client.ApiClient,
+                                '_ApiClient__session') as session:
+                            session.request.return_value = _response()
 
-                cli_client.ApiClient().get('/restconf/data')
+                            cli_client.ApiClient().get('/restconf/data')
 
-                self.assertTrue(session.request.call_args.kwargs['verify'])
+                            self.assertEqual(
+                                '/etc/sonic/rest-ca.pem',
+                                session.request.call_args.kwargs['verify'])
+
+    def test_remote_request_requires_ca_certificate(self):
+        with mock.patch.object(
+                cli_client.ApiClient,
+                '_ApiClient__api_root',
+                'https://rest.example.com'):
+            with mock.patch.dict(os.environ, {}, clear=True):
+                with mock.patch.object(
+                        cli_client.ApiClient,
+                        '_ApiClient__session') as session:
+
+                    response = cli_client.ApiClient().get('/restconf/data')
+
+                    session.request.assert_not_called()
+                    self.assertEqual(
+                        '%Error: REST_API_CA_CERT must be set for a remote Management REST Server',
+                        response.content['ietf-restconf:errors']['error'][0]['error-message'])
+
+    def test_remote_request_does_not_use_requests_ca_bundle(self):
+        with mock.patch.object(
+                cli_client.ApiClient,
+                '_ApiClient__api_root',
+                'https://rest.example.com'):
+            with mock.patch.dict(
+                    os.environ,
+                    {'REQUESTS_CA_BUNDLE': '/etc/ssl/certs/ca-certificates.crt'},
+                    clear=True):
+                with mock.patch.object(
+                        cli_client.ApiClient,
+                        '_ApiClient__session') as session:
+
+                    response = cli_client.ApiClient().get('/restconf/data')
+
+                    session.request.assert_not_called()
+                    self.assertEqual(
+                        '%Error: REST_API_CA_CERT must be set for a remote Management REST Server',
+                        response.content['ietf-restconf:errors']['error'][0]['error-message'])
+
+    def test_remote_request_rejects_unreadable_ca_certificate(self):
+        with mock.patch.object(
+                cli_client.ApiClient,
+                '_ApiClient__api_root',
+                'https://rest.example.com'):
+            with mock.patch.dict(
+                    os.environ,
+                    {cli_client.REST_API_CA_CERT: '/etc/sonic/missing.pem'}):
+                with mock.patch('cli_client.os.path.isfile', return_value=False):
+                    with mock.patch.object(
+                            cli_client.ApiClient,
+                            '_ApiClient__session') as session:
+
+                        response = cli_client.ApiClient().get('/restconf/data')
+
+                        session.request.assert_not_called()
+                        self.assertEqual(
+                            '%Error: REST_API_CA_CERT must identify a readable CA certificate file',
+                            response.content['ietf-restconf:errors']['error'][0]['error-message'])
 
     def test_loopback_warning_suppression_is_scoped_to_request(self):
         def request_with_warning(*args, **kwargs):
