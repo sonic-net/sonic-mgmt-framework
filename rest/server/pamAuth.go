@@ -20,13 +20,36 @@
 package server
 
 import (
+	"bytes"
+	"fmt"
+	"net"
 	"net/http"
+	"os"
 	"os/user"
+	"strings"
+	"time"
 
 	"github.com/golang/glog"
 	//"github.com/msteinert/pam"
 	"golang.org/x/crypto/ssh"
 )
+
+// sshAuthAddr is the address of the local sshd used to validate credentials.
+const sshAuthAddr = "127.0.0.1:22"
+
+// sshAuthTimeout bounds both the TCP connect and the SSH handshake/auth phase
+// so a rogue listener cannot hang the auth path indefinitely.
+const sshAuthTimeout = 5 * time.Second
+
+// sshHostKeyPaths lists candidate public host key files for the local sshd, in
+// preference order. The mgmt-framework container mounts the host /etc read-only
+// at /host_etc (see docker-sonic-mgmt-framework.mk), so the host sshd keys live
+// under /host_etc/ssh rather than the container's own /etc/ssh.
+var sshHostKeyPaths = []string{
+	"/host_etc/ssh/ssh_host_ed25519_key.pub",
+	"/host_etc/ssh/ssh_host_ecdsa_key.pub",
+	"/host_etc/ssh/ssh_host_rsa_key.pub",
+}
 
 /*
 type UserCredential struct {
@@ -91,6 +114,45 @@ func IsAdminGroup(username string) bool {
 	return false
 }
 
+// sshdHostKeyCallback returns an ssh.HostKeyCallback pinned to the local
+// sshd's public host key(s) read from paths. It fails closed if no key can be
+// loaded, so a rogue process bound to 127.0.0.1:22 cannot intercept credentials.
+func sshdHostKeyCallback(paths []string) (ssh.HostKeyCallback, error) {
+	var pinned []ssh.PublicKey
+	var problems []string
+	for _, path := range paths {
+		keyBytes, err := os.ReadFile(path)
+		if err != nil {
+			problems = append(problems, fmt.Sprintf("%s: %v", path, err))
+			continue
+		}
+		pubKey, _, _, rest, err := ssh.ParseAuthorizedKey(keyBytes)
+		if err != nil {
+			problems = append(problems, fmt.Sprintf("%s: parse: %v", path, err))
+			continue
+		}
+		if len(bytes.TrimSpace(rest)) != 0 {
+			problems = append(problems, fmt.Sprintf("%s: unexpected trailing data", path))
+			continue
+		}
+		pinned = append(pinned, pubKey)
+	}
+	if len(pinned) == 0 {
+		return nil, fmt.Errorf("no usable sshd host keys found: %s", strings.Join(problems, "; "))
+	}
+
+	callback := func(hostname string, remote net.Addr, key ssh.PublicKey) error {
+		presented := key.Marshal()
+		for _, p := range pinned {
+			if bytes.Equal(p.Marshal(), presented) {
+				return nil
+			}
+		}
+		return fmt.Errorf("ssh: host key mismatch: presented key of type %s is not among the %d pinned sshd host keys", key.Type(), len(pinned))
+	}
+	return callback, nil
+}
+
 func PAMAuthenAndAuthor(r *http.Request, rc *RequestContext) error {
 
 	username, passwd, authOK := r.BasicAuth()
@@ -113,19 +175,38 @@ func PAMAuthenAndAuthor(r *http.Request, rc *RequestContext) error {
 	        return err
 	    }*/
 
+	hostKeyCallback, err := sshdHostKeyCallback(sshHostKeyPaths)
+	if err != nil {
+		glog.Errorf("[%s] Authentication unavailable: cannot load sshd host key: %v", rc.ID, err)
+		return httpError(http.StatusUnauthorized, "")
+	}
+
 	//Use ssh for authentication.
 	config := &ssh.ClientConfig{
 		User: username,
 		Auth: []ssh.AuthMethod{
 			ssh.Password(passwd),
 		},
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+		HostKeyCallback: hostKeyCallback,
 	}
-	_, err := ssh.Dial("tcp", "127.0.0.1:22", config)
+
+	conn, err := net.DialTimeout("tcp", sshAuthAddr, sshAuthTimeout)
 	if err != nil {
 		glog.Infof("[%s] Failed to authenticate; %v", rc.ID, err)
 		return httpError(http.StatusUnauthorized, "")
 	}
+	if err := conn.SetDeadline(time.Now().Add(sshAuthTimeout)); err != nil {
+		conn.Close()
+		glog.Infof("[%s] Failed to authenticate; %v", rc.ID, err)
+		return httpError(http.StatusUnauthorized, "")
+	}
+	sshConn, chans, reqs, err := ssh.NewClientConn(conn, sshAuthAddr, config)
+	if err != nil {
+		conn.Close()
+		glog.Infof("[%s] Failed to authenticate; %v", rc.ID, err)
+		return httpError(http.StatusUnauthorized, "")
+	}
+	ssh.NewClient(sshConn, chans, reqs).Close()
 
 	glog.Infof("[%s] Authentication passed. user=%s ", rc.ID, username)
 
