@@ -78,11 +78,17 @@ inline bool is_loopback_url(const std::string& url)
     }
 
     struct in6_addr ipv6;
-    return inet_pton(AF_INET6, host.c_str(), &ipv6) == 1 && IN6_IS_ADDR_LOOPBACK(&ipv6);
+    if (inet_pton(AF_INET6, host.c_str(), &ipv6) != 1) {
+        return false;
+    }
+
+    return IN6_IS_ADDR_LOOPBACK(&ipv6) ||
+           (IN6_IS_ADDR_V4MAPPED(&ipv6) && ipv6.s6_addr[12] == 127);
 }
 
 inline bool is_readable_ca_file(const char *path)
 {
+    /* The path must remain operator-controlled between this check and libcurl's open. */
     struct stat file_stat;
     return path && path[0] != '\0' && stat(path, &file_stat) == 0 &&
            S_ISREG(file_stat.st_mode) && access(path, R_OK) == 0;

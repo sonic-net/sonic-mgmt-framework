@@ -35,11 +35,14 @@ int main()
     expect_loopback("https://127.255.255.254:8443", true);
     expect_loopback("https://[::1]", true);
     expect_loopback("https://[::1]:8443/restconf", true);
+    expect_loopback("https://[::ffff:127.0.0.1]", true);
+    expect_loopback("https://[::ffff:127.255.255.254]:8443", true);
 
     expect_loopback("https://localhost.example.com", false);
     expect_loopback("https://127.0.0.1.example.com", false);
     expect_loopback("https://128.0.0.1", false);
     expect_loopback("https://[::2]", false);
+    expect_loopback("https://[::ffff:128.0.0.1]", false);
     expect_loopback("https://example.com", false);
     expect_loopback("https://localhost@remote.example", false);
     expect_loopback("https://[::1.example.com", false);

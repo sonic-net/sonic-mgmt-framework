@@ -187,10 +187,11 @@ static int _init_curl() {
                 return 1;
             }
 
+            /* ca_cert was validated non-null by is_readable_ca_file(). */
             if (curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L) != CURLE_OK ||
                 curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L) != CURLE_OK ||
                 curl_easy_setopt(curl, CURLOPT_CAINFO, ca_cert) != CURLE_OK ||
-                curl_easy_setopt(curl, CURLOPT_CAPATH, "") != CURLE_OK) {
+                curl_easy_setopt(curl, CURLOPT_CAPATH, NULL) != CURLE_OK) {
                 REST_CLIENT_INIT_ERROR = "failed to configure REST server certificate verification";
                 syslog(LOG_ERR, "clish_restcl: %s", REST_CLIENT_INIT_ERROR.c_str());
                 curl_easy_cleanup(curl);
