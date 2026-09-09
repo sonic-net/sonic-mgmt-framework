@@ -138,5 +138,6 @@ stages:
     - script: |
         # KLISH sanity
         pushd sonic-mgmt-framework
+        tools/test/rest-tls.sh
         tools/test/cli.sh -c 'exit'
       displayName: "KLISH Sanity Test"
