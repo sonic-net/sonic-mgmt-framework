@@ -1,5 +1,4 @@
-#ifndef CLISH_REST_TLS_H
-#define CLISH_REST_TLS_H
+#pragma once
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -95,5 +94,3 @@ inline bool is_readable_ca_file(const char *path)
 }
 
 }  // namespace rest_tls
-
-#endif
