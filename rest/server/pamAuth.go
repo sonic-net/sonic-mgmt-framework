@@ -93,6 +93,16 @@ func IsAdminGroup(username string) bool {
 
 func PAMAuthenAndAuthor(r *http.Request, rc *RequestContext) error {
 
+	// Requests arriving over the local REST Unix domain socket
+	// (/var/run/rest-local.sock) carry a kernel-verified peer uid instead
+	// of a Basic-Auth header. Klish/sonic-cli has no credentials to send,
+	// but Klish also enforces no read/write privilege boundary of its own,
+	// so the UDS path below bypasses only the password challenge -- it
+	// still performs the same write-authorization check as remote users.
+	if cred, ok := PeerCredFromRequest(r); ok {
+		return udsAuthenAndAuthor(cred, r, rc)
+	}
+
 	username, passwd, authOK := r.BasicAuth()
 	if authOK == false {
 		glog.Warningf("[%s] User info not present", rc.ID)
@@ -131,6 +141,33 @@ func PAMAuthenAndAuthor(r *http.Request, rc *RequestContext) error {
 
 	//Allow SET request only if user belong to admin group
 	if isWriteOperation(r) && IsAdminGroup(username) == false {
+		glog.Warningf("[%s] Not an admin; cannot allow %s", rc.ID, r.Method)
+		return httpError(http.StatusForbidden, "Not an admin user")
+	}
+
+	glog.Infof("[%s] Authorization passed", rc.ID)
+	return nil
+}
+
+// udsAuthenAndAuthor authorizes a request that arrived over the local REST
+// Unix domain socket. Identity comes solely from cred, the kernel-verified
+// SO_PEERCRED uid captured by ConnContext -- no password challenge is
+// performed, and no client-supplied value (header, env var, etc.) is ever
+// consulted here. The uid is resolved to a host username via the host's
+// bind-mounted /etc (see hostident.go), and write operations still require
+// the same admin-group membership that PAMAuthenAndAuthor requires for
+// authenticated remote users.
+func udsAuthenAndAuthor(cred *PeerCred, r *http.Request, rc *RequestContext) error {
+
+	username, ok := LookupHostUsername(cred.UID)
+	if !ok {
+		glog.Warningf("[%s] No host user found for local REST socket peer uid=%d", rc.ID, cred.UID)
+		return httpError(http.StatusUnauthorized, "")
+	}
+
+	glog.Infof("[%s] Local REST socket request from uid=%d, user=%s", rc.ID, cred.UID, username)
+
+	if isWriteOperation(r) && IsHostAdminGroup(username) == false {
 		glog.Warningf("[%s] Not an admin; cannot allow %s", rc.ID, r.Method)
 		return httpError(http.StatusForbidden, "Not an admin user")
 	}

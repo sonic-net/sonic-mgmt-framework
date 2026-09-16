@@ -40,6 +40,13 @@ import (
 	"github.com/pkg/profile"
 )
 
+// restLocalSocketPath is the local Unix domain socket used by sonic-cli
+// (and other local processes in the same container) to reach the REST
+// server without TLS or a password challenge. Its path is fixed rather
+// than a flag because the native Klish REST client (rest_cl.cpp) already
+// hardcodes this exact path.
+const restLocalSocketPath = "/var/run/rest-local.sock"
+
 // Command line parameters
 var (
 	port       int    // Server port
@@ -115,6 +122,7 @@ func main() {
 		TLSConfig:   &tlsConfig,
 		ReadTimeout: readTimeout,
 		ErrorLog:    serverLog,
+		ConnContext: server.ConnContext,
 	}
 
 	if glog.V(1) {
@@ -122,10 +130,60 @@ func main() {
 		glog.Infof("Authentication modes = %v", clientAuth)
 	}
 
+	// Start the local Unix domain socket listener alongside the TCP/TLS
+	// listener, serving the same router/handler. A failure here must not
+	// prevent the remote TCP/TLS listener (and its Basic Auth requirement)
+	// from starting -- it is only logged.
+	if udsListener, err := prepareUnixSocketListener(restLocalSocketPath); err != nil {
+		glog.Errorf("Local REST unix socket disabled: %v", err)
+	} else {
+		glog.Infof("Local REST unix socket listening on %s", restLocalSocketPath)
+		go func() {
+			if serveErr := restServer.Serve(udsListener); serveErr != nil && serveErr != http.ErrServerClosed {
+				glog.Errorf("Local REST unix socket listener stopped: %v", serveErr)
+			}
+		}()
+	}
+
 	glog.Infof("Server started on %v", address)
 
 	// Start HTTPS server
 	glog.Fatal(restServer.ListenAndServeTLS("", ""))
+}
+
+// prepareUnixSocketListener removes a stale rest-local.sock left behind by
+// a previous process (if any) and binds a fresh listener at path. Only a
+// pre-existing Unix domain socket special file is ever removed -- any
+// other file type found at path is left untouched, and listener setup
+// fails instead of clobbering it. The socket is created with mode 0666;
+// filesystem permissions are intentionally permissive here because
+// authorization for requests on this socket is based on the kernel
+// verified SO_PEERCRED uid (see server.ConnContext / IsHostAdminGroup),
+// not on who can open the socket file.
+func prepareUnixSocketListener(path string) (net.Listener, error) {
+	if info, err := os.Lstat(path); err == nil {
+		if info.Mode()&os.ModeSocket == 0 {
+			return nil, fmt.Errorf("%s exists and is not a socket; refusing to remove it", path)
+		}
+		if err := os.Remove(path); err != nil {
+			return nil, fmt.Errorf("failed to remove stale socket %s: %w", path, err)
+		}
+	} else if !os.IsNotExist(err) {
+		return nil, fmt.Errorf("failed to stat %s: %w", path, err)
+	}
+
+	listener, err := net.Listen("unix", path)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := os.Chmod(path, 0666); err != nil {
+		listener.Close()
+		os.Remove(path)
+		return nil, fmt.Errorf("failed to chmod %s: %w", path, err)
+	}
+
+	return listener, nil
 }
 
 // prepareServerCertificate function parses --cert and --key parameter

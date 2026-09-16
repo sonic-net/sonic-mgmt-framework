@@ -20,7 +20,9 @@
 package server
 
 import (
+	"context"
 	"flag"
+	"net"
 	"net/http"
 	"path"
 	"regexp"
@@ -31,6 +33,7 @@ import (
 	"github.com/Azure/sonic-mgmt-common/translib"
 	"github.com/golang/glog"
 	"github.com/gorilla/mux"
+	"golang.org/x/sys/unix"
 )
 
 // Root directory for UI files
@@ -57,6 +60,72 @@ type RouterConfig struct {
 	// ServerAddr is the address to contact main server. Will be used to
 	// advertise the server's address (like yang download path).. Optional
 	ServerAddr string
+}
+
+// PeerCred holds the kernel-verified identity of the process on the other
+// end of a Unix domain socket connection, as reported by SO_PEERCRED. It is
+// only ever populated for connections accepted on the local REST Unix
+// socket (/var/run/rest-local.sock) -- TCP connections never carry one.
+type PeerCred struct {
+	UID uint32
+	GID uint32
+	PID int32
+}
+
+// ConnContext is installed as the http.Server's ConnContext hook. For a
+// connection accepted on a Unix domain socket listener, it reads the
+// kernel-verified peer credentials via SO_PEERCRED and attaches them to
+// the connection's context, where PeerCredFromRequest can retrieve them
+// for every request served on that connection. TCP/TLS connections are
+// untouched: the type assertion below only ever succeeds for
+// *net.UnixConn, never for a *tls.Conn or *net.TCPConn.
+func ConnContext(ctx context.Context, c net.Conn) context.Context {
+	uc, ok := c.(*net.UnixConn)
+	if !ok {
+		return ctx
+	}
+
+	cred, err := unixPeerCred(uc)
+	if err != nil {
+		glog.Warningf("Could not read SO_PEERCRED for local REST socket connection: %v", err)
+		return ctx
+	}
+
+	return context.WithValue(ctx, peerCredContextKey, cred)
+}
+
+// unixPeerCred retrieves the SO_PEERCRED credentials of the process on the
+// other end of a Unix domain socket connection.
+func unixPeerCred(uc *net.UnixConn) (*PeerCred, error) {
+	raw, err := uc.SyscallConn()
+	if err != nil {
+		return nil, err
+	}
+
+	var ucred *unix.Ucred
+	var sockErr error
+	ctrlErr := raw.Control(func(fd uintptr) {
+		ucred, sockErr = unix.GetsockoptUcred(int(fd), unix.SOL_SOCKET, unix.SO_PEERCRED)
+	})
+	if ctrlErr != nil {
+		return nil, ctrlErr
+	}
+	if sockErr != nil {
+		return nil, sockErr
+	}
+
+	return &PeerCred{UID: ucred.Uid, GID: ucred.Gid, PID: ucred.Pid}, nil
+}
+
+// PeerCredFromRequest returns the SO_PEERCRED credentials captured for the
+// connection that carried r. The second return value is false for any
+// request that did not arrive over the local REST Unix domain socket (in
+// particular, every TCP request), in which case the PeerCred is nil. This
+// is the only source of local identity used for UDS authorization -- it is
+// never derived from a client-supplied header.
+func PeerCredFromRequest(r *http.Request) (*PeerCred, bool) {
+	cred, ok := getContextValue(r, peerCredContextKey).(*PeerCred)
+	return cred, ok
 }
 
 // ServeHTTP resolves and invokes the handler for http request r.
