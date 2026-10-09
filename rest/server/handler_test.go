@@ -367,6 +367,39 @@ func TestReqData_ReadFailure(t *testing.T) {
 	testReqError(t, r, rc, 500)
 }
 
+func TestSetMaxRequestBodyBytes(t *testing.T) {
+	originalLimit := maxRequestBodyBytes
+	t.Cleanup(func() { maxRequestBodyBytes = originalLimit })
+
+	for _, limit := range []int64{0, -1} {
+		if err := SetMaxRequestBodyBytes(limit); err == nil {
+			t.Errorf("SetMaxRequestBodyBytes(%d) succeeded; expected an error", limit)
+		}
+		if maxRequestBodyBytes != originalLimit {
+			t.Fatalf("invalid limit %d changed the configured limit", limit)
+		}
+	}
+
+	if err := SetMaxRequestBodyBytes(1024); err != nil {
+		t.Fatalf("SetMaxRequestBodyBytes(1024) failed: %v", err)
+	}
+	if maxRequestBodyBytes != 1024 {
+		t.Fatalf("configured limit = %d; expected 1024", maxRequestBodyBytes)
+	}
+}
+
+func TestReqData_ConfiguredBodyLimit(t *testing.T) {
+	originalLimit := maxRequestBodyBytes
+	t.Cleanup(func() { maxRequestBodyBytes = originalLimit })
+	if err := SetMaxRequestBodyBytes(4); err != nil {
+		t.Fatalf("SetMaxRequestBodyBytes(4) failed: %v", err)
+	}
+
+	r := httptest.NewRequest("PUT", "/test", strings.NewReader("12345"))
+	rc := &RequestContext{ID: t.Name()}
+	testReqError(t, r, rc, http.StatusRequestEntityTooLarge)
+}
+
 func TestReqData_DeclaredBodyTooLarge(t *testing.T) {
 	// An oversized declared length must be rejected without reading the body.
 	r := httptest.NewRequest("PUT", "/test", errReader("body must not be read"))
@@ -377,7 +410,7 @@ func TestReqData_DeclaredBodyTooLarge(t *testing.T) {
 }
 
 func TestReqData_ChunkedBodyTooLarge(t *testing.T) {
-	r := httptest.NewRequest("PUT", "/test", strings.NewReader(strings.Repeat("x", maxRequestBodyBytes+1)))
+	r := httptest.NewRequest("PUT", "/test", strings.NewReader(strings.Repeat("x", int(maxRequestBodyBytes+1))))
 	r.ContentLength = -1
 	rc := &RequestContext{ID: t.Name()}
 
@@ -385,7 +418,7 @@ func TestReqData_ChunkedBodyTooLarge(t *testing.T) {
 }
 
 func TestReqData_BodyAtLimit(t *testing.T) {
-	input := strings.Repeat("x", maxRequestBodyBytes)
+	input := strings.Repeat("x", int(maxRequestBodyBytes))
 	r := httptest.NewRequest("PUT", "/test", strings.NewReader(input))
 	r.Header.Set("content-type", "text/plain")
 	rc := &RequestContext{ID: t.Name()}

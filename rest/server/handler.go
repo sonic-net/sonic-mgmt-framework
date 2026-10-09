@@ -117,8 +117,22 @@ func getRequestID(r *http.Request) string {
 	return ""
 }
 
-// maxRequestBodyBytes bounds the payload buffered before RESTCONF validation.
-const maxRequestBodyBytes = 10 << 20 // 10 MiB
+// DefaultMaxRequestBodyBytes is the default payload limit applied before
+// RESTCONF validation.
+const DefaultMaxRequestBodyBytes int64 = 10 << 20 // 10 MiB
+
+var maxRequestBodyBytes = DefaultMaxRequestBodyBytes
+
+// SetMaxRequestBodyBytes changes the request body limit. It must be called
+// before the server starts accepting requests.
+func SetMaxRequestBodyBytes(limit int64) error {
+	if limit <= 0 {
+		return fmt.Errorf("request body limit must be greater than zero")
+	}
+
+	maxRequestBodyBytes = limit
+	return nil
+}
 
 // getRequestBody returns the validated request body.
 func getRequestBody(w http.ResponseWriter, r *http.Request, rc *RequestContext) (*MediaType, []byte, error) {
