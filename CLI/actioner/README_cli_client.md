@@ -11,6 +11,10 @@ import cli_client as cc
 api = cc.ApiClient()
 ```
 
+The client connects to `https://localhost` by default. To connect to a non-loopback REST server, set
+`REST_API_ROOT` to the server URL and `REST_API_CA_CERT` to a readable PEM CA certificate file. The
+client does not use the system CA store for non-loopback endpoints.
+
 Create a path object for target REST resource. It accepts parameterized path template and parameter
 values. Path template is similar to the template used by swagger. Parameter values will be URL-encoded
 and substituted in the template to get REST resource path.

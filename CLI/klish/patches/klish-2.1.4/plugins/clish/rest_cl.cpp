@@ -39,7 +39,10 @@ extern "C" {
 
 #include <string>
 
+#include "rest_tls.h"
+
 std::string REST_API_ROOT;
+std::string REST_CLIENT_INIT_ERROR;
 
 typedef struct {
     int size;
@@ -169,9 +172,33 @@ static int _init_curl() {
     curl_easy_setopt(curl, CURLOPT_READFUNCTION, read_callback);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
 
-    if (REST_API_ROOT.find("https://") == 0) {
-        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
-        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+    if (rest_tls::is_https_url(REST_API_ROOT)) {
+        if (rest_tls::is_loopback_url(REST_API_ROOT)) {
+            curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+            curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+        } else {
+            const char *ca_cert = getenv("REST_API_CA_CERT");
+            if (!rest_tls::is_readable_ca_file(ca_cert)) {
+                REST_CLIENT_INIT_ERROR =
+                    "REST_API_CA_CERT must name a readable CA certificate file for a remote HTTPS REST server";
+                syslog(LOG_ERR, "clish_restcl: %s", REST_CLIENT_INIT_ERROR.c_str());
+                curl_easy_cleanup(curl);
+                curl = NULL;
+                return 1;
+            }
+
+            /* ca_cert was validated non-null by is_readable_ca_file(). */
+            if (curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L) != CURLE_OK ||
+                curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L) != CURLE_OK ||
+                curl_easy_setopt(curl, CURLOPT_CAINFO, ca_cert) != CURLE_OK ||
+                curl_easy_setopt(curl, CURLOPT_CAPATH, NULL) != CURLE_OK) {
+                REST_CLIENT_INIT_ERROR = "failed to configure REST server certificate verification";
+                syslog(LOG_ERR, "clish_restcl: %s", REST_CLIENT_INIT_ERROR.c_str());
+                curl_easy_cleanup(curl);
+                curl = NULL;
+                return 1;
+            }
+        }
     } else {
         curl_easy_setopt(curl, CURLOPT_UNIX_SOCKET_PATH, "/var/run/rest-local.sock");
     }
@@ -183,10 +210,11 @@ void rest_client_init() {
     char *root = getenv("REST_API_ROOT");
 
     REST_API_ROOT.assign(root ? root : "http://localhost");
+    REST_CLIENT_INIT_ERROR.clear();
 
-    _init_curl();
-
-    rest_set_curl_headers(true);
+    if (_init_curl() == 0) {
+        rest_set_curl_headers(true);
+    }
 }
 
 int rest_token_fetch(int *interval) {
@@ -195,7 +223,8 @@ int rest_token_fetch(int *interval) {
     std::string url;
 
     if (!curl) {
-        syslog(LOG_WARNING, "curl handle is not yet initialized.");
+        syslog(LOG_WARNING, "curl handle is not initialized: %s",
+                REST_CLIENT_INIT_ERROR.empty() ? "unknown error" : REST_CLIENT_INIT_ERROR.c_str());
         return 1;
     }
     
@@ -356,8 +385,14 @@ int rest_cl(char *cmd, const char *buff)
             }
         }
     } else {
-        lub_dump_printf("%%Error: Could not connect to Management REST Server\n");
-        syslog(LOG_WARNING, "Couldn't initialize curl handle");
+        if (REST_CLIENT_INIT_ERROR.empty()) {
+            lub_dump_printf("%%Error: Could not connect to Management REST Server\n");
+            syslog(LOG_WARNING, "Couldn't initialize curl handle");
+        } else {
+            lub_dump_printf("%%Error: %s\n", REST_CLIENT_INIT_ERROR.c_str());
+            syslog(LOG_WARNING, "Couldn't initialize curl handle: %s",
+                    REST_CLIENT_INIT_ERROR.c_str());
+        }
     }
 
     return ret_code;

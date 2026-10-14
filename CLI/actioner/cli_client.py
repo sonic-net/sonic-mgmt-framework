@@ -17,16 +17,34 @@
 #                                                                              #
 ################################################################################
 
+import ipaddress
 import os
 import json
-import urllib3
+import warnings
 import requests
 from requests.structures import CaseInsensitiveDict
-from six.moves.urllib.parse import quote
+from six.moves.urllib.parse import quote, urlparse
+from urllib3.exceptions import InsecureRequestWarning
 from collections import OrderedDict
 from cli_log import log_info, log_warning
 
-urllib3.disable_warnings()
+
+REST_API_CA_CERT = 'REST_API_CA_CERT'
+
+
+def _is_loopback_endpoint(url):
+    try:
+        hostname = urlparse(url).hostname
+    except ValueError:
+        return False
+    if hostname is None:
+        return False
+    if hostname.lower() == 'localhost':
+        return True
+    try:
+        return ipaddress.ip_address(hostname).is_loopback
+    except ValueError:
+        return False
 
 
 class ApiClient(object):
@@ -51,14 +69,29 @@ class ApiClient(object):
                 req_headers['Content-Type'] = 'application/yang-data+json'
             body = json.dumps(data)
 
+        verify = False
+        if not _is_loopback_endpoint(url):
+            verify = os.getenv(REST_API_CA_CERT)
+            if not verify:
+                msg = '%Error: REST_API_CA_CERT must be set for a remote Management REST Server'
+                log_info("cli_client certificate configuration error: {}", msg)
+                return ApiClient.__new_error_response(msg)
+            if not os.path.isfile(verify) or not os.access(verify, os.R_OK):
+                msg = '%Error: REST_API_CA_CERT must identify a readable CA certificate file'
+                log_info("cli_client certificate configuration error: {}", msg)
+                return ApiClient.__new_error_response(msg)
+
         try:
-            r = ApiClient.__session.request(
-                method,
-                url,
-                headers=req_headers,
-                data=body,
-                params=query,
-                verify=False)
+            with warnings.catch_warnings():
+                if not verify:
+                    warnings.simplefilter('ignore', InsecureRequestWarning)
+                r = ApiClient.__session.request(
+                    method,
+                    url,
+                    headers=req_headers,
+                    data=body,
+                    params=query,
+                    verify=verify)
 
             return Response(r, response_type)
 
