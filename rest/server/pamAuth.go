@@ -121,11 +121,12 @@ func PAMAuthenAndAuthor(r *http.Request, rc *RequestContext) error {
 		},
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}
-	_, err := ssh.Dial("tcp", "127.0.0.1:22", config)
+	client, err := ssh.Dial("tcp", "127.0.0.1:22", config)
 	if err != nil {
 		glog.Infof("[%s] Failed to authenticate; %v", rc.ID, err)
 		return httpError(http.StatusUnauthorized, "")
 	}
+	defer client.Close()
 
 	glog.Infof("[%s] Authentication passed. user=%s ", rc.ID, username)
 
