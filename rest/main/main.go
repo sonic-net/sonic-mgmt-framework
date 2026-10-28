@@ -106,6 +106,12 @@ func main() {
 		ClientCAs:                prepareCACertificates(),
 		MinVersion:               tls.VersionTLS12,
 		PreferServerCipherSuites: true,
+		// In FIPS mode (sonic_fips=1) the symcrypt OpenSSL provider does not
+		// implement AES-CTR, and the golang-fips backend panics instead of
+		// returning an error. crypto/tls uses AES-CTR only to encrypt session
+		// tickets, so disabling ticket based resumption keeps the whole TLS
+		// path within the algorithms symcrypt provides.
+		SessionTicketsDisabled: true,
 	}
 
 	// Prepare HTTPS server
