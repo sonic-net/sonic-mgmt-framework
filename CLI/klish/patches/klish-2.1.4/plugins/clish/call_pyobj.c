@@ -25,8 +25,14 @@
 #include <Python.h>
 #include <stdarg.h>
 #include <malloc.h>
+#include <dlfcn.h>
 
 void pyobj_init() {
+    void *python_lib = dlopen("libpython3.11.so.1.0", RTLD_NOW | RTLD_GLOBAL);
+    if (!python_lib) {
+        fprintf(stderr, "Failed to load Python library: %s\n", dlerror());
+    }
+
     Py_Initialize();
 }
 
