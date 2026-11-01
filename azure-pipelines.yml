@@ -30,6 +30,12 @@ resources:
     endpoint: sonic-net
     ref: refs/heads/$(BUILD_BRANCH)
 
+  - repository: sonic-swss-common
+    type: github
+    name: sonic-net/sonic-swss-common
+    endpoint: sonic-net
+    ref: refs/heads/$(BUILD_BRANCH)
+
 stages:
 - stage: Build
   jobs:
@@ -53,6 +59,10 @@ stages:
       submodules: recursive
       displayName: 'Checkout sonic-mgmt-common'
 
+    - checkout: sonic-swss-common
+      clean: true
+      displayName: 'Checkout native Redis binding'
+
     - task: DownloadPipelineArtifact@2
       inputs:
         source: specific
@@ -69,6 +79,8 @@ stages:
           target/debs/trixie/libyang3_*.deb
           target/debs/trixie/libyang-dev_3*.deb
           target/debs/trixie/python3-libyang_*.deb
+          target/debs/trixie/libswsscommon_*.deb
+          target/debs/trixie/libswsscommon-dev_*.deb
           target/python-wheels/trixie/sonic_yang_models*.whl
       displayName: "Download sonic buildimage"
 
@@ -93,6 +105,9 @@ stages:
                      ../target/debs/trixie/python3-libyang_*.deb
 
         # Install from "requirement" files in sonic-mgmt-framework/tools/test directory.
+        sudo dpkg -i ../target/debs/trixie/libswsscommon_*.deb \
+                     ../target/debs/trixie/libswsscommon-dev_*.deb
+
         pushd sonic-mgmt-framework/tools/test
 
         [[ ! -f apt_requirements.txt ]] || \
