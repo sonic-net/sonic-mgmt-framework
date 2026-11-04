@@ -63,6 +63,7 @@ const (
 	errtagResourceDenied        errtag = "resource-denied"
 	errtagInUse                 errtag = "in-use"
 	errtagMalformedMessage      errtag = "malformed-message"
+	errtagTooBig                errtag = "too-big"
 )
 
 // cvlErrorData holds error-info data for cvl errors.
@@ -139,6 +140,8 @@ func toErrorEntry(err error, r *http.Request) (status int, errInfo errorEntry) {
 			errInfo.Tag = errtagInvalidValue
 		case http.StatusMethodNotAllowed: // 405
 			errInfo.Tag = errtagOperationNotSupported
+		case http.StatusRequestEntityTooLarge: // 413
+			errInfo.Tag = errtagTooBig
 		case http.StatusUnsupportedMediaType:
 			errInfo.Tag = errtagInvalidValue
 		default: // 5xx and others
