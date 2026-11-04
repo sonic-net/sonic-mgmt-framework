@@ -54,6 +54,10 @@ type RouterConfig struct {
 	// AuthEnable indicates if client authentication is enabled
 	AuthEnable bool
 
+	// CertAuth selects TLS client certificate authentication instead of
+	// username/password. Takes effect only when AuthEnable is set.
+	CertAuth bool
+
 	// ServerAddr is the address to contact main server. Will be used to
 	// advertise the server's address (like yang download path).. Optional
 	ServerAddr string
@@ -406,8 +410,7 @@ func (rs *routeStore) addServiceRoutes(config *RouterConfig) {
 
 // addFilesystemRoute creates a mux route to handle file system based GET requests.
 func (rs *routeStore) addFilesystemRoute(name, prefix, dir string) {
-	h := http.StripPrefix(prefix, http.FileServer(http.Dir(dir)))
-	//TODO enable authentication?
+	h := withMiddleware(http.StripPrefix(prefix, http.FileServer(http.Dir(dir))), name)
 	rs.muxRoutes.Name(name).Methods("GET", "HEAD").PathPrefix(prefix).Handler(h)
 }
 
