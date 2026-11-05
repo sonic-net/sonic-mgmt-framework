@@ -30,11 +30,6 @@ resources:
     endpoint: sonic-net
     ref: refs/heads/$(BUILD_BRANCH)
 
-  - repository: sonic-swss-common
-    type: github
-    name: sonic-net/sonic-swss-common
-    endpoint: sonic-net
-    ref: refs/heads/$(BUILD_BRANCH)
 
 stages:
 - stage: Build
@@ -58,10 +53,6 @@ stages:
       clean: true
       submodules: recursive
       displayName: 'Checkout sonic-mgmt-common'
-
-    - checkout: sonic-swss-common
-      clean: true
-      displayName: 'Checkout native Redis binding'
 
     - task: DownloadPipelineArtifact@2
       inputs:

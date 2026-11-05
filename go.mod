@@ -33,7 +33,6 @@ require (
 	github.com/openconfig/ygot v0.7.1 // indirect
 	github.com/philopon/go-toposort v0.0.0-20170620085441-9be86dbd762f // indirect
 	github.com/redis/go-redis/v9 v9.6.3 // indirect
-	github.com/sonic-net/sonic-swss-common v0.0.0-20261105000629-1a2b92b44664 // indirect
 	go4.org/intern v0.0.0-20211027215823-ae77deb06f29 // indirect
 	go4.org/unsafe/assume-no-moving-gc v0.0.0-20230525183740-e7c30c78aeb2 // indirect
 	golang.org/x/net v0.54.0 // indirect
@@ -52,6 +51,3 @@ go 1.25.9
 
 // Pin glog to the version that patches/glog.patch is written for.
 replace github.com/golang/glog => github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
-
-// SONiC builds use the matching native source from the sibling checkout.
-replace github.com/sonic-net/sonic-swss-common => ../sonic-swss-common
