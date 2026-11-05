@@ -1,0 +1,29 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["local>sonic-net/sonic-pipelines//renovate/default"],
+  "ignoreDeps": ["go"],
+  "suppressNotifications": ["artifactErrors", "prEditedNotification"],
+  "vulnerabilityAlerts": {
+    "groupName": "{{{datasource}}} security updates{{#if (or isMajor (includes (split 'github.com/antchfx/jsonquery github.com/antchfx/xmlquery github.com/antchfx/xpath github.com/golang/glog github.com/openconfig/gnmi github.com/openconfig/goyang github.com/openconfig/ygot' ' ') depName))}} for {{{depName}}}{{/if}}"
+  },
+  "packageRules": [
+    {
+      "description": "Modules sonic-mgmt-common's patches/apply.sh patches in vendor/ here, and openconfig/gnmi, whose newer versions require newer goyang and ygot. A bump has to refresh the patch, so it opens on its own, and only on dashboard approval. A security update still opens, on its own (see vulnerabilityAlerts above, which repeats this list), and the patched-module label keeps the preset from labeling it automerge.",
+      "matchManagers": ["gomod"],
+      "matchPackageNames": [
+        "github.com/antchfx/jsonquery",
+        "github.com/antchfx/xmlquery",
+        "github.com/antchfx/xpath",
+        "github.com/golang/glog",
+        "github.com/openconfig/gnmi",
+        "github.com/openconfig/goyang",
+        "github.com/openconfig/ygot"
+      ],
+      "groupName": null,
+      "minimumReleaseAge": "7 days",
+      "dependencyDashboardApproval": true,
+      "addLabels": ["patched-module"],
+      "prBodyNotes": ["sonic-mgmt-common's `patches/apply.sh` patches this module in `vendor/` here, or, for `openconfig/gnmi`, the goyang and ygot it requires. A patch that still applies may no longer be correct for the new version, so check each one against it. This update is never labeled `automerge`."]
+    }
+  ]
+}
