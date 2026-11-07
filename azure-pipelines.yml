@@ -69,6 +69,12 @@ stages:
           target/debs/trixie/libyang3_*.deb
           target/debs/trixie/libyang-dev_3*.deb
           target/debs/trixie/python3-libyang_*.deb
+          target/debs/trixie/libnl-3-200_*.deb
+          target/debs/trixie/libnl-genl-3-200_*.deb
+          target/debs/trixie/libnl-route-3-200_*.deb
+          target/debs/trixie/libnl-nf-3-200_*.deb
+          target/debs/trixie/libswsscommon_*.deb
+          target/debs/trixie/libswsscommon-dev_*.deb
           target/python-wheels/trixie/sonic_yang_models*.whl
       displayName: "Download sonic buildimage"
 
@@ -105,6 +111,16 @@ stages:
             sudo pip3 install --no-cache-dir -r python3_requirements.txt
 
       displayName: "Install dependency"
+
+    - script: |
+        set -e
+        sudo dpkg -i ../target/debs/trixie/libnl-3-200_*.deb \
+                     ../target/debs/trixie/libnl-genl-3-200_*.deb \
+                     ../target/debs/trixie/libnl-route-3-200_*.deb \
+                     ../target/debs/trixie/libnl-nf-3-200_*.deb \
+                     ../target/debs/trixie/libswsscommon_*.deb \
+                     ../target/debs/trixie/libswsscommon-dev_*.deb
+      displayName: "Install native Redis SDK dependencies"
 
     - script: |
         sudo pip3 install ../target/python-wheels/trixie/sonic_yang_models*.whl
