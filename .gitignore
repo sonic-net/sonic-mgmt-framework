@@ -15,3 +15,7 @@ __pycache__
 vendor
 models/yangs
 
+
+# Bazel outputs and generated resolution evidence
+bazel-*
+MODULE.bazel.lock

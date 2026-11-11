@@ -1,0 +1,37 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("//tools/bazel:rest_models.bzl", "rest_models")
+
+package(default_visibility = ["//visibility:public"])
+
+exports_files(["codegen.config"])
+
+rest_models(
+    name = "rest_models",
+    assets = ["//tools:rest_codegen_assets"],
+    config = "codegen.config",
+    models = "@sonic_mgmt_common//models/yang:prepared_models",
+    openapi_specs = glob(
+        ["openapi/*.yaml"],
+        allow_empty = True,
+    ),
+    plugin = "//tools:pyang/pyang_plugins/openapi.py",
+)
+
+go_library(
+    name = "openapi",
+    srcs = [":rest_models"],
+    importpath = "github.com/Azure/sonic-mgmt-framework/build/rest_server/dist/openapi",
+    deps = ["//rest/server"],
+)
+
+filegroup(
+    name = "ui",
+    srcs = [":rest_models"],
+    output_group = "ui",
+)
+
+filegroup(
+    name = "docs",
+    srcs = [":rest_models"],
+    output_group = "docs",
+)

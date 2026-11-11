@@ -1,0 +1,255 @@
+load("@bazel_skylib//rules:select_file.bzl", "select_file")
+load("@rules_cc//cc:defs.bzl", "cc_test")
+load("@rules_foreign_cc//foreign_cc:defs.bzl", "configure_make")
+load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
+load("@rules_python//python:py_test.bzl", "py_test")
+load("@sonic_build_infra//binary:keep_debug_info.bzl", "keep_debug_info")
+load("@sonic_build_infra//tar:sonic_deploy_tar.bzl", "sonic_deploy_tar")
+load("//CLI/bazel:defs.bzl", "ASSETS_STRIP_PREFIX", "cli_prepare")
+
+package(default_visibility = ["//visibility:public"])
+
+_AMD64 = [
+    "@platforms//cpu:x86_64",
+    "@sonic_build_infra//platforms:trixie",
+]
+
+_LIBRARIES = [
+    "libclish",
+    "libkonf",
+    "liblub",
+    "libtinyrl",
+]
+
+cli_prepare(
+    name = "klish_sources",
+    srcs = glob(["klish/patches/klish-2.1.4/**"]),
+    archive = "klish/klish-2.1.4.tgz",
+    configure = "//CLI/bazel:configure.sh",
+    mode = "klish",
+    source_prefix = "CLI/klish/patches/klish-2.1.4",
+    target_compatible_with = _AMD64,
+    tools = "@sonic_build_infra//tools/build_tools:foreign_runtime",
+)
+
+# The same patched source, configure options and Make build as CLI/klish/Makefile.
+# Only its build environment and install staging are explicit Bazel inputs.
+configure_make(
+    name = "klish",
+    args = [
+        "-C",
+        "source",
+    ],
+    build_data = [
+        "@sonic_build_infra//tools/build_tools:foreign_runtime",
+        "@sonic_build_infra//tools/build_tools:configure_environment.sh",
+        "//CLI/bazel:target_libraries",
+    ],
+    configure_command = "source/bazel-configure.sh",
+    configure_in_place = True,
+    configure_options = [
+        "--enable-debug=no",
+        "--prefix=/usr/local",
+        "--bindir=/usr/sbin/cli",
+        "--libdir=/usr/sbin/cli/.libs",
+    ],
+    configure_prefix = "/bin/sh",
+    env = {
+        "BAZEL_FOREIGN_TOOLS": "$(execpath @sonic_build_infra//tools/build_tools:foreign_runtime)",
+        "BAZEL_CONFIGURE_ENV": "$(execpath @sonic_build_infra//tools/build_tools:configure_environment.sh)",
+        "CLI_TARGET_ROOT": "$(execpath //CLI/bazel:target_libraries)",
+        "PATH": "$(execpath @sonic_build_infra//tools/build_tools:foreign_runtime)/bin:$$PATH",
+        "SOURCE_DATE_EPOCH": "0",
+    },
+    features = ["-sanitize_pwd"],
+    lib_source = ":klish_sources",
+    out_binaries = ["clish"],
+    out_data_files = ["config.log"],
+    out_shared_libs = [name + ".so.1.0.0" for name in _LIBRARIES] + ["clish_plugin_clish.so"],
+    out_static_libs = [name + ".a" for name in _LIBRARIES] + ["clish_plugin_clish.a"],
+    postfix_script = "\n".join([
+        # Libtool's build-tree libraries embed the temporary .libs directory.
+        # Its normal install/relink step replaces that with the deployed path
+        # before build IDs and matching debug symbols are packaged.
+        "$$BAZEL_FOREIGN_TOOLS/bin/make -C source install-libLTLIBRARIES install-binPROGRAMS DESTDIR=$$INSTALLDIR/staged",
+        "mkdir -p $$INSTALLDIR/bin $$INSTALLDIR/lib $$INSTALLDIR/include",
+        "cp $$INSTALLDIR/staged/usr/sbin/cli/clish $$INSTALLDIR/bin/",
+        "cp -P $$INSTALLDIR/staged/usr/sbin/cli/.libs/*.so* $$INSTALLDIR/staged/usr/sbin/cli/.libs/*.a $$INSTALLDIR/lib/",
+        "cp source/config.log $$INSTALLDIR/",
+    ]),
+    target_compatible_with = _AMD64,
+    targets = [""],
+)
+
+select_file(
+    name = "clish",
+    srcs = ":klish",
+    subpath = "klish/bin/clish",
+)
+
+[
+    select_file(
+        name = name + ".so",
+        srcs = ":klish",
+        subpath = "klish/lib/" + name + ".so.1.0.0",
+    )
+    for name in _LIBRARIES
+]
+
+select_file(
+    name = "clish_plugin_clish.so",
+    srcs = ":klish",
+    subpath = "klish/lib/clish_plugin_clish.so",
+)
+
+[
+    select_file(
+        name = name + ".a",
+        srcs = ":klish",
+        subpath = "klish/lib/" + name + ".a",
+    )
+    for name in _LIBRARIES + ["clish_plugin_clish"]
+]
+
+# Use the same configuration for installed static archives and deployed ELF
+# files, so splitting symbols does not compile the klish source tree twice.
+[
+    keep_debug_info(
+        name = name + ".a.debuggable",
+        src = ":" + name + ".a",
+    )
+    for name in _LIBRARIES + ["clish_plugin_clish"]
+]
+
+sonic_deploy_tar(
+    name = "klish_runtime",
+    srcs = ["klish/clish_start"] + [":" + name + ".a.debuggable" for name in _LIBRARIES + ["clish_plugin_clish"]],
+    binaries = {
+        "usr/sbin/cli/clish": ":clish",
+        "usr/sbin/cli/.libs/clish_plugin_clish.so": ":clish_plugin_clish.so",
+    } | {
+        "usr/sbin/cli/.libs/" + name + ".so.1.0.0": ":" + name + ".so"
+        for name in _LIBRARIES
+    },
+    force_debug_build = True,
+    mtree = [
+        "/set uid=0 gid=0 mode=0755 time=0 type=file",
+        "usr type=dir",
+        "usr/sbin type=dir",
+        "usr/sbin/cli type=dir",
+        "usr/sbin/cli/.libs type=dir",
+        "usr/sbin/cli/clish_start content=$(location klish/clish_start)",
+    ] + [
+        "usr/sbin/cli/.libs/" + name + "." + suffix + " type=link mode=0777 link=" + name + ".so.1.0.0"
+        for name in _LIBRARIES
+        for suffix in [
+            "so",
+            "so.1",
+        ]
+    ] + [
+        "usr/sbin/cli/.libs/" + name + ".a type=file mode=0644 content=$(location :" + name + ".a.debuggable)"
+        for name in _LIBRARIES + ["clish_plugin_clish"]
+    ],
+    target_compatible_with = _AMD64,
+)
+
+cli_prepare(
+    name = "installed_assets",
+    srcs = glob([
+        "actioner/*.py",
+        "clitree/cli-xml/**/*.xml",
+        "clitree/macro/*.xml",
+        "clitree/scripts/*.py",
+        "clitree/scripts/*.sh",
+        "clitree/scripts/*.xml",
+        "clitree/scripts/*.xsd",
+        "clicfg/*.xsd",
+        "clicfg/*.xsl",
+        "renderer/scripts/*.py",
+        "renderer/templates/*",
+    ]),
+    mode = "assets",
+    source_prefix = "CLI",
+    target_compatible_with = _AMD64,
+    tools = "@sonic_build_infra//tools/build_tools:foreign_runtime",
+)
+
+pkg_tar(
+    name = "assets",
+    srcs = [":installed_assets"],
+    # Keep the executable bits from the owner scripts; tree modes cannot be
+    # overridden per file by pkg_tar. The generator preserves source modes.
+    mode = "",
+    mtime = 0,
+    package_dir = "usr/sbin/cli",
+    portable_mtime = False,
+    # pkg_tar strips exec-root paths for tree artifacts. Include the repository
+    # prefix when these public targets are consumed from another Bazel module.
+    strip_prefix = ASSETS_STRIP_PREFIX,
+    target_compatible_with = _AMD64,
+)
+
+pkg_tar(
+    name = "runtime",
+    mtime = 0,
+    portable_mtime = False,
+    target_compatible_with = _AMD64,
+    deps = [
+        ":assets",
+        ":klish_runtime",
+    ],
+)
+
+alias(
+    name = "runtime.debug_symbols",
+    actual = ":klish_runtime.debug_symbols",
+)
+
+py_test(
+    name = "installed_runtime_test",
+    srcs = ["//CLI/bazel:installed_probe.py"],
+    args = [
+        "$(location :runtime)",
+        "$(location //CLI/bazel:target_libraries)",
+    ],
+    data = [
+        ":runtime",
+        "//CLI/bazel:target_libraries",
+    ],
+    main = "//CLI/bazel:installed_probe.py",
+    target_compatible_with = _AMD64,
+)
+
+py_test(
+    name = "cli_client_test",
+    srcs = [
+        "actioner/cli_client.py",
+        "actioner/cli_log.py",
+        "tests/test_cli_client.py",
+    ],
+    main = "tests/test_cli_client.py",
+    deps = [
+        "@framework_pip//requests",
+        "@framework_pip//six",
+    ],
+)
+
+py_test(
+    name = "generator_order_test",
+    srcs = [
+        "clitree/scripts/klish_ins_def_cmd.py",
+        "//CLI/bazel:generator_order_test.py",
+    ],
+    main = "//CLI/bazel:generator_order_test.py",
+    deps = ["@framework_pip//lxml"],
+)
+
+# Original TLS URL/CA validation assertions, compiled by the declared toolchain.
+cc_test(
+    name = "rest_tls_test",
+    srcs = [
+        "klish/patches/klish-2.1.4/plugins/clish/rest_tls.h",
+        "//tools:test/rest-tls.cpp",
+    ],
+    target_compatible_with = _AMD64,
+)

@@ -1,0 +1,84 @@
+load("@rules_distroless//distroless:defs.bzl", "flatten")
+load("@rules_python//python:py_test.bzl", "py_test")
+load("@sonic_build_infra//tar:sonic_deploy_tar.bzl", "sonic_deploy_tar")
+load("@tar.bzl", "mutate", "tar")
+
+package(default_visibility = ["//visibility:public"])
+
+sonic_deploy_tar(
+    name = "rest_binaries",
+    binaries = {
+        "usr/sbin/rest_server uid=0 gid=0 mode=0755 type=file": "//rest/main:rest_server",
+        "usr/sbin/generate_cert uid=0 gid=0 mode=0755 type=file": "//rest/cert:generate_cert",
+    },
+    force_debug_build = True,
+    visibility = ["//visibility:public"],
+)
+
+tar(
+    name = "ui",
+    srcs = ["//models:ui"],
+    compress = "",
+    mutate = mutate(
+        includes = [":data_modes.awk"],
+        package_dir = "etc/rest_server/ui",
+        strip_prefix = "models/rest_models_ui",
+    ),
+)
+
+flatten(
+    name = "runtime",
+    tars = [
+        ":rest_binaries",
+        ":ui",
+        "//CLI:runtime",
+    ],
+)
+
+flatten(
+    name = "runtime.debug_symbols",
+    tars = [
+        ":rest_binaries.debug_symbols",
+        "//CLI:runtime.debug_symbols",
+    ],
+)
+
+py_test(
+    name = "rest_runtime_test",
+    srcs = ["rest_runtime_test.py"],
+    args = [
+        "$(location :rest_binaries)",
+        "$(location :ui)",
+        "$(location @sonic_mgmt_common//dist:runtime)",
+        "$(location @sonic_mgmt_common//tools/bazel:test_runtime)",
+        "$(location @sonic_mgmt_common//tools/test:database_config.json)",
+    ],
+    data = [
+        ":rest_binaries",
+        ":ui",
+        "@sonic_mgmt_common//dist:runtime",
+        "@sonic_mgmt_common//tools/bazel:test_runtime",
+        "@sonic_mgmt_common//tools/test:database_config.json",
+    ],
+)
+
+py_test(
+    name = "package_test",
+    srcs = ["package_test.py"],
+    args = [
+        "$(location :runtime)",
+        "$(location :runtime.debug_symbols)",
+        "$(location //models:ui)",
+        "$(location //CLI:installed_assets)",
+        "$(location @sonic_build_infra//toolchains/binutils:readelf)",
+        "$(location @sonic_build_infra//toolchains/binutils:objcopy)",
+    ],
+    data = [
+        ":runtime",
+        ":runtime.debug_symbols",
+        "//CLI:installed_assets",
+        "//models:ui",
+        "@sonic_build_infra//toolchains/binutils:objcopy",
+        "@sonic_build_infra//toolchains/binutils:readelf",
+    ],
+)

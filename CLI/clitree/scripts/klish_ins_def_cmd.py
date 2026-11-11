@@ -146,7 +146,8 @@ def ins_def_cmd (in_dirpath, out_dirpath, debug):
     parser = etree.XMLParser(remove_blank_text=True, resolve_entities=False)
 
     for dir_name, subdir_list, file_list in os.walk(IN_DIR_PATH):
-        for fname in file_list:
+        subdir_list.sort()
+        for fname in sorted(file_list):
             if fname.endswith(".xml"):
                 if DBG_FLAG == True:
                     print('\tInput File:%s' % fname)

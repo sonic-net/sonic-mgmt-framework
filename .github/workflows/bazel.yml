@@ -1,0 +1,93 @@
+name: Bazel management-framework
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native:
+    name: Management-framework source and TARs (AMD64)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    container: debian:trixie-20260918@sha256:9cc080028c43b27d2074d63a5f9caf7166d731494965616c1a6d2827a004585c
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Install CI inspection tools
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends binutils binutils-gold build-essential ca-certificates curl gdb git patch pkg-config python3 tar unzip zstd
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Trust the checked-out workspace for validation
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - uses: bazel-contrib/setup-bazel@c5acdfb288317d0b5c0bbd7a396a3dc868bb0f86 # 0.19.0
+        with:
+          bazelisk-version: 1.29.0
+          bazelisk-cache: true
+          repository-cache: true
+          disk-cache: management-framework-amd64
+          cache-version: "8.5.1"
+      - name: Use the maintained registry and preserve cache settings
+        run: |
+          python3 - <<'PYCODE'
+          from pathlib import Path
+          source = Path('.bazelrc').read_text()
+          cache_lines = [line for line in (Path.home() / '.bazelrc').read_text().splitlines()
+                         if line.startswith(('build --disk_cache=', 'common --repository_cache='))]
+          assert len(cache_lines) == 2
+          Path('/tmp/framework-ci.bazelrc').write_text(source + '\n' + '\n'.join(cache_lines) + '\n')
+          PYCODE
+          echo 'BAZEL_COMMAND=bazel --nosystem_rc --nohome_rc --noworkspace_rc --bazelrc=/tmp/framework-ci.bazelrc' >> "$GITHUB_ENV"
+      - name: Build source TARs and verify independent edits
+        id: incremental
+        run: |
+          test "$(uname -m)" = x86_64
+          test "$(. /etc/os-release; echo "$VERSION_CODENAME")" = trixie
+          test ! -e MODULE.bazel.lock
+          python3 tools/bazel/check_incremental.py
+          git diff --exit-code
+      - name: Run original suites and installed payload checks
+        id: tests
+        run: |
+          $BAZEL_COMMAND test --local_test_jobs=2 \
+            //rest/server:server_test //tools/openapi_tests:generator_test //tools/bazel:models_repro_test //tools/bazel:codegen_config_test \
+            //CLI:cli_client_test //CLI:generator_order_test //CLI:rest_tls_test //CLI:installed_runtime_test \
+            //dist:rest_runtime_test //dist:package_test
+      - name: Validate the public targets from a downstream workspace
+        id: consumer
+        run: python3 tools/bazel/check_consumer.py
+      - name: Verify isolated runtime and debug symbols
+        id: debugger
+        run: |
+          python3 CLI/bazel/verify_gdb.py \
+            --runtime "$($BAZEL_COMMAND cquery //dist:runtime --output=files)" \
+            --debug "$($BAZEL_COMMAND cquery //dist:runtime.debug_symbols --output=files)" \
+            --gdb "$(command -v gdb)" --output bazel-evidence/debugger.json
+      - name: Retain source, tests and exact TARs
+        if: always()
+        env:
+          CI_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          CI_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          CI_TEST_RESULT: ${{ steps.tests.outcome }}
+          CI_INCREMENTAL_RESULT: ${{ steps.incremental.outcome }}
+          CI_DEBUGGER_RESULT: ${{ steps.debugger.outcome }}
+          CI_CONSUMER_RESULT: ${{ steps.consumer.outcome }}
+        run: |
+          python3 tools/bazel/collect_evidence.py
+          git diff --exit-code
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: sonic-mgmt-framework-amd64
+          path: bazel-evidence
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 1

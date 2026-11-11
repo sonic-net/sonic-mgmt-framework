@@ -1,0 +1,17 @@
+package(default_visibility = ["//visibility:public"])
+
+exports_files([
+    "pyang/pyang_plugins/openapi.py",
+    "test/rest-tls.cpp",
+])
+
+filegroup(
+    name = "rest_codegen_assets",
+    srcs = glob([
+        "codegen/go-server/templates-yang/*",
+        "swagger_codegen/ui-dist/**",
+        "ui_gen/src/*.py",
+        "ui_gen/templates/*",
+        "restconf_doc_tools/*",
+    ]) + ["swagger_codegen/go-server/src/openapi/routes.go"],
+)

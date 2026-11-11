@@ -1,0 +1,8 @@
+package(default_visibility = ["//visibility:public"])
+
+exports_files([
+    "go.bazel.work",
+    "go.mod",
+    "go.sum",
+    "requirements_lock.txt",
+])

@@ -1,0 +1,27 @@
+load("@rules_python//python:py_binary.bzl", "py_binary")
+load(":defs.bzl", "cli_unpack")
+
+package(default_visibility = ["//CLI:__pkg__"])
+
+exports_files([
+    "configure.sh",
+    "generator_order_test.py",
+    "installed_probe.py",
+    "verify_gdb.py",
+])
+
+py_binary(
+    name = "prepare",
+    srcs = ["prepare.py"],
+    deps = ["@framework_pip//lxml"],
+)
+
+cli_unpack(
+    name = "target_libraries",
+    archives = [
+        "@framework_cli_target_debian//libcjson-dev",
+        "@framework_cli_target_debian//libcurl4-openssl-dev",
+        "@framework_cli_target_debian//libpython3.13-dev",
+        "@framework_cli_target_debian//libxml2-dev",
+    ],
+)

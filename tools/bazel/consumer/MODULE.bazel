@@ -1,0 +1,61 @@
+module(name = "management_framework_consumer")
+
+bazel_dep(name = "sonic-mgmt-framework", version = "1.0.0")
+bazel_dep(name = "sonic-mgmt-common", version = "1.0.1-05f83dcab8fe2e1a0e0fc37ac172b289d6968e2b")
+bazel_dep(name = "gazelle", version = "0.54.0")
+bazel_dep(name = "openconfig_goyang", version = "0.0.0.sonic.1-20200309174518-a00bece872fc", repo_name = "com_github_openconfig_goyang")
+bazel_dep(name = "openconfig_ygot", version = "0.7.1.sonic.1", repo_name = "com_github_openconfig_ygot")
+bazel_dep(name = "rules_go", version = "0.64.1-sonic.1", repo_name = "io_bazel_rules_go")
+bazel_dep(name = "sonic-build-infra", version = "0.0.28-9965823498ab54816de5addb6084638470dd04d7", repo_name = "sonic_build_infra")
+bazel_dep(name = "tar.bzl", version = "0.10.5-sonic.1")
+
+go_deps = use_extension("@gazelle//:extensions.bzl", "go_deps")
+go_deps.from_file(go_work = "@sonic-mgmt-framework//:go.bazel.work")
+
+# The consuming root selects the owner's existing SONiC Go patches. Public
+# libraries and their consumers share one Go graph and the same Go types.
+go_deps.gazelle_override(
+    directives = ["gazelle:proto disable_global"],
+    path = "github.com/openconfig/gnmi",
+)
+
+# These are the existing Make/vendor patches, applied to isolated dependency
+# repositories. Build actions never modify go.mod, vendor, or the checkout.
+go_deps.module_override(
+    patch_strip = 1,
+    patches = ["@sonic-mgmt-common//patches:jsonquery.patch"],
+    path = "github.com/antchfx/jsonquery",
+)
+go_deps.module_override(
+    patch_strip = 1,
+    patches = ["@sonic-mgmt-common//patches:xmlquery.patch"],
+    path = "github.com/antchfx/xmlquery",
+)
+go_deps.module_override(
+    patch_strip = 1,
+    patches = ["@sonic-mgmt-common//patches:xpath.patch"],
+    path = "github.com/antchfx/xpath",
+)
+go_deps.module_override(
+    patch_strip = 1,
+    patches = ["@sonic-mgmt-common//patches:glog.patch"],
+    path = "github.com/golang/glog",
+)
+
+# Match the owner generators and source toolchain in this consuming root.
+bazel_dep(name = "rules_python", version = "1.9.0")
+
+python = use_extension("@rules_python//python/extensions:python.bzl", "python")
+python.toolchain(
+    is_default = True,
+    python_version = "3.13",
+)
+
+go_sdk = use_extension("@io_bazel_rules_go//go:extensions.bzl", "go_sdk")
+go_sdk.download(version = "1.25.9")
+
+bazel_dep(name = "rules_distroless", version = "0.9.4.sonic.18")
+
+# Select the shared SDK lock for Framework and Management Common.
+apt = use_extension("@rules_distroless//apt:extensions.bzl", "apt")
+apt.import_lock(lock = "@sonic_build_infra//apt:apt.lock.json")
