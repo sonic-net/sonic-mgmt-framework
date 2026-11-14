@@ -8,6 +8,10 @@ on:
       - '201[7-9][0-1][0-9]'
       - '202[0-9][0-1][0-9]'
 
+# The merge robot approves this workflow's runs on a Renovate go.sum fixup
+permissions:
+  contents: read
+
 jobs:
   semgrep:
     if: github.repository_owner == 'sonic-net'
