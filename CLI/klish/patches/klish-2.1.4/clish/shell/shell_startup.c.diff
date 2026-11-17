@@ -1,0 +1,5 @@
+166c166,167
+< 		clish_shell_find_create_plugin(this, "clish");
+---
+> 		clish_plugin_t *plugin = clish_shell_find_create_plugin(this, "clish");
+> 		clish_plugin__set_rtld_global(plugin, BOOL_TRUE);
