@@ -48,6 +48,9 @@ var (
 	caFile     string // Client CA certificate file path
 	clientAuth string // Client auth mode
 
+	// maxRequestBodyBytes bounds request bodies buffered by the REST server.
+	maxRequestBodyBytes int64 = server.DefaultMaxRequestBodyBytes
+
 	// readTimeout is the deadline for receiving a full request (TLS+header+body)
 	// once the connection is made. Value 0 indicates no timeout.
 	readTimeout time.Duration = 15 * time.Second
@@ -62,11 +65,15 @@ func init() {
 	flag.StringVar(&caFile, "cacert", "", "CA certificate for client certificate validation")
 	flag.StringVar(&clientAuth, "client_auth", "none", "Client auth mode - none|cert|user")
 	flag.DurationVar(&readTimeout, "readtimeout", readTimeout, "Maximum duration for reading entire request")
+	flag.Int64Var(&maxRequestBodyBytes, "maxrequestbody", maxRequestBodyBytes, "Maximum request body size in bytes")
 	flag.Parse()
 }
 
 // Start REST server
 func main() {
+	if err := server.SetMaxRequestBodyBytes(maxRequestBodyBytes); err != nil {
+		glog.Fatalf("Invalid maximum request body size: %v", err)
+	}
 
 	/* Enable profiling by default. Send SIGUSR1 signal to rest_server to
 	 * stop profiling and save data to /tmp/profile<xxxxx>/cpu.pprof file.
@@ -119,6 +126,7 @@ func main() {
 
 	if glog.V(1) {
 		glog.Infof("Read timeout = %v", readTimeout)
+		glog.Infof("Maximum request body size = %d bytes", maxRequestBodyBytes)
 		glog.Infof("Authentication modes = %v", clientAuth)
 	}
 

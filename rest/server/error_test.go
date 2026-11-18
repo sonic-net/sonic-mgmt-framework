@@ -84,6 +84,10 @@ func TestErrorEntry(t *testing.T) {
 		httpError(405, "405 NotSupported."),
 		405, "protocol", "operation-not-supported", "", "405 NotSupported."))
 
+	t.Run("RequestTooLarge", testErrorEntry(
+		httpError(413, "Request too large."),
+		413, "protocol", "too-big", "", "Request too large."))
+
 	t.Run("UnknownMediaType", testErrorEntry(
 		httpError(415, "hii"),
 		415, "protocol", "invalid-value", "", "hii"))
