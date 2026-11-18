@@ -20,8 +20,12 @@
 import ipaddress
 import os
 import json
+import socket
 import warnings
 import requests
+import requests.adapters
+import urllib3
+import urllib3.connection
 from requests.structures import CaseInsensitiveDict
 from six.moves.urllib.parse import quote, urlparse
 from urllib3.exceptions import InsecureRequestWarning
@@ -30,6 +34,61 @@ from cli_log import log_info, log_warning
 
 
 REST_API_CA_CERT = 'REST_API_CA_CERT'
+
+# Local sonic-cli traffic talks to the REST server over this Unix domain
+# socket instead of a TCP/TLS connection. The server authorizes these
+# requests using the kernel-verified SO_PEERCRED uid of this process (see
+# rest/server/pamAuth.go:udsAuthenAndAuthor) -- no credentials are sent.
+REST_LOCAL_SOCKET_PATH = '/var/run/rest-local.sock'
+REST_LOCAL_API_ROOT = 'http://localhost'
+
+
+class _UnixSocketConnection(urllib3.connection.HTTPConnection):
+    """An HTTPConnection that dials a local Unix domain socket instead of
+    opening a TCP connection. The host/port given to the base class are
+    placeholders used only to build the HTTP "Host:" header; connect()
+    ignores them and always dials socket_path.
+    """
+
+    def __init__(self, socket_path, *args, **kwargs):
+        super(_UnixSocketConnection, self).__init__('localhost', *args, **kwargs)
+        self._socket_path = socket_path
+
+    def connect(self):
+        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        sock.connect(self._socket_path)
+        self.sock = sock
+
+
+class _UnixSocketConnectionPool(urllib3.HTTPConnectionPool):
+    """A urllib3 connection pool whose connections are _UnixSocketConnections
+    to a fixed local socket path, instead of TCP connections to host:port.
+    """
+
+    def __init__(self, socket_path, **kwargs):
+        self._socket_path = socket_path
+        super(_UnixSocketConnectionPool, self).__init__('localhost', **kwargs)
+
+    def _new_conn(self):
+        return _UnixSocketConnection(self._socket_path)
+
+
+class UnixSocketAdapter(requests.adapters.HTTPAdapter):
+    """A requests transport adapter that sends every request over a fixed
+    local Unix domain socket rather than opening a TCP connection. Mounted
+    only for the local REST API root; the remote (https://) path is
+    unaffected and continues to use the default TCP/TLS adapter.
+    """
+
+    def __init__(self, socket_path, *args, **kwargs):
+        self._socket_path = socket_path
+        self._pool = None
+        super(UnixSocketAdapter, self).__init__(*args, **kwargs)
+
+    def get_connection(self, url, proxies=None):
+        if self._pool is None:
+            self._pool = _UnixSocketConnectionPool(self._socket_path)
+        return self._pool
 
 
 def _is_loopback_endpoint(url):
@@ -52,9 +111,17 @@ class ApiClient(object):
     Customized for CLI actioner use.
     """
 
-    # Initialize API root and session
-    __api_root = os.getenv('REST_API_ROOT', 'https://localhost')
+    # Initialize API root and session.
+    #
+    # The default (no REST_API_ROOT override) is the local Unix domain
+    # socket -- this is what on-box sonic-cli uses. An operator or test
+    # harness can still set REST_API_ROOT to an explicit https://<host>
+    # value to talk to a remote (or the TCP/TLS-only) REST server, which
+    # continues to use the ordinary TLS adapter untouched by the mount
+    # below.
+    __api_root = os.getenv('REST_API_ROOT', REST_LOCAL_API_ROOT)
     __session = requests.Session()
+    __session.mount(REST_LOCAL_API_ROOT, UnixSocketAdapter(REST_LOCAL_SOCKET_PATH))
 
     def request(self, method, path, data=None, headers={}, query=None, response_type=None):
 
