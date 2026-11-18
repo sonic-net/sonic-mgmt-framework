@@ -121,7 +121,7 @@ func PAMAuthenAndAuthor(r *http.Request, rc *RequestContext) error {
 		},
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}
-	_, err := ssh.Dial("tcp", "127.0.0.1:22", config)
+	client, err := ssh.Dial("tcp", "127.0.0.1:22", config)
 	if err != nil {
 		glog.Infof("[%s] Failed to authenticate; %v", rc.ID, err)
 		return httpError(http.StatusUnauthorized, "")
@@ -134,6 +134,7 @@ func PAMAuthenAndAuthor(r *http.Request, rc *RequestContext) error {
 		glog.Warningf("[%s] Not an admin; cannot allow %s", rc.ID, r.Method)
 		return httpError(http.StatusForbidden, "Not an admin user")
 	}
+	defer client.Close()
 
 	glog.Infof("[%s] Authorization passed", rc.ID)
 	return nil
