@@ -31,6 +31,8 @@ FORMAT_LOG    := $(REST_BUILD_DIR)/go_format.log
 
 REST_GO_SRCS   = $(shell find . -name '*.go' -not -name '*_test.go')
 REST_TEST_SRCS = $(shell find . -name '*_test.go')
+# openapi/ holds generated server code beside the committed routes.go; gofmt checks only committed code
+REST_FMT_SRCS  = $(filter-out ./openapi/%,$(REST_GO_SRCS) $(REST_TEST_SRCS)) ./openapi/routes.go
 
 # Source files affecting REST server
 REST_SRCS := $(REST_GO_SRCS)
@@ -73,7 +75,7 @@ $(CERTGEN_BIN): | $(REST_BUILD_DIR)/
 
 .SECONDEXPANSION:
 
-$(FORMAT_CHECK): $(REST_GO_SRCS) $(REST_TEST_SRCS) | $$(@D)/.
+$(FORMAT_CHECK): $(REST_FMT_SRCS) | $$(@D)/.
 	@echo "Checking Go file formatting..."
 	@$(GOROOT)/bin/gofmt -l -d $? > $(FORMAT_LOG)
 	@if [ -s $(FORMAT_LOG) ]; then \

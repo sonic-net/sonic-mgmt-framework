@@ -34,7 +34,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/Azure/sonic-mgmt-framework/build/rest_server/dist/openapi"
+	"github.com/Azure/sonic-mgmt-framework/rest/openapi"
 	"github.com/Azure/sonic-mgmt-framework/rest/server"
 	"github.com/golang/glog"
 	"github.com/pkg/profile"

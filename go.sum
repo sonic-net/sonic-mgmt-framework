@@ -1,4 +1,6 @@
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
+github.com/Azure/sonic-mgmt-common v0.0.0-20261106021544-c49a9496f49b h1:Nc38lEZ7H0ZmWCYJngtz4aQzPOXO9qPMTxFf1xnA5EE=
+github.com/Azure/sonic-mgmt-common v0.0.0-20261106021544-c49a9496f49b/go.mod h1:cUQ/safTUhTo5+XSpxjIvCA1lIiY/29YzAe6SHEPHaM=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/Workiva/go-datastructures v1.1.8 h1:QAa62XrWwDV6Vy11cNdlkJEkNx/wjVUSbiT7vqEbEpY=
 github.com/Workiva/go-datastructures v1.1.8/go.mod h1:1yZL+zfsztete+ePzZz/Zb1/t5BnDuE2Ya2MMGhzP6A=

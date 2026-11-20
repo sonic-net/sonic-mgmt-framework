@@ -1,7 +1,7 @@
 module github.com/Azure/sonic-mgmt-framework
 
 require (
-	github.com/Azure/sonic-mgmt-common v0.0.0-00010101000000-000000000000
+	github.com/Azure/sonic-mgmt-common v0.0.0-20261106021544-c49a9496f49b
 	github.com/golang/glog v1.2.5
 	github.com/gorilla/mux v1.7.4
 	github.com/pkg/profile v1.7.0
@@ -44,8 +44,6 @@ require (
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	inet.af/netaddr v0.0.0-20230525184311-b8eac61e914a // indirect
 )
-
-replace github.com/Azure/sonic-mgmt-common => ../sonic-mgmt-common
 
 go 1.26.0
 
