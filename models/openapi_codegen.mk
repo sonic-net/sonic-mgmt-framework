@@ -29,7 +29,7 @@ SERVER_BUILD_DIR	:= $(BUILD_DIR)/rest_server
 SERVER_CODEGEN_DIR	:= $(SERVER_BUILD_DIR)/codegen
 SERVER_DIST_DIR		:= $(SERVER_BUILD_DIR)/dist
 SERVER_DIST_INIT	:= $(SERVER_DIST_DIR)/.init_done
-SERVER_DIST_GO		:= $(SERVER_DIST_DIR)/openapi
+SERVER_DIST_GO		:= $(TOPDIR)/rest/openapi
 SERVER_DIST_UI		:= $(SERVER_DIST_DIR)/ui
 SERVER_DIST_UI_HOME	:= $(SERVER_DIST_DIR)/ui/index.html
 RESTCONF_MD_INDEX	:= $(BUILD_DIR)/restconf_md/index.md
@@ -121,6 +121,7 @@ $(SERVER_DIST_INIT): | $$(@D)/.
 
 clean:
 	$(RM) -r $(SERVER_DIST_DIR)
+	find $(SERVER_DIST_GO) -type f ! -name routes.go -delete
 	$(RM) -r $(SERVER_CODEGEN_DIR)
 	$(RM) $(SERVER_DIST_UI_HOME)
 

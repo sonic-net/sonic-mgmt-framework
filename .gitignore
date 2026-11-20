@@ -14,4 +14,6 @@ __pycache__
 
 vendor
 models/yangs
-
+# Generated into rest/openapi by models/openapi_codegen.mk and models/yang_to_openapi.mk
+/rest/openapi/*
+!/rest/openapi/routes.go
