@@ -158,7 +158,15 @@ func authMiddleware(inner http.Handler) http.Handler {
 		}
 
 		rc, r := GetContext(r)
-		err := PAMAuthenAndAuthor(r, rc)
+		var err error
+		if config.CertAuth {
+			err = CertAuthenAndAuthor(r, rc)
+		} else {
+			err = PAMAuthenAndAuthor(r, rc)
+			if e, ok := err.(httpErrorType); ok && e.status == http.StatusUnauthorized {
+				w.Header().Set("WWW-Authenticate", `Basic realm="SONiC REST"`)
+			}
+		}
 		if err != nil {
 			writeErrorResponse(w, r, err)
 		} else {

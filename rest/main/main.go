@@ -46,7 +46,11 @@ var (
 	certFile   string // Server certificate file path
 	keyFile    string // Server private key file path
 	caFile     string // Client CA certificate file path
+	crlFile    string // Client certificate revocation list file path
 	clientAuth string // Client auth mode
+
+	// maxRequestBodyBytes bounds request bodies buffered by the REST server.
+	maxRequestBodyBytes int64 = server.DefaultMaxRequestBodyBytes
 
 	// readTimeout is the deadline for receiving a full request (TLS+header+body)
 	// once the connection is made. Value 0 indicates no timeout.
@@ -60,13 +64,18 @@ func init() {
 	flag.StringVar(&certFile, "cert", "", "Server certificate file path")
 	flag.StringVar(&keyFile, "key", "", "Server private key file path")
 	flag.StringVar(&caFile, "cacert", "", "CA certificate for client certificate validation")
+	flag.StringVar(&crlFile, "crl", "", "CRL file for client certificate revocation checks (cert mode only)")
 	flag.StringVar(&clientAuth, "client_auth", "none", "Client auth mode - none|cert|user")
 	flag.DurationVar(&readTimeout, "readtimeout", readTimeout, "Maximum duration for reading entire request")
+	flag.Int64Var(&maxRequestBodyBytes, "maxrequestbody", maxRequestBodyBytes, "Maximum request body size in bytes")
 	flag.Parse()
 }
 
 // Start REST server
 func main() {
+	if err := server.SetMaxRequestBodyBytes(maxRequestBodyBytes); err != nil {
+		glog.Fatalf("Invalid maximum request body size: %v", err)
+	}
 
 	/* Enable profiling by default. Send SIGUSR1 signal to rest_server to
 	 * stop profiling and save data to /tmp/profile<xxxxx>/cpu.pprof file.
@@ -88,8 +97,12 @@ func main() {
 	openapi.Load()
 
 	rtrConfig := server.RouterConfig{}
-	if clientAuth == "user" {
+	switch clientAuth {
+	case "user":
 		rtrConfig.AuthEnable = true
+	case "cert":
+		rtrConfig.AuthEnable = true
+		rtrConfig.CertAuth = true
 	}
 	if ip := findAManagementIP(); ip != "" {
 		rtrConfig.ServerAddr = fmt.Sprintf("https://%s:%d", ip, port)
@@ -104,6 +117,7 @@ func main() {
 		ClientAuth:               getTLSClientAuthType(),
 		Certificates:             prepareServerCertificate(),
 		ClientCAs:                prepareCACertificates(),
+		VerifyPeerCertificate:    prepareCRLCheck(),
 		MinVersion:               tls.VersionTLS12,
 		PreferServerCipherSuites: true,
 	}
@@ -119,6 +133,7 @@ func main() {
 
 	if glog.V(1) {
 		glog.Infof("Read timeout = %v", readTimeout)
+		glog.Infof("Maximum request body size = %d bytes", maxRequestBodyBytes)
 		glog.Infof("Authentication modes = %v", clientAuth)
 	}
 
@@ -175,6 +190,25 @@ func prepareCACertificates() *x509.CertPool {
 	}
 
 	return caPool
+}
+
+// prepareCRLCheck loads the --crl file for cert mode. Returns nil when no
+// CRL is configured. Exits the process if the CRL is invalid or is not
+// signed by a CA in the --cacert file.
+func prepareCRLCheck() func([][]byte, [][]*x509.Certificate) error {
+	if crlFile == "" {
+		return nil
+	}
+	if clientAuth != "cert" {
+		glog.Warningf("Ignoring --crl; it applies only when --client_auth is 'cert'")
+		return nil
+	}
+
+	checker, err := server.LoadCRLChecker(crlFile, caFile)
+	if err != nil {
+		glog.Fatal("Failed to load CRL file -- ", err)
+	}
+	return checker.VerifyPeerCertificate
 }
 
 // getTLSClientAuthType function parses the --client_auth parameter.

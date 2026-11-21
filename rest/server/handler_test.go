@@ -65,6 +65,14 @@ func TestRoutes(t *testing.T) {
 	t.Run("Get4", testGet("/restconf/data/testroute/4", 401))
 	t.Run("GetUnknown_auth", testGet("/testroute/4", 404))
 	t.Run("Meta_auth", testGet("/.well-known/host-meta", 401))
+	t.Run("UI_auth", testGet("/ui/index.html", 401))
+
+	// Certificate auth without a verified client certificate
+	testRouter.config.CertAuth = true
+	t.Run("Get1_cert", testGet("/testroute/1", 401))
+	t.Run("Get3_cert", testGet("/restconf/data/testroute/3", 401))
+	t.Run("UI_cert", testGet("/ui/index.html", 401))
+	testRouter.config.CertAuth = false
 
 	// Cleanup for next tests
 	testRouter = nil
@@ -354,7 +362,7 @@ func TestReqData_NoBody(t *testing.T) {
 	r := httptest.NewRequest("GET", "/test", nil)
 	rc := &RequestContext{ID: t.Name()}
 
-	ct, data, err := getRequestBody(r, rc)
+	ct, data, err := getRequestBody(httptest.NewRecorder(), r, rc)
 	if ct != nil || data != nil || err != nil {
 		t.Fatalf("Expected nil response; found ct=%v, data=%v, err=%v", ct, data, err)
 	}
@@ -365,6 +373,33 @@ func TestReqData_ReadFailure(t *testing.T) {
 	rc := &RequestContext{ID: t.Name()}
 
 	testReqError(t, r, rc, 500)
+}
+
+func TestReqData_DeclaredBodyTooLarge(t *testing.T) {
+	// An oversized declared length must be rejected without reading the body.
+	r := httptest.NewRequest("PUT", "/test", errReader("body must not be read"))
+	r.ContentLength = maxRequestBodyBytes + 1
+	rc := &RequestContext{ID: t.Name()}
+
+	testReqError(t, r, rc, http.StatusRequestEntityTooLarge)
+}
+
+func TestReqData_ChunkedBodyTooLarge(t *testing.T) {
+	r := httptest.NewRequest("PUT", "/test", strings.NewReader(strings.Repeat("x", int(maxRequestBodyBytes+1))))
+	r.ContentLength = -1
+	rc := &RequestContext{ID: t.Name()}
+
+	testReqError(t, r, rc, http.StatusRequestEntityTooLarge)
+}
+
+func TestReqData_BodyAtLimit(t *testing.T) {
+	input := strings.Repeat("x", int(maxRequestBodyBytes))
+	r := httptest.NewRequest("PUT", "/test", strings.NewReader(input))
+	r.Header.Set("content-type", "text/plain")
+	rc := &RequestContext{ID: t.Name()}
+	rc.Consumes.Add("text/plain")
+
+	testReqSuccess(t, r, rc, "text/plain", input)
 }
 
 func TestReqData_Unknown(t *testing.T) {
@@ -436,7 +471,7 @@ func TestReqData_BadJsonWithValidation(t *testing.T) {
 }
 
 func testReqSuccess(t *testing.T, r *http.Request, rc *RequestContext, expType, expData string) {
-	ct, data, err := getRequestBody(r, rc)
+	ct, data, err := getRequestBody(httptest.NewRecorder(), r, rc)
 
 	if ct == nil || ct.Type != expType {
 		t.Fatalf("Expected %s; found %s", expType, ct.Type)
@@ -450,7 +485,7 @@ func testReqSuccess(t *testing.T, r *http.Request, rc *RequestContext, expType, 
 }
 
 func testReqError(t *testing.T, r *http.Request, rc *RequestContext, expCode int) {
-	ct, data, err := getRequestBody(r, rc)
+	ct, data, err := getRequestBody(httptest.NewRecorder(), r, rc)
 
 	if ct != nil {
 		t.Fatalf("Expected nil content-type; found %s", ct.Type)
