@@ -2,11 +2,11 @@ module github.com/Azure/sonic-mgmt-framework
 
 require (
 	github.com/Azure/sonic-mgmt-common v0.0.0-20261106021544-c49a9496f49b
+	github.com/go-playground/validator/v10 v10.30.6
 	github.com/golang/glog v1.2.5
 	github.com/gorilla/mux v1.7.4
 	github.com/pkg/profile v1.7.0
 	golang.org/x/crypto v0.59.0
-	gopkg.in/go-playground/validator.v9 v9.31.0
 )
 
 require (
@@ -16,8 +16,9 @@ require (
 	github.com/antchfx/xpath v1.3.6 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/felixge/fgprof v0.9.3 // indirect
-	github.com/go-playground/locales v0.13.0 // indirect
-	github.com/go-playground/universal-translator v0.17.0 // indirect
+	github.com/gabriel-vasile/mimetype v1.4.16 // indirect
+	github.com/go-playground/locales v0.14.2 // indirect
+	github.com/go-playground/universal-translator v0.18.2 // indirect
 	github.com/go-redis/redis/v7 v7.4.1 // indirect
 	github.com/godbus/dbus/v5 v5.2.4 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
@@ -25,7 +26,7 @@ require (
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/pprof v0.0.0-20211214055906-6f57359322fd // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
-	github.com/leodido/go-urn v1.2.0 // indirect
+	github.com/leodido/go-urn v1.5.0 // indirect
 	github.com/maruel/natural v1.3.0 // indirect
 	github.com/openconfig/gnmi v0.0.0-20200617225440-d2b4e6a45802 // indirect
 	github.com/openconfig/goyang v0.0.0-20200309174518-a00bece872fc // indirect
