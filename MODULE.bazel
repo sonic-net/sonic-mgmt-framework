@@ -7,16 +7,16 @@ module(
     ],
 )
 
-bazel_dep(name = "sonic-mgmt-common", version = "1.0.1-05f83dcab8fe2e1a0e0fc37ac172b289d6968e2b", repo_name = "sonic_mgmt_common")
-bazel_dep(name = "gazelle", version = "0.54.0.sonic.1")
-bazel_dep(name = "openconfig_goyang", version = "0.0.0.sonic.1-20200309174518-a00bece872fc", repo_name = "com_github_openconfig_goyang")
-bazel_dep(name = "openconfig_ygot", version = "0.7.1.sonic.1", repo_name = "com_github_openconfig_ygot")
-bazel_dep(name = "rules_go", version = "0.65.0.sonic.1", repo_name = "io_bazel_rules_go")
-bazel_dep(name = "sonic-build-infra", version = "0.0.38-0baa4acc9eac9ccc793b81104b1580d530271cbe", repo_name = "sonic_build_infra")
+bazel_dep(name = "sonic-mgmt-common", version = "1.0.2-c83630943c1e869107463be4f885fdfcc8321759", repo_name = "sonic_mgmt_common")
+bazel_dep(name = "gazelle", version = "0.54.0.sonic.2")
+bazel_dep(name = "openconfig_goyang", version = "0.0.0.sonic.2-20200309174518-a00bece872fc", repo_name = "com_github_openconfig_goyang")
+bazel_dep(name = "openconfig_ygot", version = "0.7.1.sonic.2", repo_name = "com_github_openconfig_ygot")
+bazel_dep(name = "rules_go", version = "0.65.0.sonic.2", repo_name = "io_bazel_rules_go")
+bazel_dep(name = "sonic-build-infra", version = "0.0.44-35726399908a3beb947174e9359f902077928289", repo_name = "sonic_build_infra")
 
 single_version_override(
     module_name = "rules_go",
-    version = "0.65.0.sonic.1",
+    version = "0.65.0.sonic.2",
 )
 
 single_version_override(
@@ -61,7 +61,7 @@ go_patches.module_override(
 )
 
 # Match the owner generators and source toolchain in this consuming root.
-bazel_dep(name = "rules_python", version = "1.9.0.sonic.1")
+bazel_dep(name = "rules_python", version = "1.9.0.sonic.2")
 
 python = use_extension("@rules_python//python/extensions:python.bzl", "python")
 python.toolchain(
@@ -74,8 +74,8 @@ go_sdk.download(version = "1.25.9")
 
 bazel_dep(name = "bazel_skylib", version = "1.9.2")
 bazel_dep(name = "platforms", version = "1.1.0")
-bazel_dep(name = "rules_foreign_cc", version = "0.16.0.sonic.1")
-bazel_dep(name = "rules_distroless", version = "0.9.4.sonic.22")
+bazel_dep(name = "rules_foreign_cc", version = "0.16.0.sonic.2")
+bazel_dep(name = "rules_distroless", version = "0.9.4.sonic.25")
 bazel_dep(name = "tar.bzl", version = "0.10.5.sonic.2")
 
 gcc = use_extension("@sonic_build_infra//toolchains/gcc:extensions.bzl", "gcc")
