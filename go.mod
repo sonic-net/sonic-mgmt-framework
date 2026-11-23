@@ -3,7 +3,7 @@ module github.com/Azure/sonic-mgmt-framework
 require (
 	github.com/Azure/sonic-mgmt-common v0.0.0-20261106021544-c49a9496f49b
 	github.com/golang/glog v1.2.5
-	github.com/gorilla/mux v1.7.4
+	github.com/gorilla/mux v1.8.1
 	github.com/pkg/profile v1.7.0
 	golang.org/x/crypto v0.59.0
 	gopkg.in/go-playground/validator.v9 v9.31.0
