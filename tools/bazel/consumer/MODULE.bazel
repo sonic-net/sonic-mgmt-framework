@@ -54,7 +54,7 @@ python.toolchain(
 go_sdk = use_extension("@io_bazel_rules_go//go:extensions.bzl", "go_sdk")
 go_sdk.download(version = "1.25.9")
 
-bazel_dep(name = "rules_distroless", version = "0.9.4.sonic.25")
+bazel_dep(name = "rules_distroless", version = "0.9.4.sonic.26")
 
 # Select the shared SDK lock for Framework and Management Common.
 apt = use_extension("@rules_distroless//apt:extensions.bzl", "apt")
