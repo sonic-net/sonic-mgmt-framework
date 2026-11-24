@@ -25,7 +25,7 @@ single_version_override(
 )
 
 go_deps = use_extension("@gazelle//:extensions.bzl", "go_deps")
-go_deps.from_file(go_work = "//:go.bazel.work")
+go_deps.from_file(go_mod = "//:go.mod")
 
 # Root-only patch selection, matching the management-common owner.
 go_patches = use_extension("@gazelle//:extensions.bzl", "go_deps", dev_dependency = True)

@@ -39,11 +39,10 @@ bazel build //dist:runtime //dist:runtime.debug_symbols
 
 `MODULE.bazel.lock` is generated and ignored; CI retains it as evidence. Package
 locks stay checked in. The maintained BUILD targets use the selected Common
-module directly, preserving the legacy neighboring-checkout `go.mod` declaration.
-`go.bazel.work` preserves the four deployed `golang.org/x` library versions
-from the native `go.mod`; Bazel build-tool requirements must not silently upgrade
-the REST runtime. Downstream roots load this exported work file, as shown in
-`tools/bazel/consumer/MODULE.bazel`. The native `go.mod` and `go.sum` are unchanged.
+module directly. Both the producer and standalone consumer read the native
+`go.mod`. CI compares the four resolved `golang.org/x` library versions with
+that manifest so changes to the build tools cannot silently change the shipped REST
+runtime.
 The public goyang/ygot modules own their shared Go types. Remaining Go dependency
 patches are root-only settings, and consuming roots select the owner-exported
 patches explicitly. The certificate generator reads its source
