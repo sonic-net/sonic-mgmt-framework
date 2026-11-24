@@ -36,11 +36,6 @@ go_deps.module_override(
     patches = ["@sonic-mgmt-common//patches:xpath.patch"],
     path = "github.com/antchfx/xpath",
 )
-go_deps.module_override(
-    patch_strip = 1,
-    patches = ["@sonic-mgmt-common//patches:glog.patch"],
-    path = "github.com/golang/glog",
-)
 
 # Match the owner generators and source toolchain in this consuming root.
 bazel_dep(name = "rules_python", version = "1.9.0.sonic.2")
@@ -52,7 +47,7 @@ python.toolchain(
 )
 
 go_sdk = use_extension("@io_bazel_rules_go//go:extensions.bzl", "go_sdk")
-go_sdk.download(version = "1.25.9")
+go_sdk.download(version = "1.26.0")
 
 bazel_dep(name = "rules_distroless", version = "0.9.4.sonic.26")
 
