@@ -59,7 +59,6 @@ def main():
             shutil.copyfile(source, dest)
         staged_ui = work / "build/rest_server/dist/ui"
         shutil.copytree(work / "tools/swagger_codegen/ui-dist", staged_ui)
-        shutil.copyfile(work / "tools/swagger_codegen/go-server/src/openapi/routes.go", go / "routes.go")
         for sources, search in (
             (sorted(models.glob("*.yang")) + sorted((models / "extensions").glob("*.yang")),
              [models / "common", models, models / "extensions"]),

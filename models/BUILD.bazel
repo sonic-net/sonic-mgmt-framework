@@ -19,8 +19,11 @@ rest_models(
 
 go_library(
     name = "openapi",
-    srcs = [":rest_models"],
-    importpath = "github.com/Azure/sonic-mgmt-framework/build/rest_server/dist/openapi",
+    srcs = [
+        ":rest_models",
+        "//rest:openapi/routes.go",
+    ],
+    importpath = "github.com/Azure/sonic-mgmt-framework/rest/openapi",
     deps = ["//rest/server"],
 )
 
