@@ -61,6 +61,7 @@ const (
 	requestContextKey contextkey = iota + 1
 	routerObjContextKey
 	routeMatchContextKey
+	peerCredContextKey
 )
 
 // Request Id generator
