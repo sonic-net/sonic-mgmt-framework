@@ -23,7 +23,7 @@ import json
 import warnings
 import requests
 from requests.structures import CaseInsensitiveDict
-from six.moves.urllib.parse import quote, urlparse
+from urllib.parse import quote, urlparse
 from urllib3.exceptions import InsecureRequestWarning
 from collections import OrderedDict
 from cli_log import log_info, log_warning
