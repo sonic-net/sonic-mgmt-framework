@@ -55,6 +55,11 @@ class ApiClient(object):
     # Initialize API root and session
     __api_root = os.getenv('REST_API_ROOT', 'https://localhost')
     __session = requests.Session()
+    # REST server with client authentication (REST_SERVER client_auth
+    # "user"): HTTP basic authentication as the CLI user. clish_start asks
+    # for the password once per CLI session and passes it in the environment.
+    if os.getenv('CLI_USER') and os.getenv('SONIC_CLI_PASSWORD') is not None:
+        __session.auth = (os.getenv('CLI_USER'), os.getenv('SONIC_CLI_PASSWORD'))
 
     def request(self, method, path, data=None, headers={}, query=None, response_type=None):
 
@@ -100,6 +105,16 @@ class ApiClient(object):
             # TODO have more specific error message based
             msg = '%Error: Could not connect to Management REST Server'
             return ApiClient.__new_error_response(msg)
+
+    def auth_status(self):
+        """Tells clish_start whether the REST server accepts this client:
+        0 when it does (no client authentication, or valid credentials),
+        2 when it asks for credentials or rejects them, 1 when it cannot
+        be reached."""
+        r = self.request("GET", "/.well-known/host-meta")
+        if r.status_code == 0:
+            return 1
+        return 2 if r.status_code == 401 else 0
 
     def post(self, path, data={}, response_type=None):
         return self.request("POST", path, data, response_type=response_type)
@@ -269,3 +284,10 @@ class ErrorData(object):
         self.path = err.get("error-path")
         self.cvl_err = err_info.get("cvl-error")
         self.message = format_error_message(response.status_code, err, formatter_func)
+
+
+if __name__ == '__main__':
+    import sys
+    if sys.argv[1:] == ['--auth-status']:
+        sys.exit(ApiClient().auth_status())
+    sys.exit("usage: cli_client.py --auth-status")

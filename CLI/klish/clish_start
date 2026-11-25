@@ -15,4 +15,26 @@ export PATH=$PATH:/usr/local/sbin:/usr/sbin:/sbin:$SONIC_CLI_ROOT
 
 export KLISH_CLI_USER=$CLI_USER
 
+# The REST server may require HTTP basic authentication (REST_SERVER
+# client_auth "user"). Then ask for the CLI user's password once per session,
+# check it, and hand it to the actioners in the environment, not on disk.
+if [ -n "$CLI_USER" ] && [ -t 0 ]; then
+    python3 $SONIC_CLI_ROOT/cli_client.py --auth-status
+    rc=$?
+    tries=0
+    while [ $rc -eq 2 ] && [ $tries -lt 3 ]; do
+        [ $tries -gt 0 ] && echo "%Error: authentication failed" >&2
+        read -r -s -p "Password for $CLI_USER: " SONIC_CLI_PASSWORD
+        echo
+        export SONIC_CLI_PASSWORD
+        python3 $SONIC_CLI_ROOT/cli_client.py --auth-status
+        rc=$?
+        tries=$((tries + 1))
+    done
+    if [ $rc -eq 2 ]; then
+        echo "%Error: authentication failed" >&2
+        exit 1
+    fi
+fi
+
 $SONIC_CLI_ROOT/clish -o "$@"
