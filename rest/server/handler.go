@@ -20,6 +20,7 @@
 package server
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -45,7 +46,7 @@ func Process(w http.ResponseWriter, r *http.Request) {
 	var rtype string
 
 	glog.Infof("[%s] %s %s; content-len=%d", reqID, r.Method, r.URL.Path, r.ContentLength)
-	_, args.data, err = getRequestBody(r, rc)
+	_, args.data, err = getRequestBody(w, r, rc)
 
 	if err == nil {
 		err = args.parseMethod(r, rc)
@@ -116,17 +117,44 @@ func getRequestID(r *http.Request) string {
 	return ""
 }
 
-// getRequestBody returns the validated request body
-func getRequestBody(r *http.Request, rc *RequestContext) (*MediaType, []byte, error) {
+// DefaultMaxRequestBodyBytes is the default payload limit applied before
+// RESTCONF validation.
+const DefaultMaxRequestBodyBytes int64 = 10 << 20 // 10 MiB
+
+var maxRequestBodyBytes = DefaultMaxRequestBodyBytes
+
+// SetMaxRequestBodyBytes changes the request body limit. It must be called
+// before the server starts accepting requests.
+func SetMaxRequestBodyBytes(limit int64) error {
+	if limit <= 0 {
+		return fmt.Errorf("request body limit must be greater than zero")
+	}
+
+	maxRequestBodyBytes = limit
+	return nil
+}
+
+// getRequestBody returns the validated request body.
+func getRequestBody(w http.ResponseWriter, r *http.Request, rc *RequestContext) (*MediaType, []byte, error) {
 	if r.ContentLength == 0 {
 		glog.Infof("[%s] No body", rc.ID)
 		return nil, nil, nil
 	}
 
-	// read body
-	body, err := ioutil.ReadAll(r.Body)
+	if r.ContentLength > maxRequestBodyBytes {
+		glog.Warningf("[%s] Content-length %d exceeds limit %d", rc.ID, r.ContentLength, maxRequestBodyBytes)
+		return nil, nil, httpError(http.StatusRequestEntityTooLarge, "Request body too large")
+	}
+
+	// ContentLength is unknown for chunked requests, so enforce the limit
+	// while reading as well as checking the declared length above.
+	body, err := ioutil.ReadAll(http.MaxBytesReader(w, r.Body, maxRequestBodyBytes))
 	if err != nil {
 		glog.Errorf("[%s] Failed to read body; err=%v", rc.ID, err)
+		var maxBytesError *http.MaxBytesError
+		if errors.As(err, &maxBytesError) {
+			return nil, nil, httpError(http.StatusRequestEntityTooLarge, "Request body too large")
+		}
 		return nil, nil, httpError(http.StatusInternalServerError, "")
 	}
 
