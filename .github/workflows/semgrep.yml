@@ -8,6 +8,10 @@ on:
       - '201[7-9][0-1][0-9]'
       - '202[0-9][0-1][0-9]'
 
+# The merge robot approves this workflow's runs on a Renovate go.sum fixup
+permissions:
+  contents: read
+
 jobs:
   semgrep:
     if: github.repository_owner == 'sonic-net'
@@ -16,7 +20,7 @@ jobs:
     container:
       image: returntocorp/semgrep
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - run: semgrep ci
         env:
            SEMGREP_RULES: p/default
