@@ -56,6 +56,18 @@ def main():
         assert restored["sha256"] == result["baseline"]["sha256"], name
         result[name + "_restore"] = restored
         (OUTPUT / "incremental.json").write_text(json.dumps(result, indent=2) + "\n")
+    # Change a declared input of native Klish compilation without changing C
+    # semantics. The installed ELFs and their detached symbols must reproduce.
+    config = Path("CLI/bazel/klish_config.h.in")
+    original = config.read_bytes()
+    try:
+        config.write_bytes(original + b"\n/* Native CLI reproducibility probe. */\n")
+        result["cli_rebuild"] = snapshot("cli-rebuild")
+        assert result["cli_rebuild"]["sha256"] == result["baseline"]["sha256"]
+    finally:
+        config.write_bytes(original)
+    result["cli_configure_restore"] = snapshot("cli-configure-restore")
+    assert result["cli_configure_restore"]["sha256"] == result["baseline"]["sha256"]
     (OUTPUT / "incremental.json").write_text(json.dumps(result, indent=2) + "\n")
     print(json.dumps(result, indent=2))
 
