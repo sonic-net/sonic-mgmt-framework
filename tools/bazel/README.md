@@ -16,7 +16,7 @@ No target generates a DEB, and the existing Make entry points remain available.
 | `//dist:runtime.debug_symbols` | Symbols split from the same eight deployed ELF files |
 
 The selected configuration is native AMD64 Debian Trixie with Bazel 8.5.1,
-Go 1.25.9, Python 3.13 and the shared GCC toolchain. REST compilation preserves
+Go 1.26.7, Python 3.13 and the shared GCC toolchain. REST compilation preserves
 Make's `-gcflags="all=-N -l"` on the target itself, including when another
 Bazel root consumes it; the certificate tool keeps normal Go optimization. External native libraries and execution tools use
 reviewed package locks. CLI source preparation and compilation use the shared

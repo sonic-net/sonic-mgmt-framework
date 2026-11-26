@@ -4,8 +4,8 @@ _GO_TOOLCHAIN = "@io_bazel_rules_go//go:toolchain"
 
 def _cert_source_impl(ctx):
     sdk = ctx.toolchains[_GO_TOOLCHAIN].sdk
-    if sdk.version != "1.25.9":
-        fail("The certificate source contract requires Go 1.25.9, got " + sdk.version)
+    if sdk.version != "1.26.7":
+        fail("The certificate source contract requires Go 1.26.7, got " + sdk.version)
     source_path = sdk.root_file.dirname + "/src/crypto/tls/generate_cert.go"
     sources = [source for source in sdk.srcs.to_list() if source.path == source_path]
     if len(sources) != 1:
