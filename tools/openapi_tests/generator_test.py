@@ -7,8 +7,8 @@ import subprocess
 import sys
 import unittest
 
-PYANG, WHEEL, PLUGIN, MARKER = [Path(p).absolute() for p in sys.argv[1:5]]
-del sys.argv[1:5]
+PYANG, PLUGIN, MARKER = [Path(p).absolute() for p in sys.argv[1:4]]
+del sys.argv[1:4]
 
 
 class GeneratorTest(unittest.TestCase):
@@ -17,7 +17,7 @@ class GeneratorTest(unittest.TestCase):
         for key in ("RUNFILES_DIR", "RUNFILES_MANIFEST_FILE", "PYTHON_RUNFILES"):
             environment.pop(key, None)
         result = subprocess.run(
-            [str(PYANG), str(WHEEL), "-f", "swaggerapi", "--plugindir", str(PLUGIN.parent),
+            [str(PYANG), "-f", "swaggerapi", "--plugindir", str(PLUGIN.parent),
              *options, *sources],
             cwd=MARKER.parent, env=environment, check=True, stdout=subprocess.PIPE,
         ).stdout.decode()
