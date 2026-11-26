@@ -1,2 +1,10 @@
-75a76
-> bool_t lub_argv__swap_arg(const lub_argv_t * instance,unsigned index1, unsigned index2);
+--- a/lub/argv.h
++++ b/lub/argv.h
+@@ -73,6 +73,7 @@
+ void lub_argv__free_argv(char **argv);
+ char *lub_argv__get_line(const lub_argv_t * instance);
+ void lub_argv_add(lub_argv_t * instance, const char *text);
++bool_t lub_argv__swap_arg(const lub_argv_t * instance,unsigned index1, unsigned index2);
+ 
+ _END_C_DECL
+ #endif				/* _lub_argv_h */

@@ -6,7 +6,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
-import tarfile
+import shutil
 import tempfile
 
 
@@ -14,8 +14,7 @@ def probe(runtime, libraries):
     runtime, libraries = Path(runtime).resolve(), Path(libraries).resolve()
     with tempfile.TemporaryDirectory(prefix="framework-cli-installed-") as directory:
         root = Path(directory)
-        with tarfile.open(runtime) as archive:
-            archive.extractall(root, filter="data")
+        shutil.unpack_archive(runtime, root, format="tar", filter="data")
         cli = root / "usr/sbin/cli"
         native = libraries / "usr/lib/x86_64-linux-gnu"
         loader = native / "ld-linux-x86-64.so.2"

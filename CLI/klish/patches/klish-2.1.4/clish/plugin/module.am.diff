@@ -1,5 +1,9 @@
-5c5,6
-< 	clish/plugin/private.h
----
-> 	clish/plugin/private.h \
-> 	clish/plugin/mgmt_clish_utils.c
+--- a/clish/plugin/module.am
++++ b/clish/plugin/module.am
+@@ -2,4 +2,5 @@
+ 	clish/plugin/plugin.c \
+ 	clish/plugin/sym.c \
+ 	clish/plugin/plugin_dump.c \
+-	clish/plugin/private.h
++	clish/plugin/private.h \
++	clish/plugin/mgmt_clish_utils.c

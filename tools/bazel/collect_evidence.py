@@ -9,7 +9,7 @@ import shlex
 import shutil
 import subprocess
 import sys
-import xml.etree.ElementTree as ET
+from defusedxml import ElementTree as ET
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from go_versions import verify as verify_go_versions

@@ -1,4 +1,4 @@
-# Native AMD64 CLI source outputs
+# Native CLI source outputs
 
 `//CLI:runtime` installs the existing Framework CLI under `/usr/sbin/cli`.
 `//CLI:runtime.debug_symbols` contains the matching split debug files. Neither
@@ -7,11 +7,13 @@ remain available.
 
 The build has separate actions for:
 
-- `//CLI:klish_sources`: unpack the checked-in klish 2.1.4 archive with the
-  registered BSD tar toolchain, apply the existing normal-diff patches with a
-  declared GNU patch, and copy the existing added source files.
-- `//CLI:klish`: build those sources with `rules_foreign_cc.configure_make`, the
-  shared GCC Trixie toolchain and shared declared Autotools runtime.
+- `@framework_klish`: use the shared source-preparation rule to extract the
+  checked-in klish 2.1.4 archive, apply the existing replacement files and
+  unified patches, and expose individual source files.
+- `//CLI:klish`: build those sources with native `cc_library`,
+  `cc_shared_library` and `cc_binary` targets using the GCC Trixie toolchain.
+  The configuration template preserves the original options and the reviewed
+  target-toolchain probe; normal builds do not invoke Autotools or Make.
 - `//CLI:installed_assets`: run the existing platform-feature script, macro
   expansion, pipe insertion and default-command insertion, then validate every
   installed command XML against the existing XSD with declared xmllint.
@@ -27,9 +29,10 @@ compiler prefix maps remove action-directory paths from debugging information.
 
 The CLI selects libxml2, libcurl, Python 3.13 embedding and cJSON development
 inputs from the published build-infra APT set `framework_cli_target_debian`.
-Its shared foreign runtime supplies GNU patch, xmllint and xsltproc for the
-generators in the execution configuration. The isolated build-input tree
-relocates Debian aliases inside the tree and uses UTC during the build.
+Compilation consumes the APT library targets directly through `CcInfo`.
+Declared execution tools supply xmllint and xsltproc for the asset generators.
+The separate installed-runtime test input relocates Debian aliases within its
+declared library tree and uses UTC.
 
 The CLI's runtime Python imports use the root `framework_pip` lock (requests,
 six, natsort and Jinja2); lxml is a generator dependency. A containing image must
@@ -61,4 +64,22 @@ The verifier requires a source-line lookup for each binary with the supplied
 debug TAR, and repeats every lookup without it to prove no host symbols satisfy
 the check. Pass `--cli-only` with the CLI runtime/debug TARs to check its six
 ELFs alone. `//dist:package_test` verifies the separate byte/ownership/mode,
-AMD64, build-ID, debuglink CRC and debug-section contracts.
+selected target architecture, build-ID, debuglink CRC and debug-section contracts.
+
+## ARM64 compilation
+
+The native CLI rules accept AMD64 and ARM64 Linux/Trixie target platforms. The
+reviewed target-toolchain probes yield the same configuration macros on both
+architectures, including the LP64 type sizes. Use
+`--platforms=@sonic_build_infra//platforms:aarch64_trixie` for ARM64 output.
+
+The complete CLI also requires the matching ARM64 view of the production
+`framework_cli_target_debian` set. The currently selected Infra .44 lock provides
+that set only for AMD64 and lacks ARM64 curl/cJSON development inputs. These
+producer inputs must be available before the complete ARM64 CLI can build.
+ARM64 validation can use the shared updater to add same-version ARM64 SDK
+requests in an isolated Infra copy. Verify that existing package records remain
+unchanged, then supply that validation copy through an explicit module override.
+The registry entry documents the recorded validation inputs. The production
+lock is not changed by this Framework adaptation.
+The installed CLI runtime test retains its AMD64 loader and platform constraint.

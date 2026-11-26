@@ -8,7 +8,7 @@ import shlex
 import shutil
 import subprocess
 import sys
-import xml.etree.ElementTree as ET
+from defusedxml import ElementTree as ET
 
 # Support workers that exclude the script directory with PYTHONSAFEPATH.
 sys.path.insert(0, str(Path(__file__).resolve().parent))

@@ -16,7 +16,7 @@ No target generates a DEB, and the existing Make entry points remain available.
 | `//dist:runtime.debug_symbols` | Symbols split from the same eight deployed ELF files |
 
 The selected configuration is native AMD64 Debian Trixie with Bazel 8.5.1,
-Go 1.26.0, Python 3.13 and the shared GCC toolchain. REST compilation preserves
+Go 1.26.7, Python 3.13 and the shared GCC toolchain. REST compilation preserves
 Make's `-gcflags="all=-N -l"` on the target itself, including when another
 Bazel root consumes it; the certificate tool keeps normal Go optimization. External native libraries and execution tools use
 reviewed package locks. CLI source preparation and compilation use the shared
@@ -39,10 +39,11 @@ bazel build //dist:runtime //dist:runtime.debug_symbols
 
 `MODULE.bazel.lock` is generated and ignored; CI retains it as evidence. Package
 locks stay checked in. The maintained BUILD targets use the selected Common
-module directly. Both the producer and standalone consumer read the native
-`go.mod`. CI compares the four resolved `golang.org/x` library versions with
-that manifest so changes to the build tools cannot silently change the shipped REST
-runtime.
+module directly, preserving the legacy neighboring-checkout `go.mod` declaration.
+`go.bazel.work` preserves the four deployed `golang.org/x` library versions
+from the native `go.mod`; Bazel build-tool requirements must not silently upgrade
+the REST runtime. Downstream roots load this exported work file, as shown in
+`tools/bazel/consumer/MODULE.bazel`. The native `go.mod` and `go.sum` are unchanged.
 The public goyang/ygot modules own their shared Go types. Remaining Go dependency
 patches are root-only settings, and consuming roots select the owner-exported
 patches explicitly. The certificate generator reads its source
@@ -56,10 +57,11 @@ TARs, measures a no-op, independently edits REST source/UI templates/CLI assets,
 and checks that only the corresponding outputs change. Restoring each input
 must reproduce every original hash.
 
-Klish uses libtool's install/relink step before packaging so its library search
-paths name `/usr/sbin/cli/.libs`. A harmless configure-script edit also rebuilds
-the same native sources in a new temporary directory and must preserve every
-TAR hash; package checks reject temporary build paths in ELF search paths.
+Klish uses native C/C++ compilation and shared-library targets over the existing
+SONiC-patched 2.1.4 sources. Configuration is generated from the reviewed template;
+Autotools and Make are not build actions. The existing runtime, static archives
+and matching symbol TARs retain their installation interfaces. Package checks
+reject temporary build paths in installed ELF search paths.
 
 `tools/bazel/check_consumer.py` also builds the public runtime/debug TARs from an
 independent root, composing them with Common data as a Docker consumer does. It

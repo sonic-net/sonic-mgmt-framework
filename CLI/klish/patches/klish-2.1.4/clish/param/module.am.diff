@@ -1,5 +1,9 @@
-5c5,6
-< 	clish/param/private.h
----
-> 	clish/param/private.h \
-> 	clish/param/mgmt_clish_extn_param.c
+--- a/clish/param/module.am
++++ b/clish/param/module.am
+@@ -2,4 +2,5 @@
+ 	clish/param/param.c \
+ 	clish/param/paramv.c \
+ 	clish/param/param_dump.c \
+-	clish/param/private.h
++	clish/param/private.h \
++	clish/param/mgmt_clish_extn_param.c

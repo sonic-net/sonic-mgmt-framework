@@ -8,7 +8,6 @@ def _rest_models_impl(ctx):
     args.add("--models", ctx.file.models.path)
     args.add("--config", ctx.file.config)
     args.add("--pyang", ctx.executable._pyang)
-    args.add("--pyang-wheel", ctx.file._pyang_wheel)
     args.add("--plugin", ctx.file.plugin)
     args.add("--go", generated_go.path)
     args.add("--ui", ui.path)
@@ -18,7 +17,7 @@ def _rest_models_impl(ctx):
     ctx.actions.run(
         executable = ctx.executable._driver,
         arguments = [args],
-        inputs = [ctx.file.models, ctx.file.plugin, ctx.file._pyang_wheel, ctx.file.config] + ctx.files.assets + ctx.files.openapi_specs,
+        inputs = [ctx.file.models, ctx.file.plugin, ctx.file.config] + ctx.files.assets + ctx.files.openapi_specs,
         tools = [ctx.attr._driver[DefaultInfo].files_to_run, ctx.attr._pyang[DefaultInfo].files_to_run],
         outputs = [generated_go, ui, docs],
         env = {"PYTHONHASHSEED": "0", "PYTHONNOUSERSITE": "1"},
@@ -40,6 +39,5 @@ rest_models = rule(
         "openapi_specs": attr.label_list(allow_files = [".yaml"]),
         "_driver": attr.label(default = "//tools/bazel:generate_rest_models", executable = True, cfg = "exec"),
         "_pyang": attr.label(default = "//tools/bazel:pyang", executable = True, cfg = "exec"),
-        "_pyang_wheel": attr.label(default = "@framework_pip//pyang:whl", allow_single_file = True, cfg = "exec"),
     },
 )

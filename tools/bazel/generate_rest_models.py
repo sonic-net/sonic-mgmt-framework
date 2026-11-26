@@ -29,7 +29,7 @@ def validate_codegen_config(path):
 
 def main():
     parser = argparse.ArgumentParser()
-    for name in ("models", "pyang", "pyang-wheel", "plugin", "go", "ui", "docs", "config"):
+    for name in ("models", "pyang", "plugin", "go", "ui", "docs", "config"):
         parser.add_argument("--" + name, required=True, type=Path)
     parser.add_argument("--asset", action="append", default=[], type=Path)
     parser.add_argument("--openapi-spec", action="append", default=[], type=Path)
@@ -68,7 +68,7 @@ def main():
             if not sources:
                 raise ValueError("The management-common model set is incomplete")
             subprocess.run([
-                str(pyang), str(args.pyang_wheel.absolute()), "-f", "swaggerapi", "--outdir", str(staged_ui),
+                str(pyang), "-f", "swaggerapi", "--outdir", str(staged_ui),
                 "--plugindir", str(plugin.parent), "--with-md-doc", "--md-outdir", str(docs),
                 "--with-serverstub", "--stub-outdir", str(go),
                 "--template-dir", str(work / "tools/codegen/go-server/templates-yang"),

@@ -1,3 +1,11 @@
-27a28,29
-> AC_PROG_CXX
-> 
+--- a/configure.ac
++++ b/configure.ac
+@@ -24,6 +24,8 @@
+ AC_PROG_CC
+ AC_LIBTOOL_WIN32_DLL
+ AC_PROG_LIBTOOL
++
++AC_PROG_CXX
+ 
+ AC_CONFIG_HEADERS([config.h])
+ AM_INIT_AUTOMAKE(subdir-objects)

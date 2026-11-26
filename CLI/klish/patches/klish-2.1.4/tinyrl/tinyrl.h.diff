@@ -1,13 +1,21 @@
-224a225,236
-> extern void tinyrl_complete_ignore_error(tinyrl_t * instance);
-> /**
->  * Indicate whether the cursor is in middle or not
->  */
-> extern bool_t
->         tinyrl_is_cursor_in_middle(
->                 /**
->                  * The instance on which to operate
->                  */
->                 const tinyrl_t *instance
->         );
-> 
+--- a/tinyrl/tinyrl.h
++++ b/tinyrl/tinyrl.h
+@@ -222,6 +222,18 @@
+ extern int tinyrl__save_history(const tinyrl_t *instance, const char *fname);
+ extern int tinyrl__restore_history(tinyrl_t *instance, const char *fname);
+ extern void tinyrl__stifle_history(tinyrl_t *instance, unsigned int stifle);
++extern void tinyrl_complete_ignore_error(tinyrl_t * instance);
++/**
++ * Indicate whether the cursor is in middle or not
++ */
++extern bool_t
++        tinyrl_is_cursor_in_middle(
++                /**
++                 * The instance on which to operate
++                 */
++                const tinyrl_t *instance
++        );
++
+ 
+ _END_C_DECL
+ #endif				/* _tinyrl_tinyrl_h */

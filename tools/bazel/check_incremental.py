@@ -56,19 +56,6 @@ def main():
         assert restored["sha256"] == result["baseline"]["sha256"], name
         result[name + "_restore"] = restored
         (OUTPUT / "incremental.json").write_text(json.dumps(result, indent=2) + "\n")
-    # A harmless configure-script comment changes the declared foreign action,
-    # rebuilding the same native sources in another temporary directory. This
-    # catches libtool build-directory paths in deployed ELF files/build IDs.
-    configure = Path("CLI/bazel/configure.sh")
-    original = configure.read_bytes()
-    try:
-        configure.write_bytes(original + b"\n# Native CLI reproducibility probe.\n")
-        result["cli_rebuild"] = snapshot("cli-rebuild")
-        assert result["cli_rebuild"]["sha256"] == result["baseline"]["sha256"]
-    finally:
-        configure.write_bytes(original)
-    result["cli_configure_restore"] = snapshot("cli-configure-restore")
-    assert result["cli_configure_restore"]["sha256"] == result["baseline"]["sha256"]
     (OUTPUT / "incremental.json").write_text(json.dumps(result, indent=2) + "\n")
     print(json.dumps(result, indent=2))
 

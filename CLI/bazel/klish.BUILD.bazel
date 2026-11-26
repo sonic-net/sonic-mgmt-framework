@@ -1,0 +1,400 @@
+"""Native compilation of the existing SONiC-patched klish 2.1.4 sources."""
+load("@bazel_skylib//rules:expand_template.bzl", "expand_template")
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
+load("@rules_cc//cc:cc_shared_library.bzl", "cc_shared_library")
+load("@sonic_build_infra//cc:shared_library.bzl", "shared_library_cc_info")
+
+package(default_visibility = ["//visibility:public"])
+
+_TRIXIE_64 = [
+    "@platforms//os:linux",
+    "@sonic_build_infra//platforms:trixie",
+] + select({
+    "@platforms//cpu:x86_64": [],
+    "@platforms//cpu:aarch64": [],
+    "//conditions:default": ["@platforms//:incompatible"],
+})
+
+expand_template(
+    name = "configuration",
+    template = "config.h.in",
+    out = "config.h",
+    substitutions = {"@KLISH_VERSION@": "2.1.4"},
+)
+
+expand_template(
+    name = "builtin_plugins",
+    template = "clish/plugin_builtin.c.in",
+    out = "clish/plugin_builtin.c",
+    substitutions = {
+        "@CLISH_PLUGIN_BUILTIN_DEFS@": "",
+        "@CLISH_PLUGIN_BUILTIN_LIST@": "",
+    },
+)
+
+cc_library(
+    target_compatible_with = _TRIXIE_64,
+    name = "headers",
+    hdrs = glob(["**/*.h"]) + [":configuration"],
+    includes = ["."],
+    visibility = ["//visibility:private"],
+)
+
+cc_library(
+    target_compatible_with = _TRIXIE_64,
+    name = "liblub_objects",
+    srcs = [
+        "lub/argv/argv.c",
+        "lub/bintree/bintree_dump.c",
+        "lub/bintree/bintree_find.c",
+        "lub/bintree/bintree_findfirst.c",
+        "lub/bintree/bintree_findlast.c",
+        "lub/bintree/bintree_findnext.c",
+        "lub/bintree/bintree_findprevious.c",
+        "lub/bintree/bintree_init.c",
+        "lub/bintree/bintree_insert.c",
+        "lub/bintree/bintree_iterator_init.c",
+        "lub/bintree/bintree_iterator_next.c",
+        "lub/bintree/bintree_iterator_previous.c",
+        "lub/bintree/bintree_node_init.c",
+        "lub/bintree/bintree_remove.c",
+        "lub/bintree/bintree_splay.c",
+        "lub/list/list.c",
+        "lub/ctype/ctype.c",
+        "lub/dump/dump.c",
+        "lub/string/string.c",
+        "lub/system/test.c",
+        "lub/system/system_test.c",
+        "lub/system/system_file.c",
+        "lub/db/db.c",
+        "lub/ini/pair.c",
+        "lub/ini/ini.c",
+        "lub/log/log.c",
+        "lub/conv/conv.c",
+    ],
+    local_defines = ["HAVE_CONFIG_H"],
+    copts = ["-g"],
+    conlyopts = ["-Wall"],
+    deps = [":headers"],
+    linkstatic = True,
+)
+
+cc_shared_library(
+    target_compatible_with = _TRIXIE_64,
+    name = "liblub.so",
+    deps = [":liblub_objects"],
+    dynamic_deps = [],
+    shared_lib_name = "liblub.so.1.0.0",
+    user_link_flags = ["-Wl,-soname,liblub.so.1"],
+    features = ["-strip_debug_symbols"],
+)
+
+shared_library_cc_info(
+    name = "liblub_link",
+    shared_library = ":liblub.so",
+)
+
+cc_library(
+    target_compatible_with = _TRIXIE_64,
+    name = "liblub",
+    deps = [
+        ":headers",
+        ":liblub_link",
+    ],
+)
+
+filegroup(
+    name = "liblub.a",
+    srcs = [":liblub_objects"],
+    output_group = "archive",
+)
+
+cc_library(
+    target_compatible_with = _TRIXIE_64,
+    name = "libtinyrl_objects",
+    srcs = [
+        "tinyrl/tinyrl.c",
+        "tinyrl/history/history.c",
+        "tinyrl/history/history_entry.c",
+        "tinyrl/vt100/vt100.c",
+    ],
+    local_defines = ["HAVE_CONFIG_H"],
+    copts = ["-g"],
+    conlyopts = ["-Wall"],
+    deps = [
+        ":headers",
+        ":liblub_objects",
+    ],
+    linkstatic = True,
+)
+
+cc_shared_library(
+    target_compatible_with = _TRIXIE_64,
+    name = "libtinyrl.so",
+    deps = [":libtinyrl_objects"],
+    dynamic_deps = [":liblub.so"],
+    shared_lib_name = "libtinyrl.so.1.0.0",
+    user_link_flags = ["-Wl,-soname,libtinyrl.so.1"],
+    features = ["-strip_debug_symbols"],
+)
+
+shared_library_cc_info(
+    name = "libtinyrl_link",
+    shared_library = ":libtinyrl.so",
+)
+
+cc_library(
+    target_compatible_with = _TRIXIE_64,
+    name = "libtinyrl",
+    deps = [
+        ":headers",
+        ":libtinyrl_link",
+    ],
+)
+
+filegroup(
+    name = "libtinyrl.a",
+    srcs = [":libtinyrl_objects"],
+    output_group = "archive",
+)
+
+cc_library(
+    target_compatible_with = _TRIXIE_64,
+    name = "libkonf_objects",
+    srcs = [
+        "konf/tree/tree.c",
+        "konf/tree/tree_dump.c",
+        "konf/query/query.c",
+        "konf/query/query_dump.c",
+        "konf/buf/buf.c",
+        "konf/net/net.c",
+    ],
+    local_defines = ["HAVE_CONFIG_H"],
+    copts = ["-g"],
+    conlyopts = ["-Wall"],
+    deps = [
+        ":headers",
+        ":liblub_objects",
+    ],
+    linkstatic = True,
+)
+
+cc_shared_library(
+    target_compatible_with = _TRIXIE_64,
+    name = "libkonf.so",
+    deps = [":libkonf_objects"],
+    dynamic_deps = [":liblub.so"],
+    shared_lib_name = "libkonf.so.1.0.0",
+    user_link_flags = ["-Wl,-soname,libkonf.so.1"],
+    features = ["-strip_debug_symbols"],
+)
+
+shared_library_cc_info(
+    name = "libkonf_link",
+    shared_library = ":libkonf.so",
+)
+
+cc_library(
+    target_compatible_with = _TRIXIE_64,
+    name = "libkonf",
+    deps = [
+        ":headers",
+        ":libkonf_link",
+    ],
+)
+
+filegroup(
+    name = "libkonf.a",
+    srcs = [":libkonf_objects"],
+    output_group = "archive",
+)
+
+cc_library(
+    target_compatible_with = _TRIXIE_64,
+    name = "libclish_objects",
+    srcs = [
+        ":builtin_plugins",
+        "clish/command/command.c",
+        "clish/command/command_dump.c",
+        "clish/param/param.c",
+        "clish/param/paramv.c",
+        "clish/param/param_dump.c",
+        "clish/param/mgmt_clish_extn_param.c",
+        "clish/pargv/pargv.c",
+        "clish/pargv/parg.c",
+        "clish/pargv/pargv_dump.c",
+        "clish/ptype/ptype.c",
+        "clish/ptype/ptype_dump.c",
+        "clish/shell/shell_view.c",
+        "clish/shell/shell_ptype.c",
+        "clish/shell/shell_var.c",
+        "clish/shell/shell_command.c",
+        "clish/shell/shell_dump.c",
+        "clish/shell/shell_execute.c",
+        "clish/shell/shell_help.c",
+        "clish/shell/shell_new.c",
+        "clish/shell/shell_parse.c",
+        "clish/shell/shell_file.c",
+        "clish/shell/shell_loop.c",
+        "clish/shell/shell_startup.c",
+        "clish/shell/shell_wdog.c",
+        "clish/shell/shell_pwd.c",
+        "clish/shell/shell_tinyrl.c",
+        "clish/shell/shell_plugin.c",
+        "clish/shell/shell_xml.c",
+        "clish/shell/shell_roxml.c",
+        "clish/shell/shell_libxml2.c",
+        "clish/shell/shell_expat.c",
+        "clish/shell/shell_udata.c",
+        "clish/shell/shell_misc.c",
+        "clish/shell/context.c",
+        "clish/view/view.c",
+        "clish/view/view_dump.c",
+        "clish/nspace/nspace.c",
+        "clish/nspace/nspace_dump.c",
+        "clish/var/var.c",
+        "clish/var/var_dump.c",
+        "clish/action/action.c",
+        "clish/action/action_dump.c",
+        "clish/config/config.c",
+        "clish/config/config_dump.c",
+        "clish/hotkey/hotkey.c",
+        "clish/hotkey/hotkey_dump.c",
+        "clish/plugin/plugin.c",
+        "clish/plugin/sym.c",
+        "clish/plugin/plugin_dump.c",
+        "clish/plugin/mgmt_clish_utils.c",
+        "clish/udata/udata.c",
+    ],
+    local_defines = ["HAVE_CONFIG_H"],
+    copts = ["-g"],
+    deps = [
+        ":headers",
+        ":liblub_objects",
+        ":libtinyrl_objects",
+        ":libkonf_objects",
+        "@framework_cli_target_debian//libxml2-dev:libxml2",
+        "@framework_cli_target_debian//libpython3.13-dev:libpython3.13_cc",
+    ],
+    linkstatic = True,
+)
+
+cc_shared_library(
+    target_compatible_with = _TRIXIE_64,
+    name = "libclish.so",
+    deps = [":libclish_objects"],
+    dynamic_deps = [
+        ":liblub.so",
+        ":libtinyrl.so",
+        ":libkonf.so",
+    ],
+    shared_lib_name = "libclish.so.1.0.0",
+    user_link_flags = ["-Wl,-soname,libclish.so.1"],
+    features = ["-strip_debug_symbols"],
+)
+
+shared_library_cc_info(
+    name = "libclish_link",
+    shared_library = ":libclish.so",
+)
+
+cc_library(
+    target_compatible_with = _TRIXIE_64,
+    name = "libclish",
+    deps = [
+        ":headers",
+        ":libclish_link",
+        "@framework_cli_target_debian//libxml2-dev:libxml2",
+        "@framework_cli_target_debian//libpython3.13-dev:libpython3.13_cc",
+    ],
+)
+
+filegroup(
+    name = "libclish.a",
+    srcs = [":libclish_objects"],
+    output_group = "archive",
+)
+
+cc_library(
+    target_compatible_with = _TRIXIE_64,
+    name = "clish_plugin_clish_objects",
+    srcs = [
+        "plugins/clish/builtin_init.c",
+        "plugins/clish/hook_access.c",
+        "plugins/clish/hook_config.c",
+        "plugins/clish/hook_log.c",
+        "plugins/clish/sym_misc.c",
+        "plugins/clish/rest_cl.cpp",
+        "plugins/clish/call_pyobj.c",
+        "plugins/clish/nos_extn.c",
+        "plugins/clish/sym_script.c",
+    ],
+    local_defines = ["HAVE_CONFIG_H"],
+    copts = ["-g"],
+    conlyopts = ["-Wall"],
+    deps = [
+        ":headers",
+        ":libclish_objects",
+        ":libkonf_objects",
+        ":liblub_objects",
+        ":libtinyrl_objects",
+        "@framework_cli_target_debian//libxml2-dev:libxml2",
+        "@framework_cli_target_debian//libcurl4-openssl-dev:libcurl_cc",
+        "@framework_cli_target_debian//libpython3.13-dev:libpython3.13_cc",
+        "@framework_cli_target_debian//libcjson-dev:libcjson_cc",
+    ],
+    linkstatic = True,
+)
+
+cc_shared_library(
+    target_compatible_with = _TRIXIE_64,
+    name = "clish_plugin_clish.so",
+    deps = [":clish_plugin_clish_objects"],
+    dynamic_deps = [
+        ":libclish.so",
+        ":libkonf.so",
+        ":liblub.so",
+        ":libtinyrl.so",
+    ],
+    shared_lib_name = "clish_plugin_clish.so",
+    user_link_flags = ["-Wl,-soname,clish_plugin_clish.so"],
+    features = ["-strip_debug_symbols"],
+)
+
+shared_library_cc_info(
+    name = "clish_plugin_clish_link",
+    shared_library = ":clish_plugin_clish.so",
+)
+
+cc_library(
+    target_compatible_with = _TRIXIE_64,
+    name = "clish_plugin_clish",
+    deps = [
+        ":headers",
+        ":clish_plugin_clish_link",
+    ],
+)
+
+filegroup(
+    name = "clish_plugin_clish.a",
+    srcs = [":clish_plugin_clish_objects"],
+    output_group = "archive",
+)
+
+cc_binary(
+    target_compatible_with = _TRIXIE_64,
+    name = "bin/clish",
+    srcs = ["bin/clish.c"],
+    copts = ["-g"],
+    conlyopts = ["-Wall"],
+    local_defines = ["HAVE_CONFIG_H"],
+    deps = [
+        ":libclish",
+        ":libkonf",
+        ":libtinyrl",
+        ":liblub",
+    ],
+    features = ["-strip_debug_symbols"],
+)
+
+alias(name = "clish", actual = ":bin/clish")
