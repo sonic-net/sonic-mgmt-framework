@@ -13,5 +13,5 @@ filegroup(
         "ui_gen/src/*.py",
         "ui_gen/templates/*",
         "restconf_doc_tools/*",
-    ]) + ["swagger_codegen/go-server/src/openapi/routes.go"],
+    ]),
 )

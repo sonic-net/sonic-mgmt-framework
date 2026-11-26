@@ -13,7 +13,11 @@ import unittest
 import zlib
 
 RUNTIME, DEBUG, UI, CLI, READELF, OBJCOPY = [Path(p).absolute() for p in sys.argv[1:7]]
-del sys.argv[1:7]
+EXPECTED_MACHINE = {
+    "x86_64": "Advanced Micro Devices X86-64",
+    "aarch64": "AArch64",
+}[sys.argv[7]]
+del sys.argv[1:8]
 LIBRARIES = ("libclish", "libkonf", "liblub", "libtinyrl")
 
 
@@ -71,7 +75,7 @@ class PackageContractTest(unittest.TestCase):
                     binary = root / f"binary-{number}"
                     binary.write_bytes(runtime[name][1])
                     self.assertTrue(binary.read_bytes().startswith(b"\x7fELF"))
-                    self.assertIn("Advanced Micro Devices X86-64", readelf("-h", binary))
+                    self.assertIn(EXPECTED_MACHINE, readelf("-h", binary))
                     match = re.search(r"Build ID: ([0-9a-f]+)", readelf("-n", binary))
                     self.assertIsNotNone(match, name)
                     identity = match[1]

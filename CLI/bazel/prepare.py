@@ -1,6 +1,5 @@
 """Stage the existing CLI sources using declared upstream archive/XML tools."""
 import argparse
-import hashlib
 import importlib
 import json
 import os
@@ -8,8 +7,6 @@ from pathlib import Path
 import shutil
 import subprocess
 import tempfile
-
-KLISH_SHA256 = "c3e9d65868a6fc07aa118c43dc9c43688d76ac3d2c8780599f3bbf1c2b5a1c33"
 
 
 def run(argv, **kwargs):
@@ -44,26 +41,6 @@ def unpack(args):
             raise RuntimeError("unexpected declared timezone alias")
         localtime.unlink()
         localtime.symlink_to("Etc/UTC")
-
-
-def klish(args):
-    if hashlib.sha256(args.archive.read_bytes()).hexdigest() != KLISH_SHA256:
-        raise RuntimeError("vendored klish archive differs from the reviewed Make source")
-    args.output.mkdir(parents=True, exist_ok=True)
-    run([args.bsdtar, "-xf", args.archive, "-C", args.output, "--strip-components=1", "--no-same-owner"])
-    mapping = json.loads(args.inputs.read_text())
-    for relative, source in sorted(mapping.items()):
-        source = Path(source)
-        destination = args.output / relative.removesuffix(".diff")
-        if relative.endswith(".diff"):
-            # These owner-maintained files use normal diff, not a repository patch.
-            # Name the target explicitly and reject fuzz, reversal and partial apply.
-            run(tool_command(args.tools, "patch") + ["--batch", "--forward", "--fuzz=0", "--no-backup-if-mismatch", str(destination), str(source)])
-        else:
-            destination.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(source, destination)
-    shutil.copy2(args.configure, args.output / "bazel-configure.sh")
-
 
 
 def assets(args):
@@ -123,14 +100,11 @@ def main():
     p.add_argument("--bsdtar", type=Path, required=True)
     p.add_argument("--archives", type=Path, nargs="+", required=True)
     p.add_argument("--output", type=Path, required=True)
-    p = modes.add_parser("klish")
-    for name in ("bsdtar", "archive", "inputs", "tools", "configure", "output"):
-        p.add_argument("--" + name, type=Path, required=True)
     p = modes.add_parser("assets")
     for name in ("inputs", "tools", "output"):
         p.add_argument("--" + name, type=Path, required=True)
     args = parser.parse_args()
-    {"unpack": unpack, "klish": klish, "assets": assets}[args.mode](args)
+    {"unpack": unpack, "assets": assets}[args.mode](args)
 
 
 if __name__ == "__main__":

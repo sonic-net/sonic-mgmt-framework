@@ -1,20 +1,46 @@
-13a14
-> #define IFACE_CMD "interface"
-44a46
-> 	char *commandstr;
-121c123,124
-< 	const char *line, const clish_command_t ** cmd, clish_pargv_t ** pargv);
----
-> 	const char *line, const clish_command_t ** cmd, clish_pargv_t ** pargv, 
-> 	clish_context_t *orig_context, unsigned *err_len);
-127c130,131
-< 	unsigned *idx, clish_pargv_t *last, unsigned need_index);
----
-> 	unsigned *idx, clish_pargv_t *last, unsigned need_index,
-> 	unsigned *err_index,  unsigned *strmatchLen);
-131c135
-< 	instance, const char *line);
----
-> 	instance, const char *line, clish_context_t *context);
-147a152
-> bool_t clish_shell_command_test(const clish_command_t *cmd, void *context);
+--- a/clish/shell/private.h
++++ b/clish/shell/private.h
+@@ -11,6 +11,7 @@
+ #include "clish/plugin.h"
+ #include "clish/udata.h"
+ 
++#define IFACE_CMD "interface"
+ /* iterate around commands */
+ typedef struct {
+ 	const char *last_cmd;
+@@ -42,6 +43,7 @@
+ 	const clish_command_t *cmd;
+ 	clish_pargv_t *pargv;
+ 	const clish_action_t *action;
++	char *commandstr;
+ };
+ 
+ /* Shell structure */
+@@ -118,17 +120,19 @@
+ clish_view_t *clish_shell_find_view(clish_shell_t * instance, const char *name);
+ void clish_shell_insert_view(clish_shell_t * instance, clish_view_t * view);
+ clish_pargv_status_e clish_shell_parse(clish_shell_t * instance,
+-	const char *line, const clish_command_t ** cmd, clish_pargv_t ** pargv);
++	const char *line, const clish_command_t ** cmd, clish_pargv_t ** pargv, 
++	clish_context_t *orig_context, unsigned *err_len);
+ clish_pargv_status_e clish_shell_parse_pargv(clish_pargv_t *pargv,
+ 	const clish_command_t *cmd,
+ 	void *context,
+ 	clish_paramv_t *paramv,
+ 	const lub_argv_t *argv,
+-	unsigned *idx, clish_pargv_t *last, unsigned need_index);
++	unsigned *idx, clish_pargv_t *last, unsigned need_index,
++	unsigned *err_index,  unsigned *strmatchLen);
+ char *clish_shell_word_generator(clish_shell_t * instance,
+ 	const char *line, unsigned offset, unsigned state);
+ const clish_command_t *clish_shell_resolve_command(const clish_shell_t *
+-	instance, const char *line);
++	instance, const char *line, clish_context_t *context);
+ const clish_command_t *clish_shell_resolve_prefix(const clish_shell_t *
+ 	instance, const char *line);
+ void clish_shell_tinyrl_history(clish_shell_t * instance, unsigned int *limit);
+@@ -145,3 +149,4 @@
+ void clish_shell__fini_pwd(clish_shell_pwd_t *pwd);
+ int clish_shell_timeout_fn(tinyrl_t *tinyrl);
+ int clish_shell_keypress_fn(tinyrl_t *tinyrl, int key);
++bool_t clish_shell_command_test(const clish_command_t *cmd, void *context);

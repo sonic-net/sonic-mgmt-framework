@@ -37,6 +37,11 @@ $(GO_MOD):
 	$(GO) mod init github.com/Azure/sonic-mgmt-framework
 
 $(GO_DEPS): $(GO_MOD) $(GO_CODEGEN_INIT)
+	@# go.mod requires a published sonic-mgmt-common, so Go and Renovate resolve it
+	@# without a checkout beside this one. Build against the checkout when it is there.
+	@if [ -d $(MGMT_COMMON_DIR) ]; then \
+	   $(GO) mod edit -replace github.com/Azure/sonic-mgmt-common=$(MGMT_COMMON_DIR); \
+	 fi
 	@# Run go mod tidy only if installed Go >= go.mod's go directive
 	@GO_MOD_VER=$$(sed -n 's/^go //p' go.mod) && \
 	 GO_CUR_VER=$$($(GO) env GOVERSION | sed 's/go//') && \

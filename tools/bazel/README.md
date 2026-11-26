@@ -16,7 +16,7 @@ No target generates a DEB, and the existing Make entry points remain available.
 | `//dist:runtime.debug_symbols` | Symbols split from the same eight deployed ELF files |
 
 The selected configuration is native AMD64 Debian Trixie with Bazel 8.5.1,
-Go 1.25.9, Python 3.13 and the shared GCC toolchain. REST compilation preserves
+Go 1.26.7, Python 3.13 and the shared GCC toolchain. REST compilation preserves
 Make's `-gcflags="all=-N -l"` on the target itself, including when another
 Bazel root consumes it; the certificate tool keeps normal Go optimization. External native libraries and execution tools use
 reviewed package locks. CLI source preparation and compilation use the shared
@@ -57,10 +57,11 @@ TARs, measures a no-op, independently edits REST source/UI templates/CLI assets,
 and checks that only the corresponding outputs change. Restoring each input
 must reproduce every original hash.
 
-Klish uses libtool's install/relink step before packaging so its library search
-paths name `/usr/sbin/cli/.libs`. A harmless configure-script edit also rebuilds
-the same native sources in a new temporary directory and must preserve every
-TAR hash; package checks reject temporary build paths in ELF search paths.
+Klish uses native C/C++ compilation and shared-library targets over the existing
+SONiC-patched 2.1.4 sources. Configuration is generated from the reviewed template;
+Autotools and Make are not build actions. The existing runtime, static archives
+and matching symbol TARs retain their installation interfaces. Package checks
+reject temporary build paths in installed ELF search paths.
 
 `tools/bazel/check_consumer.py` also builds the public runtime/debug TARs from an
 independent root, composing them with Common data as a Docker consumer does. It

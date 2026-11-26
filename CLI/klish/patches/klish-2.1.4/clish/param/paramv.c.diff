@@ -1,4 +1,11 @@
-137c137
-< 		return clish_param__get_defval(res);
----
-> 		return clish_param__get_default(res);
+--- a/clish/param/paramv.c
++++ b/clish/param/paramv.c
+@@ -134,7 +134,7 @@
+ 	clish_param_t *res = clish_paramv_find_param(this, name);
+ 
+ 	if (res)
+-		return clish_param__get_defval(res);
++		return clish_param__get_default(res);
+ 
+ 	return NULL;
+ }

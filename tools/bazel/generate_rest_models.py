@@ -29,7 +29,7 @@ def validate_codegen_config(path):
 
 def main():
     parser = argparse.ArgumentParser()
-    for name in ("models", "pyang", "pyang-wheel", "plugin", "go", "ui", "docs", "config"):
+    for name in ("models", "pyang", "plugin", "go", "ui", "docs", "config"):
         parser.add_argument("--" + name, required=True, type=Path)
     parser.add_argument("--asset", action="append", default=[], type=Path)
     parser.add_argument("--openapi-spec", action="append", default=[], type=Path)
@@ -59,7 +59,6 @@ def main():
             shutil.copyfile(source, dest)
         staged_ui = work / "build/rest_server/dist/ui"
         shutil.copytree(work / "tools/swagger_codegen/ui-dist", staged_ui)
-        shutil.copyfile(work / "tools/swagger_codegen/go-server/src/openapi/routes.go", go / "routes.go")
         for sources, search in (
             (sorted(models.glob("*.yang")) + sorted((models / "extensions").glob("*.yang")),
              [models / "common", models, models / "extensions"]),
@@ -69,7 +68,7 @@ def main():
             if not sources:
                 raise ValueError("The management-common model set is incomplete")
             subprocess.run([
-                str(pyang), str(args.pyang_wheel.absolute()), "-f", "swaggerapi", "--outdir", str(staged_ui),
+                str(pyang), "-f", "swaggerapi", "--outdir", str(staged_ui),
                 "--plugindir", str(plugin.parent), "--with-md-doc", "--md-outdir", str(docs),
                 "--with-serverstub", "--stub-outdir", str(go),
                 "--template-dir", str(work / "tools/codegen/go-server/templates-yang"),

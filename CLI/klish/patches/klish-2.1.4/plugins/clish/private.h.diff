@@ -1,4 +1,9 @@
-23a24,26
-> CLISH_PLUGIN_SYM(clish_restcl);
-> CLISH_PLUGIN_SYM(clish_pyobj);
-> CLISH_PLUGIN_SYM(clish_setenv);
+--- a/plugins/clish/private.h
++++ b/plugins/clish/private.h
+@@ -21,3 +21,6 @@
+ CLISH_PLUGIN_SYM(clish_wdog);
+ CLISH_PLUGIN_OSYM(clish_script);
+ CLISH_PLUGIN_SYM(clish_macros);
++CLISH_PLUGIN_SYM(clish_restcl);
++CLISH_PLUGIN_SYM(clish_pyobj);
++CLISH_PLUGIN_SYM(clish_setenv);

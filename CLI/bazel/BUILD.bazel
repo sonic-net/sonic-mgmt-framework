@@ -4,7 +4,8 @@ load(":defs.bzl", "cli_unpack")
 package(default_visibility = ["//CLI:__pkg__"])
 
 exports_files([
-    "configure.sh",
+    "klish.BUILD.bazel",
+    "klish_config.h.in",
     "generator_order_test.py",
     "installed_probe.py",
     "verify_gdb.py",

@@ -1,2 +1,10 @@
-16a17
-> typedef clish_pargv_status_e clish_pargv_status_t;
+--- a/clish/pargv.h
++++ b/clish/pargv.h
+@@ -14,6 +14,7 @@
+ 	CLISH_BAD_HISTORY
+ } clish_pargv_status_e;
+ 
++typedef clish_pargv_status_e clish_pargv_status_t;
+ typedef struct clish_pargv_s clish_pargv_t;
+ typedef struct clish_parg_s clish_parg_t;
+ 

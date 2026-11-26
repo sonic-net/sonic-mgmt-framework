@@ -9,8 +9,8 @@ import sys
 import tempfile
 import unittest
 
-DRIVER, PYANG, WHEEL, MODELS, PLUGIN, CONFIG = [Path(p).absolute() for p in sys.argv[1:7]]
-ASSETS = [Path(p).absolute() for p in sys.argv[7:]]
+DRIVER, PYANG, MODELS, PLUGIN, CONFIG = [Path(p).absolute() for p in sys.argv[1:6]]
+ASSETS = [Path(p).absolute() for p in sys.argv[6:]]
 sys.argv[1:] = []
 
 
@@ -29,7 +29,7 @@ class ModelsReproTest(unittest.TestCase):
                 for key in ("RUNFILES_DIR", "RUNFILES_MANIFEST_FILE", "PYTHON_RUNFILES"):
                     environment.pop(key, None)
                 subprocess.run([str(DRIVER), "--models", str(MODELS), "--pyang", str(PYANG),
-                    "--pyang-wheel", str(WHEEL), "--plugin", str(PLUGIN), "--config", str(CONFIG),
+                     "--plugin", str(PLUGIN), "--config", str(CONFIG),
                     "--go", str(output / "go"), "--ui", str(output / "ui"), "--docs", str(output / "docs"),
                     *[arg for asset in ASSETS for arg in ("--asset", str(asset))]],
                     check=True, env=environment)

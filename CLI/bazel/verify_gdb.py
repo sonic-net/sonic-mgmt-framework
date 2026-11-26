@@ -11,6 +11,7 @@ import json
 from pathlib import Path
 import re
 import subprocess
+import shutil
 import tarfile
 import tempfile
 
@@ -35,9 +36,9 @@ def verify(runtime, debug, gdb, cli_only=False):
     with tempfile.TemporaryDirectory(prefix="framework-debug-lookup-") as directory:
         root = Path(directory)
         for archive_path, destination in ((runtime, root / "runtime"), (debug, root / "symbols")):
-            with tarfile.open(archive_path) as archive:
-                archive.extractall(destination, filter="data")
-                if archive_path == debug:
+            shutil.unpack_archive(archive_path, destination, format="tar", filter="data")
+            if archive_path == debug:
+                with tarfile.open(archive_path) as archive:
                     for member in archive.getmembers():
                         if member.isfile():
                             if member.mode != 0o644:
