@@ -4,9 +4,22 @@ load("@rules_python//python:py_test.bzl", "py_test")
 package(default_visibility = ["//visibility:private"])
 
 py_binary(
+    name = "extract_pyang",
+    srcs = ["extract_pyang.py"],
+)
+
+genrule(
+    name = "pyang_script",
+    srcs = ["@framework_pip//pyang:whl"],
+    outs = ["pyang_cli.py"],
+    cmd = "$(execpath :extract_pyang) $(execpath @framework_pip//pyang:whl) $@",
+    tools = [":extract_pyang"],
+)
+
+py_binary(
     name = "pyang",
-    srcs = ["pyang_main.py"],
-    main = "pyang_main.py",
+    srcs = [":pyang_script"],
+    main = "pyang_cli.py",
     visibility = ["//visibility:public"],
     deps = [
         "@framework_pip//jinja2",
@@ -35,7 +48,6 @@ py_test(
     args = [
         "$(location :generate_rest_models)",
         "$(location :pyang)",
-        "$(location @framework_pip//pyang:whl)",
         "$(location @sonic_mgmt_common//models/yang:prepared_models)",
         "$(location //tools:pyang/pyang_plugins/openapi.py)",
         "$(location //models:codegen.config)",
@@ -47,7 +59,6 @@ py_test(
         "//models:codegen.config",
         "//tools:pyang/pyang_plugins/openapi.py",
         "//tools:rest_codegen_assets",
-        "@framework_pip//pyang:whl",
         "@sonic_mgmt_common//models/yang:prepared_models",
     ],
 )

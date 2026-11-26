@@ -22,7 +22,7 @@ jobs:
       - name: Install CI inspection tools
         run: |
           apt-get update
-          apt-get install -y --no-install-recommends binutils binutils-gold build-essential ca-certificates curl gdb git patch pkg-config python3 tar unzip zstd
+          apt-get install -y --no-install-recommends binutils binutils-gold build-essential ca-certificates curl gdb git patch pkg-config python3 python3-defusedxml tar unzip zstd
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
