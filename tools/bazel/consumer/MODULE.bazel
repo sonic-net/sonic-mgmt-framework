@@ -1,7 +1,7 @@
 module(name = "management_framework_consumer")
 
 bazel_dep(name = "sonic-mgmt-framework", version = "1.0.2-c2da0d69273f3ef61d7acbd7d15d5f56786a84aa")
-bazel_dep(name = "sonic-mgmt-common", version = "1.0.2-c83630943c1e869107463be4f885fdfcc8321759")
+bazel_dep(name = "sonic-mgmt-common", version = "1.0.2-68bfd75e9034ac0981c0f431b54cf8a9a868a2ca")
 bazel_dep(name = "gazelle", version = "0.54.0.sonic.2")
 bazel_dep(name = "openconfig_goyang", version = "0.0.0.sonic.2-20200309174518-a00bece872fc", repo_name = "com_github_openconfig_goyang")
 bazel_dep(name = "openconfig_ygot", version = "0.7.1.sonic.2", repo_name = "com_github_openconfig_ygot")
@@ -35,11 +35,6 @@ go_deps.module_override(
     patch_strip = 1,
     patches = ["@sonic-mgmt-common//patches:xpath.patch"],
     path = "github.com/antchfx/xpath",
-)
-go_deps.module_override(
-    patch_strip = 1,
-    patches = ["@sonic-mgmt-common//patches:glog.patch"],
-    path = "github.com/golang/glog",
 )
 
 # Match the owner generators and source toolchain in this consuming root.
