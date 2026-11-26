@@ -5,14 +5,13 @@ import os
 from pathlib import Path
 import sys
 import tempfile
-import unittest
-from unittest import mock
+from unittest import TestCase, main, mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "clitree/scripts"))
 import klish_ins_def_cmd
 
 
-class GeneratorOrderTest(unittest.TestCase):
+class GeneratorOrderTest(TestCase):
     def test_reversed_directory_enumeration_keeps_identical_command_tree(self):
         xml = '''<?xml version="1.0" encoding="UTF-8"?>
 <CLISH_MODULE xmlns="http://www.dellemc.com/sonic/XMLSchema">
@@ -41,4 +40,4 @@ class GeneratorOrderTest(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    unittest.main()
+    main()
