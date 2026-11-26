@@ -87,11 +87,22 @@ def main():
         declared = {artifact_path(artifact["pathFragmentId"]) for artifact in artifacts_by_id.values()}
         rest_sources = {str(path) for path in Path("rest").rglob("*.go") if not path.name.endswith("_test.go")}
         cli_sources = {str(path) for path in Path("CLI/klish/patches/klish-2.1.4").rglob("*") if path.is_file()}
-        for name, sources in (("rest", rest_sources), ("patched_klish", cli_sources)):
-            assert sources and sources <= declared, (name, sorted(sources - declared))
+        assert rest_sources and rest_sources <= declared, sorted(rest_sources - declared)
+        # Native Klish applies its source patches in the repository rule, before
+        # compilation. Verify every checked-in input in the selected rule's steps.
+        klish_repo = command("mod", "show_repo", "@framework_klish")
+        klish_name = json.loads(re.search(r"^  name = (.+),$", klish_repo, re.M)[1])
+        inputs = json.loads(re.search(r"^  inputs = (.+),$", klish_repo, re.M)[1])
+        steps = [json.loads(step) for step in json.loads(re.search(r"^  steps = (.+),$", klish_repo, re.M)[1])]
+        step_inputs = {inputs[step["input"]].removeprefix("//").replace(":", "/", 1)
+                       for step in steps if "input" in step}
+        assert cli_sources and cli_sources <= step_inputs, sorted(cli_sources - step_inputs)
+        compiled_cli_sources = {f"external/{klish_name}/{path}"
+                                for path in ("bin/clish.c", "plugins/clish/rest_cl.cpp")}
+        assert compiled_cli_sources <= declared, sorted(compiled_cli_sources - declared)
         (OUT / "source-coverage.json").write_text(json.dumps({
             "rest_sources": sorted(rest_sources), "patched_klish_inputs": sorted(cli_sources),
-            "all_declared_in_runtime_actions": True,
+            "klish_compilation_inputs": sorted(compiled_cli_sources),
         }, indent=2) + "\n")
         # Locked external DEBs are allowed inputs. Only generated action outputs
         # would violate the producer scope.
@@ -103,7 +114,11 @@ def main():
             name = action["mnemonic"]
             counts[name] = counts.get(name, 0) + 1
         assert counts.get("GoCompilePkg", 0) and counts.get("FrameworkRestModels", 0), counts
-        assert counts.get("CcConfigureMakeRule", 0) and counts.get("CliPatchedSource", 0), counts
+        klish_target_ids = {target["id"] for target in graph["targets"]
+                            if target["label"].split("//", 1)[0].lstrip("@") in (klish_name, "framework_klish")}
+        klish_actions = {action["mnemonic"] for action in graph["actions"]
+                         if action["targetId"] in klish_target_ids}
+        assert {"CppCompile", "CppLink"} <= klish_actions, klish_actions
         (OUT / "source-actions.json").write_text(json.dumps({"action_count": len(graph.get("actions", [])), "mnemonics": counts, "deb_paths": []}, indent=2) + "\n")
     lock = Path("MODULE.bazel.lock")
     if complete:
