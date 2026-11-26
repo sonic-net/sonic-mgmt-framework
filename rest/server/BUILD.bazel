@@ -1,0 +1,65 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+load("@rules_python//python:py_test.bzl", "py_test")
+
+package(default_visibility = ["//visibility:public"])
+
+go_library(
+    name = "server",
+    srcs = glob(
+        ["*.go"],
+        exclude = ["*_test.go"],
+    ),
+    importpath = "github.com/Azure/sonic-mgmt-framework/rest/server",
+    deps = [
+        "@com_github_golang_glog//:glog",
+        "@com_github_gorilla_mux//:mux",
+        "@in_gopkg_go_playground_validator_v9//:validator_v9",
+        "@org_golang_x_crypto//ssh",
+        "@sonic_mgmt_common//cvl",
+        "@sonic_mgmt_common//translib",
+        "@sonic_mgmt_common//translib/tlerr",
+    ],
+)
+
+go_test(
+    name = "server_test_binary",
+    srcs = glob(["*_test.go"]),
+    embed = [":server"],
+    gotags = ["test"],
+    tags = ["manual"],
+    deps = [
+        "@sonic_mgmt_common//cvl",
+        "@sonic_mgmt_common//translib",
+        "@sonic_mgmt_common//translib/tlerr",
+    ],
+)
+
+# Reuse the owner's declared Trixie/Redis/model test harness. The existing REST
+# suite keeps all assertions and its seven opt-in host-authentication skips.
+py_test(
+    name = "server_test",
+    srcs = ["@sonic_mgmt_common//tools/bazel:run_go_tests.py"],
+    args = [
+        "$(location :server_test_binary)",
+        "$(location @sonic_mgmt_common//tools/bazel:test_runtime)",
+        "$(location @sonic_mgmt_common//dist:runtime)",
+        "$(location @sonic_mgmt_common//dist:schema)",
+        "$(location @sonic_mgmt_common//tools/test:database_config.json)",
+        "$(location @sonic_mgmt_common//cvl:test_fixture_marker)",
+        "$(location @sonic_mgmt_common//tools/test:dbinit)",
+        "$(location @sonic_mgmt_common//tools/test:platform.json)",
+        "0",
+    ],
+    data = [
+        ":server_test_binary",
+        "@sonic_mgmt_common//cvl:test_fixture_marker",
+        "@sonic_mgmt_common//cvl:test_fixtures",
+        "@sonic_mgmt_common//dist:runtime",
+        "@sonic_mgmt_common//dist:schema",
+        "@sonic_mgmt_common//tools/bazel:test_runtime",
+        "@sonic_mgmt_common//tools/test:database_config.json",
+        "@sonic_mgmt_common//tools/test:dbinit",
+        "@sonic_mgmt_common//tools/test:platform.json",
+    ],
+    main = "@sonic_mgmt_common//tools/bazel:run_go_tests.py",
+)

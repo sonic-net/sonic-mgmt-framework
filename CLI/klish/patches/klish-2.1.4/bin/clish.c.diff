@@ -1,20 +1,44 @@
-41a42,43
-> #include <stdbool.h>
-> 
-48a51,56
-> bool _nos_use_alt_name = false;
-> 
-> bool nos_use_alt_name() {
->     return _nos_use_alt_name;
-> }
-> 
-88a97,101
->     char *mode = getenv("SONIC_CLI_IFACE_MODE");
->     if (mode) {
->         _nos_use_alt_name = (strcmp(mode, "standard") == 0);
->     }
-> 
-307c320
-< 		clish_shell__set_idle_timeout(shell, timeout);
----
-> 		clish_shell__set_timeout(shell, timeout);
+--- a/bin/clish.c
++++ b/bin/clish.c
+@@ -39,12 +39,20 @@
+ #include "lub/conv.h"
+ #include "clish/shell.h"
+ 
++#include <stdbool.h>
++
+ #define QUOTE(t) #t
+ /* #define version(v) printf("%s\n", QUOTE(v)) */
+ #define version(v) printf("%s\n", v)
+ 
+ static void sighandler(int signo);
+ static void help(int status, const char *argv0);
++
++bool _nos_use_alt_name = false;
++
++bool nos_use_alt_name() {
++    return _nos_use_alt_name;
++}
+ 
+ /*--------------------------------------------------------- */
+ int main(int argc, char **argv)
+@@ -85,6 +93,11 @@
+ 	/* Signal vars */
+ 	struct sigaction sigpipe_act;
+ 	sigset_t sigpipe_set;
++
++    char *mode = getenv("SONIC_CLI_IFACE_MODE");
++    if (mode) {
++        _nos_use_alt_name = (strcmp(mode, "standard") == 0);
++    }
+ 
+ 	static const char *shortopts = "hvs:ledx:w:i:bqu8oO:kKt:c:f:z:p:";
+ #ifdef HAVE_GETOPT_LONG
+@@ -304,7 +317,7 @@
+ 		clish_shell__set_canon_out(shell, canon_out);
+ 	/* Set idle timeout */
+ 	if (istimeout)
+-		clish_shell__set_idle_timeout(shell, timeout);
++		clish_shell__set_timeout(shell, timeout);
+ 	/* Set history settings */
+ 	clish_shell__stifle_history(shell, histsize);
+ 	if (histfile)

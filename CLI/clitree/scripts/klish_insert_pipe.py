@@ -143,7 +143,7 @@ def insert_pipe (dirpath, debug):
     ''' The following loops go through each directory in the given
         input directory and reads each *.xml file in the directory
         for inserting the pipe '''
-    for fname in os.listdir(dirpath):
+    for fname in sorted(os.listdir(dirpath)):
         fname = dirpath + fname
         if not os.path.isfile (fname):
             if DBG_FLAG == True:

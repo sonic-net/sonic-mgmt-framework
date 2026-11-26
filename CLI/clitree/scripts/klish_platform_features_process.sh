@@ -81,7 +81,7 @@ function insert_entities()
     for i in ${list}; do
         echo Processing $i
         insert_in $i
-        xmllint $i > /dev/null
+        xmllint --nonet $i > /dev/null
         if [ $? -ne 0 ]; then
             echo ENTITY insertion in $i failed
             exit 1
@@ -93,7 +93,7 @@ function insert_entities()
 
 
 echo Sanity check of platform config files with feature master ...
-    xmllint --schema $FEATURES_MASTER $PLATFORM_CONFIGS >& /dev/null
+    xmllint --nonet --schema $FEATURES_MASTER $PLATFORM_CONFIGS >& /dev/null
     if [ $? -ne 0 ]; then
         echo Failed to validate $PLATFORM_CONFIGS
         exit 1
@@ -103,7 +103,7 @@ mkdir -p ${BUILD_DIR}
 echo Done. Generating platform specific files ...
     base=${PLATFORM_CONFIGS%*.xml}         # Strip of the .xml suffix
     platform=${base#platform_*} # Get the platform name
-    xsltproc $ENTITIES_TEMPLATE $PLATFORM_CONFIGS > $BUILD_DIR/${platform}_entities.ent #2>/dev/null
+    xsltproc --nonet $ENTITIES_TEMPLATE $PLATFORM_CONFIGS > $BUILD_DIR/${platform}_entities.ent #2>/dev/null
     # echo ${platform}_entities.ent ready
     if [ $? -ne 0 ]; then
         echo Failed to apply entities xsl template for $PLATFORM_CONFIGS

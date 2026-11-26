@@ -1,11 +1,22 @@
-37c37,39
-< 	clish_ptype_method_e method, clish_ptype_preprocess_e preprocess)
----
-> 	clish_ptype_method_e method, clish_ptype_preprocess_e preprocess,
-> 	const char *ext_pattern, const char *ext_help, const char *alt_ext_pattern,
-> 	const char *alt_pattern)
-44c46,47
-< 			method, preprocess);
----
-> 			method, preprocess, ext_pattern, ext_help, 
-> 			alt_ext_pattern, alt_pattern);
+--- a/clish/shell/shell_ptype.c
++++ b/clish/shell/shell_ptype.c
+@@ -34,14 +34,17 @@
+ /*--------------------------------------------------------- */
+ clish_ptype_t *clish_shell_find_create_ptype(clish_shell_t * this,
+ 	const char *name, const char *text, const char *pattern,
+-	clish_ptype_method_e method, clish_ptype_preprocess_e preprocess)
++	clish_ptype_method_e method, clish_ptype_preprocess_e preprocess,
++	const char *ext_pattern, const char *ext_help, const char *alt_ext_pattern,
++	const char *alt_pattern)
+ {
+ 	clish_ptype_t *ptype = clish_shell_find_ptype(this, name);
+ 
+ 	if (!ptype) {
+ 		/* Create a ptype */
+ 		ptype = clish_ptype_new(name, text, pattern,
+-			method, preprocess);
++			method, preprocess, ext_pattern, ext_help, 
++			alt_ext_pattern, alt_pattern);
+ 		assert(ptype);
+ 		lub_list_add(this->ptype_tree, ptype);
+ 	}

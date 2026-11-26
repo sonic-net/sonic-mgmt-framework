@@ -1,4 +1,11 @@
-20a21,23
-> 	plugins/clish/rest_cl.cpp \
-> 	plugins/clish/call_pyobj.c \
-> 	plugins/clish/nos_extn.c \
+--- a/plugins/clish/module.am
++++ b/plugins/clish/module.am
+@@ -18,5 +18,8 @@
+ 	plugins/clish/hook_config.c \
+ 	plugins/clish/hook_log.c \
+ 	plugins/clish/sym_misc.c \
++	plugins/clish/rest_cl.cpp \
++	plugins/clish/call_pyobj.c \
++	plugins/clish/nos_extn.c \
+ 	plugins/clish/sym_script.c \
+ 	plugins/clish/private.h

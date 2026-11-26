@@ -1,0 +1,10 @@
+load("@rules_distroless//distroless:defs.bzl", "flatten")
+
+# Docker management installs both owners into one runtime filesystem.
+flatten(
+    name = "image_payload",
+    tars = [
+        "@sonic-mgmt-common//dist:runtime",
+        "@sonic-mgmt-framework//dist:runtime",
+    ],
+)

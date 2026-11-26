@@ -1,12 +1,25 @@
-100c100,102
-< 	clish_ptype_preprocess_e preprocess);
----
-> 	clish_ptype_preprocess_e preprocess,
-> 	const char *ext_pattern, const char *ext_help,
-> 	const char *alt_ext_pattern, const char *alt_pattern);
-103c105
-< void clish_shell_help(clish_shell_t * instance, const char *line);
----
-> void clish_shell_help(clish_shell_t * instance, const char *line, clish_context_t *context);
-190a193
-> void clish_shell__set_timeout(clish_shell_t *instance, int timeout);
+--- a/clish/shell.h
++++ b/clish/shell.h
+@@ -97,10 +97,12 @@
+ 	const char *text,
+ 	const char *pattern,
+ 	clish_ptype_method_e method,
+-	clish_ptype_preprocess_e preprocess);
++	clish_ptype_preprocess_e preprocess,
++	const char *ext_pattern, const char *ext_help,
++	const char *alt_ext_pattern, const char *alt_pattern);
+ clish_ptype_t *clish_shell_find_ptype(clish_shell_t *instance,
+ 	const char *name);
+-void clish_shell_help(clish_shell_t * instance, const char *line);
++void clish_shell_help(clish_shell_t * instance, const char *line, clish_context_t *context);
+ int clish_shell_exec_action(clish_context_t *context, char **out);
+ int clish_shell_execute(clish_context_t *context, char **out);
+ int clish_shell_forceline(clish_shell_t *instance, const char *line, char ** out);
+@@ -188,6 +190,7 @@
+ int clish_shell__save_history(const clish_shell_t *instance, const char *fname);
+ int clish_shell__restore_history(clish_shell_t *instance, const char *fname);
+ void clish_shell__stifle_history(clish_shell_t *instance, unsigned int stifle);
++void clish_shell__set_timeout(clish_shell_t *instance, int timeout);
+ 
+ /* Plugin functions */
+ clish_plugin_t * clish_shell_create_plugin(clish_shell_t *instance,

@@ -301,7 +301,8 @@ def load_all_macros (macro_dir_path):
     reads each *macro.xml file in the directory into a buffer and return it'''
     macro_data = []
     for dirName, subdirList, fileList in os.walk(macro_dir_path):
-        for macro_file_name in fileList:
+        subdirList.sort()
+        for macro_file_name in sorted(fileList):
             macro_file_name = macro_dir_path + "/" + macro_file_name
             with open(macro_file_name, "r") as macrofile:
                 data = macrofile.readlines()
@@ -330,7 +331,7 @@ def process_dir (dirpath, macro_data, replace_entities):
     if DBG_FLAG == True:
         print("process_dir ", dirpath, tmp_dirpath, temp_file_name)
 
-    for fname in os.listdir(dirpath):
+    for fname in sorted(os.listdir(dirpath)):
         fname = dirpath + fname
         if not os.path.isfile (fname):
             if DBG_FLAG == True:

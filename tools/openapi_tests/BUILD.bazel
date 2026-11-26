@@ -1,0 +1,20 @@
+load("@rules_python//python:py_test.bzl", "py_test")
+
+py_test(
+    name = "generator_test",
+    srcs = ["generator_test.py"],
+    args = [
+        "$(location //tools/bazel:pyang)",
+        "$(location @framework_pip//pyang:whl)",
+        "$(location //tools:pyang/pyang_plugins/openapi.py)",
+        "$(location test-rpc.yang)",
+    ],
+    data = glob([
+        "*.yang",
+        "*.expect",
+    ]) + [
+        "//tools:pyang/pyang_plugins/openapi.py",
+        "//tools/bazel:pyang",
+        "@framework_pip//pyang:whl",
+    ],
+)

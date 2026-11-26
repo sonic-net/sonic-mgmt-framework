@@ -1,0 +1,63 @@
+load("@rules_python//python:py_binary.bzl", "py_binary")
+load("@rules_python//python:py_test.bzl", "py_test")
+
+package(default_visibility = ["//visibility:private"])
+
+py_binary(
+    name = "pyang",
+    srcs = ["pyang_main.py"],
+    main = "pyang_main.py",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@framework_pip//jinja2",
+        "@framework_pip//mmh3",
+        "@framework_pip//pyang",
+        "@framework_pip//pyyaml",
+        "@framework_pip//setuptools",
+    ],
+)
+
+py_binary(
+    name = "generate_rest_models",
+    srcs = ["generate_rest_models.py"],
+    deps = ["@framework_pip//jinja2"],
+)
+
+py_binary(
+    name = "cert_source",
+    srcs = ["cert_source.py"],
+    visibility = ["//rest/cert:__pkg__"],
+)
+
+py_test(
+    name = "models_repro_test",
+    srcs = ["models_repro_test.py"],
+    args = [
+        "$(location :generate_rest_models)",
+        "$(location :pyang)",
+        "$(location @framework_pip//pyang:whl)",
+        "$(location @sonic_mgmt_common//models/yang:prepared_models)",
+        "$(location //tools:pyang/pyang_plugins/openapi.py)",
+        "$(location //models:codegen.config)",
+        "$(locations //tools:rest_codegen_assets)",
+    ],
+    data = [
+        ":generate_rest_models",
+        ":pyang",
+        "//models:codegen.config",
+        "//tools:pyang/pyang_plugins/openapi.py",
+        "//tools:rest_codegen_assets",
+        "@framework_pip//pyang:whl",
+        "@sonic_mgmt_common//models/yang:prepared_models",
+    ],
+)
+
+py_test(
+    name = "codegen_config_test",
+    srcs = [
+        "codegen_config_test.py",
+        "generate_rest_models.py",
+    ],
+    args = ["$(location //models:codegen.config)"],
+    data = ["//models:codegen.config"],
+)

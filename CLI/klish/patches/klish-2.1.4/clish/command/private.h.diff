@@ -1,4 +1,10 @@
-26a27,29
->       char *test;
->       bool_t hidden;
->       bool_t enabled;
+--- a/clish/command/private.h
++++ b/clish/command/private.h
+@@ -24,4 +24,7 @@
+ 	clish_view_t *pview;
+ 	bool_t dynamic; /* Is command dynamically created */
+ 	bool_t internal; /* Is command internal? Like the "startup" */
++      char *test;
++      bool_t hidden;
++      bool_t enabled;
+ };

@@ -1,8 +1,22 @@
-9a10
-> #include "nos_extn.h"
-32a34,38
-> 	clish_plugin_add_psym(plugin, clish_restcl, "clish_restcl");
-> 	clish_plugin_add_psym(plugin, clish_pyobj, "clish_pyobj");
-> 	clish_plugin_add_psym(plugin, clish_setenv, "clish_setenv");
-> 
-> 	nos_extn_init();
+--- a/plugins/clish/builtin_init.c
++++ b/plugins/clish/builtin_init.c
+@@ -7,6 +7,7 @@
+ #include "clish/plugin.h"
+ #include "private.h"
+ 
++#include "nos_extn.h"
+ /*----------------------------------------------------------- */
+ /* Initialize internal pseudo-plugin */
+ CLISH_PLUGIN_INIT(clish)
+@@ -30,6 +31,11 @@
+ 	clish_plugin_add_psym(plugin, clish_wdog, "clish_wdog");
+ 	clish_plugin_add_psym(plugin, clish_macros, "clish_macros");
+ 	clish_plugin_add_osym(plugin, clish_script, "clish_script");
++	clish_plugin_add_psym(plugin, clish_restcl, "clish_restcl");
++	clish_plugin_add_psym(plugin, clish_pyobj, "clish_pyobj");
++	clish_plugin_add_psym(plugin, clish_setenv, "clish_setenv");
++
++	nos_extn_init();
+ 
+ 	clish_shell = clish_shell; /* Happy compiler */
+ 

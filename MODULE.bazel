@@ -1,0 +1,225 @@
+module(
+    name = "sonic-mgmt-framework",
+    version = "1.0.1-07de59606b0b37a105544284405e86e1a27051bf",
+    bazel_compatibility = [
+        ">=8.5.1",
+        "<=8.5.1",
+    ],
+)
+
+bazel_dep(name = "sonic-mgmt-common", version = "1.0.2-c83630943c1e869107463be4f885fdfcc8321759", repo_name = "sonic_mgmt_common")
+bazel_dep(name = "gazelle", version = "0.54.0.sonic.2")
+bazel_dep(name = "openconfig_goyang", version = "0.0.0.sonic.2-20200309174518-a00bece872fc", repo_name = "com_github_openconfig_goyang")
+bazel_dep(name = "openconfig_ygot", version = "0.7.1.sonic.2", repo_name = "com_github_openconfig_ygot")
+bazel_dep(name = "rules_go", version = "0.65.0.sonic.2", repo_name = "io_bazel_rules_go")
+bazel_dep(name = "sonic-build-infra", version = "0.0.45-77ef625a4ddafc8cdc15f3cc6aee31eabac8a5de", repo_name = "sonic_build_infra")
+
+single_version_override(
+    module_name = "rules_go",
+    version = "0.65.0.sonic.2",
+)
+
+single_version_override(
+    module_name = "tar.bzl",
+    version = "0.10.5.sonic.2",
+)
+
+go_deps = use_extension("@gazelle//:extensions.bzl", "go_deps")
+# A consuming root owns its Go workspace. Contribute the Framework module dependencies.
+go_deps.from_file(go_mod = "//:go.mod")
+
+# Root-only patch selection, matching the management-common owner.
+go_patches = use_extension("@gazelle//:extensions.bzl", "go_deps", dev_dependency = True)
+
+# The consuming root selects the owner's existing SONiC Go patches. Public
+# libraries and their consumers share one Go graph and the same Go types.
+go_patches.gazelle_override(
+    directives = ["gazelle:proto disable_global"],
+    path = "github.com/openconfig/gnmi",
+)
+
+# These are the existing Make/vendor patches, applied to isolated dependency
+# repositories. Build actions never modify go.mod, vendor, or the checkout.
+go_patches.module_override(
+    patch_strip = 1,
+    patches = ["@sonic_mgmt_common//patches:jsonquery.patch"],
+    path = "github.com/antchfx/jsonquery",
+)
+go_patches.module_override(
+    patch_strip = 1,
+    patches = ["@sonic_mgmt_common//patches:xmlquery.patch"],
+    path = "github.com/antchfx/xmlquery",
+)
+go_patches.module_override(
+    patch_strip = 1,
+    patches = ["@sonic_mgmt_common//patches:xpath.patch"],
+    path = "github.com/antchfx/xpath",
+)
+go_patches.module_override(
+    patch_strip = 1,
+    patches = ["@sonic_mgmt_common//patches:glog.patch"],
+    path = "github.com/golang/glog",
+)
+
+# Match the owner generators and source toolchain in this consuming root.
+bazel_dep(name = "rules_python", version = "1.9.0.sonic.2")
+
+python = use_extension("@rules_python//python/extensions:python.bzl", "python")
+python.toolchain(
+    is_default = True,
+    python_version = "3.13",
+)
+
+go_sdk = use_extension("@io_bazel_rules_go//go:extensions.bzl", "go_sdk")
+go_sdk.download(version = "1.26.7")
+
+bazel_dep(name = "bazel_skylib", version = "1.9.2")
+bazel_dep(name = "platforms", version = "1.1.0")
+bazel_dep(name = "rules_distroless", version = "0.9.4.sonic.26")
+bazel_dep(name = "tar.bzl", version = "0.10.5.sonic.2")
+
+gcc = use_extension("@sonic_build_infra//toolchains/gcc:extensions.bzl", "gcc")
+use_repo(gcc, "gcc_toolchains")
+
+register_toolchains("@gcc_toolchains//:all")
+
+use_repo(go_deps, "com_github_golang_glog", "com_github_gorilla_mux", "com_github_pkg_profile", "in_gopkg_go_playground_validator_v9", "org_golang_x_crypto")
+
+pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
+pip.parse(
+    hub_name = "framework_pip",
+    python_version = "3.13",
+    requirements_lock = "//:requirements_lock.txt",
+)
+use_repo(pip, "framework_pip")
+
+tar_toolchains = use_extension("@tar.bzl//tar:extensions.bzl", "toolchains")
+use_repo(tar_toolchains, "bsd_tar_toolchains")
+
+register_toolchains("@bsd_tar_toolchains//:all")
+
+bazel_dep(name = "rules_pkg", version = "1.1.0")
+
+apt = use_extension("@rules_distroless//apt:extensions.bzl", "apt")
+apt.import_lock(lock = "@sonic_build_infra//apt:apt.lock.json")
+use_repo(apt, "framework_cli_target_debian")
+
+bazel_dep(name = "rules_cc", version = "0.2.22")
+
+# The SONiC-patched klish source is exposed as files for native C/C++ rules.
+prepared_source = use_repo_rule("@sonic_build_infra//source:prepared_source.bzl", "prepared_source")
+
+prepared_source(
+    name = "framework_klish",
+    build_file = "//CLI/bazel:klish.BUILD.bazel",
+    inputs = {
+        "archive": "//CLI:klish/klish-2.1.4.tgz",
+        "config.h.in": "//CLI/bazel:klish_config.h.in",
+        "clish/param/mgmt_clish_extn_param.c": "//CLI:klish/patches/klish-2.1.4/clish/param/mgmt_clish_extn_param.c",
+        "clish/plugin/clish_api.h": "//CLI:klish/patches/klish-2.1.4/clish/plugin/clish_api.h",
+        "clish/plugin/mgmt_clish_utils.c": "//CLI:klish/patches/klish-2.1.4/clish/plugin/mgmt_clish_utils.c",
+        "clish/plugin/mgmt_clish_utils.h": "//CLI:klish/patches/klish-2.1.4/clish/plugin/mgmt_clish_utils.h",
+        "mgmt_clish_extn_param.h": "//CLI:klish/patches/klish-2.1.4/mgmt_clish_extn_param.h",
+        "plugins/clish/call_pyobj.c": "//CLI:klish/patches/klish-2.1.4/plugins/clish/call_pyobj.c",
+        "plugins/clish/logging.h": "//CLI:klish/patches/klish-2.1.4/plugins/clish/logging.h",
+        "plugins/clish/nos_extn.c": "//CLI:klish/patches/klish-2.1.4/plugins/clish/nos_extn.c",
+        "plugins/clish/nos_extn.h": "//CLI:klish/patches/klish-2.1.4/plugins/clish/nos_extn.h",
+        "plugins/clish/rest_cl.cpp": "//CLI:klish/patches/klish-2.1.4/plugins/clish/rest_cl.cpp",
+        "plugins/clish/rest_tls.h": "//CLI:klish/patches/klish-2.1.4/plugins/clish/rest_tls.h",
+        "bin/clish.c.diff": "//CLI:klish/patches/klish-2.1.4/bin/clish.c.diff",
+        "clish/command/command.c.diff": "//CLI:klish/patches/klish-2.1.4/clish/command/command.c.diff",
+        "clish/command/private.h.diff": "//CLI:klish/patches/klish-2.1.4/clish/command/private.h.diff",
+        "clish/command.h.diff": "//CLI:klish/patches/klish-2.1.4/clish/command.h.diff",
+        "clish/nspace.h.diff": "//CLI:klish/patches/klish-2.1.4/clish/nspace.h.diff",
+        "clish/param/module.am.diff": "//CLI:klish/patches/klish-2.1.4/clish/param/module.am.diff",
+        "clish/param/param.c.diff": "//CLI:klish/patches/klish-2.1.4/clish/param/param.c.diff",
+        "clish/param/paramv.c.diff": "//CLI:klish/patches/klish-2.1.4/clish/param/paramv.c.diff",
+        "clish/param/private.h.diff": "//CLI:klish/patches/klish-2.1.4/clish/param/private.h.diff",
+        "clish/param.h.diff": "//CLI:klish/patches/klish-2.1.4/clish/param.h.diff",
+        "clish/pargv.h.diff": "//CLI:klish/patches/klish-2.1.4/clish/pargv.h.diff",
+        "clish/plugin/module.am.diff": "//CLI:klish/patches/klish-2.1.4/clish/plugin/module.am.diff",
+        "clish/ptype/private.h.diff": "//CLI:klish/patches/klish-2.1.4/clish/ptype/private.h.diff",
+        "clish/ptype/ptype.c.diff": "//CLI:klish/patches/klish-2.1.4/clish/ptype/ptype.c.diff",
+        "clish/ptype.h.diff": "//CLI:klish/patches/klish-2.1.4/clish/ptype.h.diff",
+        "clish/shell/private.h.diff": "//CLI:klish/patches/klish-2.1.4/clish/shell/private.h.diff",
+        "clish/shell/shell_command.c.diff": "//CLI:klish/patches/klish-2.1.4/clish/shell/shell_command.c.diff",
+        "clish/shell/shell_execute.c.diff": "//CLI:klish/patches/klish-2.1.4/clish/shell/shell_execute.c.diff",
+        "clish/shell/shell_help.c.diff": "//CLI:klish/patches/klish-2.1.4/clish/shell/shell_help.c.diff",
+        "clish/shell/shell_libxml2.c.diff": "//CLI:klish/patches/klish-2.1.4/clish/shell/shell_libxml2.c.diff",
+        "clish/shell/shell_new.c.diff": "//CLI:klish/patches/klish-2.1.4/clish/shell/shell_new.c.diff",
+        "clish/shell/shell_parse.c.diff": "//CLI:klish/patches/klish-2.1.4/clish/shell/shell_parse.c.diff",
+        "clish/shell/shell_ptype.c.diff": "//CLI:klish/patches/klish-2.1.4/clish/shell/shell_ptype.c.diff",
+        "clish/shell/shell_tinyrl.c.diff": "//CLI:klish/patches/klish-2.1.4/clish/shell/shell_tinyrl.c.diff",
+        "clish/shell/shell_wdog.c.diff": "//CLI:klish/patches/klish-2.1.4/clish/shell/shell_wdog.c.diff",
+        "clish/shell/shell_xml.c.diff": "//CLI:klish/patches/klish-2.1.4/clish/shell/shell_xml.c.diff",
+        "clish/shell.h.diff": "//CLI:klish/patches/klish-2.1.4/clish/shell.h.diff",
+        "configure.ac.diff": "//CLI:klish/patches/klish-2.1.4/configure.ac.diff",
+        "lub/argv/argv.c.diff": "//CLI:klish/patches/klish-2.1.4/lub/argv/argv.c.diff",
+        "lub/argv.h.diff": "//CLI:klish/patches/klish-2.1.4/lub/argv.h.diff",
+        "lub/string/string.c.diff": "//CLI:klish/patches/klish-2.1.4/lub/string/string.c.diff",
+        "lub/string.h.diff": "//CLI:klish/patches/klish-2.1.4/lub/string.h.diff",
+        "plugins/clish/builtin_init.c.diff": "//CLI:klish/patches/klish-2.1.4/plugins/clish/builtin_init.c.diff",
+        "plugins/clish/hook_log.c.diff": "//CLI:klish/patches/klish-2.1.4/plugins/clish/hook_log.c.diff",
+        "plugins/clish/module.am.diff": "//CLI:klish/patches/klish-2.1.4/plugins/clish/module.am.diff",
+        "plugins/clish/private.h.diff": "//CLI:klish/patches/klish-2.1.4/plugins/clish/private.h.diff",
+        "plugins/clish/sym_script.c.diff": "//CLI:klish/patches/klish-2.1.4/plugins/clish/sym_script.c.diff",
+        "tinyrl/history/history.c.diff": "//CLI:klish/patches/klish-2.1.4/tinyrl/history/history.c.diff",
+        "tinyrl/tinyrl.c.diff": "//CLI:klish/patches/klish-2.1.4/tinyrl/tinyrl.c.diff",
+        "tinyrl/tinyrl.h.diff": "//CLI:klish/patches/klish-2.1.4/tinyrl/tinyrl.h.diff",
+    },
+    steps = [
+        "{\"op\":\"extract\",\"archive_input\":\"archive\",\"strip_prefix\":\"klish-2.1.4\"}",
+        "{\"op\":\"file\",\"input\":\"clish/param/mgmt_clish_extn_param.c\",\"path\":\"clish/param/mgmt_clish_extn_param.c\"}",
+        "{\"op\":\"file\",\"input\":\"clish/plugin/clish_api.h\",\"path\":\"clish/plugin/clish_api.h\"}",
+        "{\"op\":\"file\",\"input\":\"clish/plugin/mgmt_clish_utils.c\",\"path\":\"clish/plugin/mgmt_clish_utils.c\"}",
+        "{\"op\":\"file\",\"input\":\"clish/plugin/mgmt_clish_utils.h\",\"path\":\"clish/plugin/mgmt_clish_utils.h\"}",
+        "{\"op\":\"file\",\"input\":\"mgmt_clish_extn_param.h\",\"path\":\"mgmt_clish_extn_param.h\"}",
+        "{\"op\":\"file\",\"input\":\"plugins/clish/call_pyobj.c\",\"path\":\"plugins/clish/call_pyobj.c\"}",
+        "{\"op\":\"file\",\"input\":\"plugins/clish/logging.h\",\"path\":\"plugins/clish/logging.h\"}",
+        "{\"op\":\"file\",\"input\":\"plugins/clish/nos_extn.c\",\"path\":\"plugins/clish/nos_extn.c\"}",
+        "{\"op\":\"file\",\"input\":\"plugins/clish/nos_extn.h\",\"path\":\"plugins/clish/nos_extn.h\"}",
+        "{\"op\":\"file\",\"input\":\"plugins/clish/rest_cl.cpp\",\"path\":\"plugins/clish/rest_cl.cpp\"}",
+        "{\"op\":\"file\",\"input\":\"plugins/clish/rest_tls.h\",\"path\":\"plugins/clish/rest_tls.h\"}",
+        "{\"op\":\"patch\",\"input\":\"bin/clish.c.diff\",\"strip\":1}",
+        "{\"op\":\"patch\",\"input\":\"clish/command/command.c.diff\",\"strip\":1}",
+        "{\"op\":\"patch\",\"input\":\"clish/command/private.h.diff\",\"strip\":1}",
+        "{\"op\":\"patch\",\"input\":\"clish/command.h.diff\",\"strip\":1}",
+        "{\"op\":\"patch\",\"input\":\"clish/nspace.h.diff\",\"strip\":1}",
+        "{\"op\":\"patch\",\"input\":\"clish/param/module.am.diff\",\"strip\":1}",
+        "{\"op\":\"patch\",\"input\":\"clish/param/param.c.diff\",\"strip\":1}",
+        "{\"op\":\"patch\",\"input\":\"clish/param/paramv.c.diff\",\"strip\":1}",
+        "{\"op\":\"patch\",\"input\":\"clish/param/private.h.diff\",\"strip\":1}",
+        "{\"op\":\"patch\",\"input\":\"clish/param.h.diff\",\"strip\":1}",
+        "{\"op\":\"patch\",\"input\":\"clish/pargv.h.diff\",\"strip\":1}",
+        "{\"op\":\"patch\",\"input\":\"clish/plugin/module.am.diff\",\"strip\":1}",
+        "{\"op\":\"patch\",\"input\":\"clish/ptype/private.h.diff\",\"strip\":1}",
+        "{\"op\":\"patch\",\"input\":\"clish/ptype/ptype.c.diff\",\"strip\":1}",
+        "{\"op\":\"patch\",\"input\":\"clish/ptype.h.diff\",\"strip\":1}",
+        "{\"op\":\"patch\",\"input\":\"clish/shell/private.h.diff\",\"strip\":1}",
+        "{\"op\":\"patch\",\"input\":\"clish/shell/shell_command.c.diff\",\"strip\":1}",
+        "{\"op\":\"patch\",\"input\":\"clish/shell/shell_execute.c.diff\",\"strip\":1}",
+        "{\"op\":\"patch\",\"input\":\"clish/shell/shell_help.c.diff\",\"strip\":1}",
+        "{\"op\":\"patch\",\"input\":\"clish/shell/shell_libxml2.c.diff\",\"strip\":1}",
+        "{\"op\":\"patch\",\"input\":\"clish/shell/shell_new.c.diff\",\"strip\":1}",
+        "{\"op\":\"patch\",\"input\":\"clish/shell/shell_parse.c.diff\",\"strip\":1}",
+        "{\"op\":\"patch\",\"input\":\"clish/shell/shell_ptype.c.diff\",\"strip\":1}",
+        "{\"op\":\"patch\",\"input\":\"clish/shell/shell_tinyrl.c.diff\",\"strip\":1}",
+        "{\"op\":\"patch\",\"input\":\"clish/shell/shell_wdog.c.diff\",\"strip\":1}",
+        "{\"op\":\"patch\",\"input\":\"clish/shell/shell_xml.c.diff\",\"strip\":1}",
+        "{\"op\":\"patch\",\"input\":\"clish/shell.h.diff\",\"strip\":1}",
+        "{\"op\":\"patch\",\"input\":\"configure.ac.diff\",\"strip\":1}",
+        "{\"op\":\"patch\",\"input\":\"lub/argv/argv.c.diff\",\"strip\":1}",
+        "{\"op\":\"patch\",\"input\":\"lub/argv.h.diff\",\"strip\":1}",
+        "{\"op\":\"patch\",\"input\":\"lub/string/string.c.diff\",\"strip\":1}",
+        "{\"op\":\"patch\",\"input\":\"lub/string.h.diff\",\"strip\":1}",
+        "{\"op\":\"patch\",\"input\":\"plugins/clish/builtin_init.c.diff\",\"strip\":1}",
+        "{\"op\":\"patch\",\"input\":\"plugins/clish/hook_log.c.diff\",\"strip\":1}",
+        "{\"op\":\"patch\",\"input\":\"plugins/clish/module.am.diff\",\"strip\":1}",
+        "{\"op\":\"patch\",\"input\":\"plugins/clish/private.h.diff\",\"strip\":1}",
+        "{\"op\":\"patch\",\"input\":\"plugins/clish/sym_script.c.diff\",\"strip\":1}",
+        "{\"op\":\"patch\",\"input\":\"tinyrl/history/history.c.diff\",\"strip\":1}",
+        "{\"op\":\"patch\",\"input\":\"tinyrl/tinyrl.c.diff\",\"strip\":1}",
+        "{\"op\":\"patch\",\"input\":\"tinyrl/tinyrl.h.diff\",\"strip\":1}",
+        "{\"op\":\"file\",\"input\":\"config.h.in\",\"path\":\"config.h.in\"}",
+    ],
+)

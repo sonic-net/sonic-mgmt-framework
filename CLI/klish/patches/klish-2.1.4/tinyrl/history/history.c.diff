@@ -1,29 +1,47 @@
-14a15
-> #include "clish/plugin/mgmt_clish_utils.h"
-138,146c139,140
-< 	for (i = 0; i < this->length; i++) {
-< 		tinyrl_history_entry_t *entry = this->entries[i];
-< 		if (0 == strcmp(line, tinyrl_history_entry__get_line(entry))) {
-< 			free_entries(this, i, i);
-< 			remove_entries(this, i, i);
-< 			result = BOOL_TRUE;
-< 			break;
-< 		}
-< 	}
----
-> 	/* We don't want to remove duplicates from the history,
-> 	   hence returning false immediately*/
-203a198,200
-> 	char *masked_line = NULL;
-> 	mask_password(line, &masked_line);
-> 	if (!masked_line) return;
-205c202
-< 		add_n_replace(this, line);
----
-> 		add_n_replace(this, (const char*)masked_line);
-207c204
-< 		add_n_grow(this, line);
----
-> 		add_n_grow(this, (const char*)masked_line);
-208a206
-> 	if(masked_line) free(masked_line);
+--- a/tinyrl/history/history.c
++++ b/tinyrl/history/history.c
+@@ -12,6 +12,7 @@
+ #include "private.h"
+ #include "lub/string.h"
+ #include "tinyrl/history.h"
++#include "clish/plugin/mgmt_clish_utils.h"
+ 
+ struct _tinyrl_history {
+ 	tinyrl_history_entry_t **entries;	/* pointer entries */
+@@ -135,15 +136,8 @@
+ 	bool_t result = BOOL_FALSE;
+ 	unsigned i;
+ 
+-	for (i = 0; i < this->length; i++) {
+-		tinyrl_history_entry_t *entry = this->entries[i];
+-		if (0 == strcmp(line, tinyrl_history_entry__get_line(entry))) {
+-			free_entries(this, i, i);
+-			remove_entries(this, i, i);
+-			result = BOOL_TRUE;
+-			break;
+-		}
+-	}
++	/* We don't want to remove duplicates from the history,
++	   hence returning false immediately*/
+ 	return result;
+ }
+ 
+@@ -201,11 +195,15 @@
+ /*------------------------------------- */
+ void tinyrl_history_add(tinyrl_history_t * this, const char *line)
+ {
++	char *masked_line = NULL;
++	mask_password(line, &masked_line);
++	if (!masked_line) return;
+ 	if (this->length && (this->length == this->stifle)) {
+-		add_n_replace(this, line);
++		add_n_replace(this, (const char*)masked_line);
+ 	} else {
+-		add_n_grow(this, line);
+-	}
++		add_n_grow(this, (const char*)masked_line);
++	}
++	if(masked_line) free(masked_line);
+ }
+ 
+ /*------------------------------------- */

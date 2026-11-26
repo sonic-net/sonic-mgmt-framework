@@ -1,0 +1,40 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_test")
+load("//tools/bazel:rest_binary.bzl", "rest_binary")
+
+package(default_visibility = ["//visibility:public"])
+
+go_binary(
+    name = "rest_server_binary",
+    srcs = ["main.go"],
+    importpath = "github.com/Azure/sonic-mgmt-framework/rest/main",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//models:openapi",
+        "//rest/server",
+        "@com_github_golang_glog//:glog",
+        "@com_github_pkg_profile//:profile",
+    ],
+)
+
+go_test(
+    name = "coverage_server",
+    srcs = [
+        "main.go",
+        "main_test.go",
+    ],
+    # Legacy coverage daemon waits for an external SIGUSR1; installed service
+    # acceptance starts and exercises the production binary separately.
+    tags = ["manual"],
+    deps = [
+        "//models:openapi",
+        "//rest/server",
+        "@com_github_golang_glog//:glog",
+        "@com_github_pkg_profile//:profile",
+    ],
+)
+
+# Keep Make's complete Go compiler profile when a Docker root consumes this.
+rest_binary(
+    name = "rest_server",
+    binary = ":rest_server_binary",
+)

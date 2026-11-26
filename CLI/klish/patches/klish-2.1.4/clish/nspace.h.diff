@@ -1,2 +1,10 @@
-17a18
-> typedef clish_nspace_visibility_e clish_nspace_visibility_t;
+--- a/clish/nspace.h
++++ b/clish/nspace.h
+@@ -15,6 +15,7 @@
+ 	CLISH_NSPACE_COMPLETION,
+ 	CLISH_NSPACE_CHELP
+ } clish_nspace_visibility_e;
++typedef clish_nspace_visibility_e clish_nspace_visibility_t;
+ 
+ #include <regex.h>
+ 
