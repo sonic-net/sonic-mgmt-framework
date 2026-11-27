@@ -1,0 +1,17 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary")
+load("//tools/bazel:cert_source.bzl", "cert_source")
+
+package(default_visibility = ["//visibility:public"])
+
+# Make names this SDK file explicitly. Remove its standalone-only build tag
+# when compiling it as a normal rules_go target; preserve all program code.
+cert_source(
+    name = "cert_source",
+)
+
+go_binary(
+    name = "generate_cert",
+    srcs = [":cert_source"],
+    gc_linkopts = ["-B=gobuildid"],
+    importpath = "sonic-mgmt-framework/generate_cert",
+)

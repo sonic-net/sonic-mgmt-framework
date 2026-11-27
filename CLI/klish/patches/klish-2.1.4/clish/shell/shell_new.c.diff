@@ -1,15 +1,40 @@
-24a25
-> 	char lock_file[PATH_MAX];
-51a53,58
-> 	/* Create lock file */
-> 	snprintf(lock_file, sizeof(lock_file),
-> 		"%s.%u", CLISH_LOCK_PATH, getpid());
-> 	lock_file[sizeof(lock_file) - 1] = '\0';
-> 	this->lockfile = lub_string_dup(lock_file);
-> 
-67d73
-< 	this->lockfile = lub_string_dup(CLISH_LOCK_PATH);
-89c95
-< 		CLISH_PTYPE_PRE_NONE);
----
-> 		CLISH_PTYPE_PRE_NONE, NULL, NULL, NULL, NULL);
+--- a/clish/shell/shell_new.c
++++ b/clish/shell/shell_new.c
+@@ -22,6 +22,7 @@
+ 	clish_ptype_t *tmp_ptype = NULL;
+ 	int i;
+ 	char template[PATH_MAX];
++	char lock_file[PATH_MAX];
+ 
+ 	/* Initialise VIEW list */
+ 	this->view_tree = lub_list_new(clish_view_compare, clish_view_delete);
+@@ -49,6 +50,12 @@
+ 		this->hooks_use[i] = BOOL_FALSE;
+ 	}
+ 
++	/* Create lock file */
++	snprintf(lock_file, sizeof(lock_file),
++		"%s.%u", CLISH_LOCK_PATH, getpid());
++	lock_file[sizeof(lock_file) - 1] = '\0';
++	this->lockfile = lub_string_dup(lock_file);
++
+ 	/* Set up defaults */
+ 	this->global = NULL;
+ 	this->startup = NULL;
+@@ -64,7 +71,6 @@
+ 	this->pwdc = 0;
+ 	this->depth = -1; /* Current depth is undefined */
+ 	this->client = NULL;
+-	this->lockfile = lub_string_dup(CLISH_LOCK_PATH);
+ 	this->default_shebang = lub_string_dup("/bin/sh");
+ 	this->interactive = BOOL_TRUE; /* The interactive shell by default. */
+ 	this->log = BOOL_FALSE; /* Disable logging by default */
+@@ -86,7 +92,7 @@
+ 		"__ptype_ARGS",
+ 		"Arguments", "[^\\\\]+",
+ 		CLISH_PTYPE_METHOD_REGEXP,
+-		CLISH_PTYPE_PRE_NONE);
++		CLISH_PTYPE_PRE_NONE, NULL, NULL, NULL, NULL);
+ 	assert(tmp_ptype);
+ 
+ 	/* Push non-NULL istream */

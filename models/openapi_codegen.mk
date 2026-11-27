@@ -121,7 +121,7 @@ $(SERVER_DIST_INIT): | $$(@D)/.
 
 clean:
 	$(RM) -r $(SERVER_DIST_DIR)
-	find $(SERVER_DIST_GO) -type f ! -name routes.go -delete
+	find $(SERVER_DIST_GO) -type f ! -name routes.go ! -name BUILD.bazel -delete
 	$(RM) -r $(SERVER_CODEGEN_DIR)
 	$(RM) $(SERVER_DIST_UI_HOME)
 

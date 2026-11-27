@@ -1,0 +1,10 @@
+# Preserve the model generator and CLI interpreter contract on Python 3.13.
+pyang==2.4.0
+lxml==5.3.0
+Jinja2==3.1.6
+PyYAML==6.0.2
+mmh3==5.2.0
+setuptools==75.8.2
+requests==2.32.3
+six==1.17.0
+natsort==8.4.0

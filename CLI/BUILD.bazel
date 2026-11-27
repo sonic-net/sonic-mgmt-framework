@@ -1,0 +1,184 @@
+load("@rules_cc//cc:defs.bzl", "cc_test")
+load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
+load("@rules_python//python:py_test.bzl", "py_test")
+load("@sonic_build_infra//binary:keep_debug_info.bzl", "keep_debug_info")
+load("@sonic_build_infra//tar:sonic_deploy_tar.bzl", "sonic_deploy_tar")
+load("//CLI/bazel:defs.bzl", "ASSETS_STRIP_PREFIX", "cli_prepare")
+
+package(default_visibility = ["//visibility:public"])
+
+_AMD64 = [
+    "@platforms//cpu:x86_64",
+    "@sonic_build_infra//platforms:trixie",
+]
+
+_TRIXIE_64 = [
+    "@platforms//os:linux",
+    "@sonic_build_infra//platforms:trixie",
+] + select({
+    "@platforms//cpu:x86_64": [],
+    "@platforms//cpu:aarch64": [],
+    "//conditions:default": ["@platforms//:incompatible"],
+})
+
+_LIBRARIES = [
+    "libclish",
+    "libkonf",
+    "liblub",
+    "libtinyrl",
+]
+
+# Public interfaces now consume individual native compilation/link outputs.
+alias(name = "clish", actual = "@framework_klish//:clish")
+
+[alias(name = name + ".so", actual = "@framework_klish//:" + name + ".so") for name in _LIBRARIES]
+alias(name = "clish_plugin_clish.so", actual = "@framework_klish//:clish_plugin_clish.so")
+[alias(name = name + ".a", actual = "@framework_klish//:" + name + ".a") for name in _LIBRARIES + ["clish_plugin_clish"]]
+
+filegroup(
+    name = "klish",
+    srcs = [":clish", ":clish_plugin_clish.so"] + [":" + name + suffix for name in _LIBRARIES for suffix in [".so", ".a"]] + [":clish_plugin_clish.a"],
+    target_compatible_with = _TRIXIE_64,
+)
+
+# Use the same configuration for installed static archives and deployed ELF
+# files, so splitting symbols does not compile the klish source tree twice.
+[
+    keep_debug_info(
+        name = name + ".a.debuggable",
+        src = ":" + name + ".a",
+    )
+    for name in _LIBRARIES + ["clish_plugin_clish"]
+]
+
+sonic_deploy_tar(
+    name = "klish_runtime",
+    srcs = ["klish/clish_start"] + [":" + name + ".a.debuggable" for name in _LIBRARIES + ["clish_plugin_clish"]],
+    binaries = {
+        "usr/sbin/cli/clish": ":clish",
+        "usr/sbin/cli/.libs/clish_plugin_clish.so": ":clish_plugin_clish.so",
+    } | {
+        "usr/sbin/cli/.libs/" + name + ".so.1.0.0": ":" + name + ".so"
+        for name in _LIBRARIES
+    },
+    force_debug_build = True,
+    mtree = [
+        "/set uid=0 gid=0 mode=0755 time=0 type=file",
+        "usr type=dir",
+        "usr/sbin type=dir",
+        "usr/sbin/cli type=dir",
+        "usr/sbin/cli/.libs type=dir",
+        "usr/sbin/cli/clish_start content=$(location klish/clish_start)",
+    ] + [
+        "usr/sbin/cli/.libs/" + name + "." + suffix + " type=link mode=0777 link=" + name + ".so.1.0.0"
+        for name in _LIBRARIES
+        for suffix in [
+            "so",
+            "so.1",
+        ]
+    ] + [
+        "usr/sbin/cli/.libs/" + name + ".a type=file mode=0644 content=$(location :" + name + ".a.debuggable)"
+        for name in _LIBRARIES + ["clish_plugin_clish"]
+    ],
+    target_compatible_with = _TRIXIE_64,
+)
+
+cli_prepare(
+    name = "installed_assets",
+    srcs = glob([
+        "actioner/*.py",
+        "clitree/cli-xml/**/*.xml",
+        "clitree/macro/*.xml",
+        "clitree/scripts/*.py",
+        "clitree/scripts/*.sh",
+        "clitree/scripts/*.xml",
+        "clitree/scripts/*.xsd",
+        "clicfg/*.xsd",
+        "clicfg/*.xsl",
+        "renderer/scripts/*.py",
+        "renderer/templates/*",
+    ]),
+    source_prefix = "CLI",
+    target_compatible_with = _TRIXIE_64,
+    tools = "@sonic_build_infra//tools/build_tools:foreign_runtime",
+)
+
+pkg_tar(
+    name = "assets",
+    srcs = [":installed_assets"],
+    # Keep the executable bits from the owner scripts; tree modes cannot be
+    # overridden per file by pkg_tar. The generator preserves source modes.
+    mode = "",
+    mtime = 0,
+    package_dir = "usr/sbin/cli",
+    portable_mtime = False,
+    # pkg_tar strips exec-root paths for tree artifacts. Include the repository
+    # prefix when these public targets are consumed from another Bazel module.
+    strip_prefix = ASSETS_STRIP_PREFIX,
+    target_compatible_with = _TRIXIE_64,
+)
+
+pkg_tar(
+    name = "runtime",
+    mtime = 0,
+    portable_mtime = False,
+    target_compatible_with = _TRIXIE_64,
+    deps = [
+        ":assets",
+        ":klish_runtime",
+    ],
+)
+
+alias(
+    name = "runtime.debug_symbols",
+    actual = ":klish_runtime.debug_symbols",
+)
+
+py_test(
+    name = "installed_runtime_test",
+    srcs = ["//CLI/bazel:installed_probe.py"],
+    args = [
+        "$(location :runtime)",
+        "$(location //CLI/bazel:target_libraries)",
+    ],
+    data = [
+        ":runtime",
+        "//CLI/bazel:target_libraries",
+    ],
+    main = "//CLI/bazel:installed_probe.py",
+    target_compatible_with = _AMD64,
+)
+
+py_test(
+    name = "cli_client_test",
+    srcs = [
+        "actioner/cli_client.py",
+        "actioner/cli_log.py",
+        "tests/test_cli_client.py",
+    ],
+    main = "tests/test_cli_client.py",
+    deps = [
+        "@framework_pip//requests",
+        "@framework_pip//six",
+    ],
+)
+
+py_test(
+    name = "generator_order_test",
+    srcs = [
+        "clitree/scripts/klish_ins_def_cmd.py",
+        "//CLI/bazel:generator_order_test.py",
+    ],
+    main = "//CLI/bazel:generator_order_test.py",
+    deps = ["@framework_pip//lxml"],
+)
+
+# Original TLS URL/CA validation assertions, compiled by the declared toolchain.
+cc_test(
+    name = "rest_tls_test",
+    srcs = [
+        "klish/patches/klish-2.1.4/plugins/clish/rest_tls.h",
+        "//tools:test/rest-tls.cpp",
+    ],
+    target_compatible_with = _AMD64,
+)
