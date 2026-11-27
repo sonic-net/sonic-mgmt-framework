@@ -1,7 +1,7 @@
 module github.com/Azure/sonic-mgmt-framework
 
 require (
-	github.com/Azure/sonic-mgmt-common v0.0.0-20261106021544-c49a9496f49b
+	github.com/Azure/sonic-mgmt-common v0.0.0-20261118214341-151344241c54
 	github.com/golang/glog v1.2.5
 	github.com/gorilla/mux v1.8.1
 	github.com/pkg/profile v1.7.0
