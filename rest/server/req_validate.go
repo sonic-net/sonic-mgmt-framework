@@ -23,8 +23,8 @@ import (
 	"encoding/json"
 	"reflect"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/golang/glog"
-	"gopkg.in/go-playground/validator.v9"
 )
 
 func isSkipValidation(t reflect.Type) bool {
