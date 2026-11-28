@@ -46,6 +46,3 @@ require (
 )
 
 go 1.26.0
-
-// Pin glog to the version that patches/glog.patch is written for.
-replace github.com/golang/glog => github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
